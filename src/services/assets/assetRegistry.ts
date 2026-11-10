@@ -5,7 +5,6 @@ type Listener = () => void;
 
 class AssetRegistry {
   private availableImages: Set<string> = new Set();
-  private checkCompleted: boolean = false;
   private listeners: Set<Listener> = new Set();
 
   public subscribe(listener: Listener): () => void {
@@ -45,12 +44,7 @@ class AssetRegistry {
       })
     );
 
-    this.checkCompleted = true;
     this.notify();
-  }
-
-  public isChecked(): boolean {
-    return this.checkCompleted;
   }
 
   public hasCustomImage(playerId: 'p1' | 'p2', damage: DamageLevel): boolean {
