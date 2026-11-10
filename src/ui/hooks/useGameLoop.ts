@@ -143,6 +143,20 @@ export function useGameLoop() {
     }
   }, [state.phase, state.lastOutcome]);
 
+  // 4. BGM 및 클라이맥스(매치 포인트) 제어
+  useEffect(() => {
+    if (state.phase === 'TITLE') {
+      soundManager.stopBgm();
+      return;
+    }
+    if (state.phase === 'GAME_OVER') {
+      soundManager.stopBgm();
+      return;
+    }
+    const isMatchPoint = state.p1.damage >= 4 || state.p2.damage >= 4;
+    soundManager.playBgm(isMatchPoint);
+  }, [state.phase, state.p1.damage, state.p2.damage]);
+
   // 4. 입력 핸들러 (UI 버튼 / 터치 / 키보드 공용)
   const handleP1Input = useCallback((type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => {
     if (type === 'rps' && stateRef.current.phase === 'RPS_INPUT') {

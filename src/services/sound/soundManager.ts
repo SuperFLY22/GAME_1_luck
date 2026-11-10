@@ -36,22 +36,26 @@ class SoundManager {
     return this.isMuted;
   }
 
-  public playBgm(): void {
+  public playBgm(isClimax: boolean = false): void {
+    const targetSrc = isClimax ? '/assets/sounds/climax_bgm.mp3' : '/assets/sounds/bgm.mp3';
+
     if (this.bgmAudio) {
-      if (!this.isMuted) this.bgmAudio.play().catch(() => {});
-      return;
+      if (this.bgmAudio.src.endsWith(targetSrc)) {
+        if (!this.isMuted) this.bgmAudio.play().catch(() => {});
+        return;
+      }
+      this.bgmAudio.pause();
+      this.bgmAudio = null;
     }
 
     try {
-      this.bgmAudio = new Audio('/assets/sounds/bgm.mp3');
+      this.bgmAudio = new Audio(targetSrc);
       this.bgmAudio.loop = true;
-      this.bgmAudio.volume = 0.25;
+      this.bgmAudio.volume = isClimax ? 0.35 : 0.25;
       this.bgmAudio.muted = this.isMuted;
-      this.bgmAudio.play().catch(() => {
-        // 자동 재생 차단 시 무시
-      });
+      this.bgmAudio.play().catch(() => {});
     } catch {
-      // BGM 파일 없을 경우 무시
+      // BGM 로드 실패 시 무시
     }
   }
 
