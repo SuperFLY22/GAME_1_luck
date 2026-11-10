@@ -46,6 +46,34 @@ export const Arena: React.FC<ArenaProps> = ({
     return '❓ 대기 중';
   };
 
+  // 1P / 2P 동적 액션 및 손 스프라이트 매핑
+  const p1RpsSprite =
+    state.phase === 'RPS_INPUT' && state.p1.rpsChoice
+      ? `/assets/images/rps/rps_1p_${state.p1.rpsChoice.toLowerCase()}.png`
+      : null;
+  const p2RpsSprite =
+    state.phase === 'RPS_INPUT' && state.p2.rpsChoice
+      ? `/assets/images/rps/rps_2p_${state.p2.rpsChoice.toLowerCase()}.png`
+      : null;
+
+  let p1ActionSprite: string | null = null;
+  if ((state.phase === 'CHAM_INPUT' || state.phase === 'RESOLVE') && state.p1.chamDirection) {
+    const dir = state.p1.chamDirection.toLowerCase();
+    p1ActionSprite =
+      state.p1.role === 'ATTACKER'
+        ? `/assets/images/actions/attack_${dir}.png`
+        : `/assets/images/actions/defend_${dir}.png`;
+  }
+
+  let p2ActionSprite: string | null = null;
+  if ((state.phase === 'CHAM_INPUT' || state.phase === 'RESOLVE') && state.p2.chamDirection) {
+    const dir = state.p2.chamDirection.toLowerCase();
+    p2ActionSprite =
+      state.p2.role === 'ATTACKER'
+        ? `/assets/images/actions/attack_${dir}_2p.png`
+        : `/assets/images/actions/defend_${dir}_2p.png`;
+  }
+
   return (
     <div
       className={`min-h-[100svh] flex flex-col justify-between py-3 px-2 sm:px-6 transition-all duration-100 select-none ${
@@ -68,7 +96,11 @@ export const Arena: React.FC<ArenaProps> = ({
             ROUND {state.round}
           </span>
           <span className="text-[10px] text-slate-400 font-semibold">
-            {state.mode === '1P_CPU' ? '1P vs CPU' : '1P vs 2P 로컬'}
+            {state.mode === 'ONLINE_MATCH'
+              ? '🌐 실시간 온라인 대전'
+              : state.mode === '1P_CPU'
+              ? '1P vs CPU'
+              : '1P vs 2P 로컬'}
           </span>
         </div>
 
@@ -109,6 +141,8 @@ export const Arena: React.FC<ArenaProps> = ({
             direction={state.p1.chamDirection}
             isHit={state.hitTarget === 'p1'}
             role={state.p1.role}
+            actionSprite={p1ActionSprite}
+            rpsSprite={p1RpsSprite}
           />
           {/* 선택 말풍선 */}
           <div className="mt-2 min-h-[30px] flex items-center justify-center">
@@ -174,6 +208,8 @@ export const Arena: React.FC<ArenaProps> = ({
             direction={state.p2.chamDirection}
             isHit={state.hitTarget === 'p2'}
             role={state.p2.role}
+            actionSprite={p2ActionSprite}
+            rpsSprite={p2RpsSprite}
           />
           {/* 선택 말풍선 */}
           <div className="mt-2 min-h-[30px] flex items-center justify-center">
@@ -196,6 +232,7 @@ export const Arena: React.FC<ArenaProps> = ({
         <TouchControls
           mode={state.mode}
           phase={state.phase}
+          myRoleInRoom={state.online?.myRoleInRoom}
           p1ChosenRps={state.p1.rpsChoice}
           p1ChosenCham={state.p1.chamDirection}
           p2ChosenRps={state.p2.rpsChoice}

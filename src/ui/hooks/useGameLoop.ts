@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { GAME_CONFIG, KEY_BINDINGS } from '../../config/constants';
 import {
   createInitialState,
@@ -10,6 +10,8 @@ import type {
   GameMode,
   RPSChoice,
 } from '../../models/types';
+import { matchmakingService, type MatchFoundData } from '../../services/network/matchmakingService';
+import { roomSessionService } from '../../services/network/roomSessionService';
 import { soundManager } from '../../services/sound/soundManager';
 
 export function useGameLoop() {
@@ -17,26 +19,69 @@ export function useGameLoop() {
     createInitialState('1P_CPU')
   );
 
-  // 현재 상태 최신 레퍼런스 유지 (이벤트 핸들러 내 클로저 분리)
+  // 대기실 통계 상태
+  const [waitingCount, setWaitingCount] = useState(1);
+  const [waitingNames, setWaitingNames] = useState<string[]>([]);
+
+  // 현재 상태 최신 레퍼런스 유지
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // 1P / 2P 입력 래칭 플래그 (키 반복 입력 누수 방지)
   const p1SubmittedRef = useRef(false);
   const p2SubmittedRef = useRef(false);
 
-  // 타이머 참조
   const timerStartRef = useRef<number>(0);
   const timerDurationRef = useRef<number>(0);
   const animFrameRef = useRef<number | null>(null);
 
-  // 단계 초기화 시 입력 플래그 리셋
   useEffect(() => {
     p1SubmittedRef.current = false;
     p2SubmittedRef.current = false;
   }, [state.phase]);
 
-  // 1. 카운트다운 루프 (READY 단계)
+  // 1. 온라인 룸 세션 연결 및 이벤트 바인딩
+  const setupOnlineRoom = useCallback((data: MatchFoundData) => {
+    roomSessionService.joinRoom(data.roomId, data.myRole, {
+      onStartReady: () => {
+        dispatch({ type: 'TICK_COUNTDOWN', countdown: 3 });
+      },
+      onRpsStart: () => {
+        dispatch({ type: 'START_RPS' });
+        soundManager.playRPSChant();
+      },
+      onRpsResult: (res) => {
+        dispatch({
+          type: 'SYNC_ONLINE_RPS_RESULT',
+          p1Choice: res.p1Choice,
+          p2Choice: res.p2Choice,
+          p1Role: res.p1Role,
+          p2Role: res.p2Role,
+          isTie: res.isTie,
+        });
+      },
+      onChamStart: () => {
+        // 참참참 입력 시작
+      },
+      onChamResult: (res) => {
+        dispatch({
+          type: 'SYNC_ONLINE_CHAM_RESULT',
+          p1Dir: res.p1Dir,
+          p2Dir: res.p2Dir,
+          isHit: res.isHit,
+          hitTarget: res.hitTarget,
+          p1Damage: res.p1Damage,
+          p2Damage: res.p2Damage,
+          isGameOver: res.isGameOver,
+          winner: res.winner,
+        });
+      },
+      onOpponentLeft: () => {
+        dispatch({ type: 'SET_OPPONENT_LEFT' });
+      },
+    });
+  }, []);
+
+  // 2. 카운트다운 루프 (READY 단계)
   useEffect(() => {
     if (state.phase !== 'READY') return;
 
@@ -48,13 +93,16 @@ export function useGameLoop() {
       } else {
         dispatch({ type: 'START_RPS' });
         soundManager.playRPSChant();
+        if (state.mode === 'ONLINE_MATCH' && state.online?.myRoleInRoom === 'p1') {
+          roomSessionService.startRpsPhase();
+        }
       }
     }, GAME_CONFIG.COUNTDOWN_STEP_MS);
 
     return () => clearTimeout(timer);
-  }, [state.phase, state.countdown]);
+  }, [state.phase, state.countdown, state.mode, state.online?.myRoleInRoom]);
 
-  // 2. 가위바위보 및 참참참 정밀 타이머 루프 (requestAnimationFrame)
+  // 3. 타이머 루프 (RPS_INPUT & CHAM_INPUT)
   useEffect(() => {
     if (state.phase !== 'RPS_INPUT' && state.phase !== 'CHAM_INPUT') {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -69,10 +117,13 @@ export function useGameLoop() {
     timerStartRef.current = performance.now();
     timerDurationRef.current = duration;
 
-    // AI 자동 입력 예약
+    // AI 자동 입력 (1P vs CPU 전용)
     let aiTimer: ReturnType<typeof setTimeout> | null = null;
     if (state.p2.isAi) {
-      const aiDelay = state.phase === 'RPS_INPUT' ? 400 + Math.random() * 400 : 200 + Math.random() * 200;
+      const aiDelay =
+        state.phase === 'RPS_INPUT'
+          ? 400 + Math.random() * 400
+          : 200 + Math.random() * 200;
       aiTimer = setTimeout(() => {
         if (stateRef.current.phase === 'RPS_INPUT') {
           const cpuChoice = getCpuRpsChoice();
@@ -92,16 +143,17 @@ export function useGameLoop() {
 
       dispatch({ type: 'UPDATE_TIMER', ratio: remainingRatio });
 
-      // 조기 판정: 두 플레이어가 모두 입력 완료했는지 확인
       const bothInputted =
         p1SubmittedRef.current &&
         (stateRef.current.p2.isAi ? p2SubmittedRef.current : p2SubmittedRef.current);
 
       if (remainingRatio <= 0 || bothInputted) {
-        if (stateRef.current.phase === 'RPS_INPUT') {
-          dispatch({ type: 'RESOLVE_RPS' });
-        } else if (stateRef.current.phase === 'CHAM_INPUT') {
-          dispatch({ type: 'RESOLVE_CHAM' });
+        if (stateRef.current.mode !== 'ONLINE_MATCH') {
+          if (stateRef.current.phase === 'RPS_INPUT') {
+            dispatch({ type: 'RESOLVE_RPS' });
+          } else if (stateRef.current.phase === 'CHAM_INPUT') {
+            dispatch({ type: 'RESOLVE_CHAM' });
+          }
         }
         return;
       }
@@ -115,9 +167,9 @@ export function useGameLoop() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (aiTimer) clearTimeout(aiTimer);
     };
-  }, [state.phase]);
+  }, [state.phase, state.mode]);
 
-  // 3. 무승부 재시도 및 결과 판정 딜레이 (RESOLVE & TIE)
+  // 4. 결과 연출 및 사운드
   useEffect(() => {
     if (state.phase === 'RESOLVE') {
       if (state.lastOutcome === 'HIT') {
@@ -143,13 +195,9 @@ export function useGameLoop() {
     }
   }, [state.phase, state.lastOutcome]);
 
-  // 4. BGM 및 클라이맥스(매치 포인트) 제어
+  // 5. BGM 제어
   useEffect(() => {
-    if (state.phase === 'TITLE') {
-      soundManager.stopBgm();
-      return;
-    }
-    if (state.phase === 'GAME_OVER') {
+    if (state.phase === 'TITLE' || state.phase === 'LOBBY' || state.phase === 'GAME_OVER') {
       soundManager.stopBgm();
       return;
     }
@@ -157,58 +205,82 @@ export function useGameLoop() {
     soundManager.playBgm(isMatchPoint);
   }, [state.phase, state.p1.damage, state.p2.damage]);
 
-  // 4. 입력 핸들러 (UI 버튼 / 터치 / 키보드 공용)
-  const handleP1Input = useCallback((type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => {
-    if (type === 'rps' && stateRef.current.phase === 'RPS_INPUT') {
-      if (p1SubmittedRef.current) return;
-      p1SubmittedRef.current = true;
-      dispatch({ type: 'SET_RPS_INPUT', playerId: 'p1', choice: value as RPSChoice });
-    } else if (type === 'cham' && stateRef.current.phase === 'CHAM_INPUT') {
-      if (p1SubmittedRef.current) return;
-      p1SubmittedRef.current = true;
-      dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: value as ChamDirection });
-    }
-  }, []);
+  // 6. 입력 핸들러 (온라인 룸 세션 자동 연동)
+  const handleP1Input = useCallback(
+    (type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => {
+      const cur = stateRef.current;
+      const isOnline = cur.mode === 'ONLINE_MATCH';
+      const myRole = cur.online?.myRoleInRoom;
 
-  const handleP2Input = useCallback((type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => {
-    if (type === 'rps' && stateRef.current.phase === 'RPS_INPUT') {
-      if (p2SubmittedRef.current) return;
-      p2SubmittedRef.current = true;
-      dispatch({ type: 'SET_RPS_INPUT', playerId: 'p2', choice: value as RPSChoice });
-    } else if (type === 'cham' && stateRef.current.phase === 'CHAM_INPUT') {
-      if (p2SubmittedRef.current) return;
-      p2SubmittedRef.current = true;
-      dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: value as ChamDirection });
-    }
-  }, []);
+      if (isOnline && myRole !== 'p1') return; // 온라인 모드에서는 내 역할만 조작
 
-  // 5. 키보드 이벤트 리스너 바인딩
+      if (type === 'rps' && cur.phase === 'RPS_INPUT') {
+        if (p1SubmittedRef.current) return;
+        p1SubmittedRef.current = true;
+        dispatch({ type: 'SET_RPS_INPUT', playerId: 'p1', choice: value as RPSChoice });
+        if (isOnline) roomSessionService.submitRps(value as RPSChoice);
+      } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
+        if (p1SubmittedRef.current) return;
+        p1SubmittedRef.current = true;
+        dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: value as ChamDirection });
+        if (isOnline) roomSessionService.submitCham(value as ChamDirection);
+      }
+    },
+    []
+  );
+
+  const handleP2Input = useCallback(
+    (type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => {
+      const cur = stateRef.current;
+      const isOnline = cur.mode === 'ONLINE_MATCH';
+      const myRole = cur.online?.myRoleInRoom;
+
+      if (isOnline && myRole !== 'p2') return;
+
+      if (type === 'rps' && cur.phase === 'RPS_INPUT') {
+        if (p2SubmittedRef.current) return;
+        p2SubmittedRef.current = true;
+        dispatch({ type: 'SET_RPS_INPUT', playerId: 'p2', choice: value as RPSChoice });
+        if (isOnline) roomSessionService.submitRps(value as RPSChoice);
+      } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
+        if (p2SubmittedRef.current) return;
+        p2SubmittedRef.current = true;
+        dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: value as ChamDirection });
+        if (isOnline) roomSessionService.submitCham(value as ChamDirection);
+      }
+    },
+    []
+  );
+
+  // 7. 키보드 바인딩
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return; // OS 키 반복 방지
-
+      if (e.repeat) return;
       const cur = stateRef.current;
       const isSolo = cur.mode === '1P_CPU';
+      const isOnline = cur.mode === 'ONLINE_MATCH';
+      const myRole = cur.online?.myRoleInRoom;
 
-      // 1P 조작 확인
+      // 1P 조작
       const p1Bindings = isSolo ? KEY_BINDINGS.SOLO_P1 : KEY_BINDINGS.P1_LOCAL;
       const p1Left = p1Bindings.LEFT as readonly string[];
       const p1Up = p1Bindings.UP as readonly string[];
       const p1Right = p1Bindings.RIGHT as readonly string[];
 
-      if (p1Left.includes(e.code) || p1Left.includes(e.key)) {
-        if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'SCISSORS');
-        else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'LEFT');
-      } else if (p1Up.includes(e.code) || p1Up.includes(e.key)) {
-        if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'ROCK');
-        // 참참참 단계에서는 상 키 무시
-      } else if (p1Right.includes(e.code) || p1Right.includes(e.key)) {
-        if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'PAPER');
-        else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'RIGHT');
+      if (!isOnline || myRole === 'p1') {
+        if (p1Left.includes(e.code) || p1Left.includes(e.key)) {
+          if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'SCISSORS');
+          else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'LEFT');
+        } else if (p1Up.includes(e.code) || p1Up.includes(e.key)) {
+          if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'ROCK');
+        } else if (p1Right.includes(e.code) || p1Right.includes(e.key)) {
+          if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'PAPER');
+          else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'RIGHT');
+        }
       }
 
-      // 2P 로컬 조작 확인 (2P 대전 모드일 때만 활성)
-      if (!isSolo) {
+      // 2P 조작
+      if (!isSolo && (!isOnline || myRole === 'p2')) {
         const p2Bindings = KEY_BINDINGS.P2_LOCAL;
         const p2Left = p2Bindings.LEFT as readonly string[];
         const p2Up = p2Bindings.UP as readonly string[];
@@ -230,11 +302,51 @@ export function useGameLoop() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleP1Input, handleP2Input]);
 
+  // 8. 모드별 시작 함수
+  const startGame = (mode: GameMode) => {
+    if (mode === 'ONLINE_MATCH') {
+      dispatch({ type: 'ENTER_LOBBY' });
+      matchmakingService.joinQueue(
+        (count, names) => {
+          setWaitingCount(count);
+          setWaitingNames(names);
+        },
+        (matchData) => {
+          dispatch({
+            type: 'MATCH_CONFIRMED',
+            roomId: matchData.roomId,
+            myRole: matchData.myRole,
+            myName: matchmakingService.getMyName(),
+            opponentName: matchData.opponentName,
+          });
+          setupOnlineRoom(matchData);
+        }
+      );
+    } else {
+      dispatch({ type: 'START_GAME', mode });
+    }
+  };
+
+  const findNewOnlineMatch = () => {
+    roomSessionService.leaveRoom();
+    dispatch({ type: 'ENTER_LOBBY' });
+    matchmakingService.reEnterQueue();
+  };
+
+  const goToTitle = () => {
+    roomSessionService.leaveRoom();
+    matchmakingService.leaveQueue();
+    dispatch({ type: 'RESET_TO_TITLE' });
+  };
+
   return {
     state,
-    startGame: (mode: GameMode) => dispatch({ type: 'START_GAME', mode }),
+    waitingCount,
+    waitingNames,
+    startGame,
     restartGame: () => dispatch({ type: 'START_GAME', mode: state.mode }),
-    goToTitle: () => dispatch({ type: 'RESET_TO_TITLE' }),
+    findNewOnlineMatch,
+    goToTitle,
     handleP1Input,
     handleP2Input,
   };

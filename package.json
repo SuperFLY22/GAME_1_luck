@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "test": "tsx tests/gameEngine.test.ts",
+    "test": "tsx tests/gameEngine.test.ts && tsx tests/matchmaking.test.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.5",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.71.0",

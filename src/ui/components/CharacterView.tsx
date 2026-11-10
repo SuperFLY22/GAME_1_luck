@@ -10,6 +10,8 @@ interface CharacterViewProps {
   direction: ChamDirection;
   isHit: boolean;
   role: Role;
+  actionSprite?: string | null;
+  rpsSprite?: string | null;
 }
 
 export const CharacterView: React.FC<CharacterViewProps> = ({
@@ -19,6 +21,8 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
   direction,
   isHit,
   role,
+  actionSprite,
+  rpsSprite,
 }) => {
   const [imgFailed, setImgFailed] = useState(false);
   const [, setTick] = useState(0);
@@ -28,30 +32,33 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
   }, []);
 
   const hasCustom = assetRegistry.hasCustomImage(playerId, damage);
-  const customUrl = assetRegistry.getCustomImageUrl(playerId, damage);
+  const customFaceUrl = assetRegistry.getCustomImageUrl(playerId, damage);
+
+  // 현재 표시할 이미지 (액션 스프라이트 > 가위바위보 손 > 기본 표정)
+  const displayImageUrl = actionSprite || rpsSprite || (hasCustom ? customFaceUrl : null);
 
   return (
     <div className="flex flex-col items-center">
       <div className="relative flex items-center justify-center min-w-[200px] min-h-[220px]">
-        {hasCustom && !imgFailed ? (
+        {displayImageUrl && !imgFailed ? (
           <div
-            className={`w-48 h-56 sm:w-60 sm:h-72 transition-transform duration-200 select-none ${
+            className={`w-48 h-56 sm:w-60 sm:h-72 transition-transform duration-200 select-none flex items-center justify-center ${
               isHit ? 'animate-bounce scale-95' : ''
             }`}
             style={{
               transform:
-                direction === 'LEFT'
+                !actionSprite && direction === 'LEFT'
                   ? 'rotate(-16deg) translateX(-12px)'
-                  : direction === 'RIGHT'
+                  : !actionSprite && direction === 'RIGHT'
                   ? 'rotate(16deg) translateX(12px)'
                   : 'rotate(0deg)',
             }}
           >
             <img
-              src={customUrl}
-              alt={`${name} state ${damage}`}
+              src={displayImageUrl}
+              alt={`${name} sprite`}
               onError={() => setImgFailed(true)}
-              className="w-full h-full object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.35)]"
+              className="w-full h-full object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.45)]"
             />
             {role && (
               <div
@@ -63,7 +70,7 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
                     : 'bg-slate-300 text-slate-800 border-slate-500'
                 }`}
               >
-                {role === 'ATTACKER' ? '💥 공격수' : role === 'DEFENDER' ? '🛡️ 수비수' : '🤝 비김'}
+                {role === 'ATTACKER' ? '💥 공격 (뿅망치)' : role === 'DEFENDER' ? '🛡️ 수비 (냄비)' : '🤝 비김'}
               </div>
             )}
           </div>

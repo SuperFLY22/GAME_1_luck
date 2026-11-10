@@ -2,10 +2,11 @@
  * 게임 도메인 모델 및 상태 인터페이스 정의
  */
 
-export type GameMode = '1P_CPU' | '2P_LOCAL';
+export type GameMode = '1P_CPU' | '2P_LOCAL' | 'ONLINE_MATCH';
 
 export type GamePhase =
   | 'TITLE'
+  | 'LOBBY'
   | 'READY'
   | 'RPS_INPUT'
   | 'CHAM_INPUT'
@@ -32,6 +33,16 @@ export interface PlayerState {
   score: number;
 }
 
+export interface OnlineMatchContext {
+  myPlayerId: string;
+  myRoleInRoom: 'p1' | 'p2';
+  roomId: string | null;
+  opponentName: string;
+  isRematchRequested: boolean;
+  opponentWantsRematch: boolean;
+  opponentLeft: boolean;
+}
+
 export interface GameEngineState {
   mode: GameMode;
   phase: GamePhase;
@@ -44,4 +55,5 @@ export interface GameEngineState {
   hitTarget: 'p1' | 'p2' | null;
   winner: 'p1' | 'p2' | null;
   message: string;
+  online?: OnlineMatchContext;
 }
