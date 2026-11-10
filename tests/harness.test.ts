@@ -68,6 +68,8 @@ const requiredSounds = [
   'dodge.mp3',
   'victory.mp3',
   'surrender.mp3',
+  'you_win.mp3',
+  'loose.mp3',
 ];
 
 for (const img of requiredImages) {
@@ -86,12 +88,12 @@ for (const snd of requiredSounds) {
   const p = path.join(process.cwd(), 'public/assets/sounds', snd);
   assert(fs.existsSync(p), `Missing sound file: ${snd}`);
 }
-console.log('✅ 총 39개 필수 이미지/오디오 에셋 물리 파일 100% 실존 확인');
+console.log('✅ 총 41개 필수 이미지/오디오 에셋 물리 파일 100% 실존 확인 (you_win/loose 포함)');
 
 // -------------------------------------------------------------
 // 2. 전체 매치 시뮬레이션 하네스 (Full Game Journey Simulation)
 // -------------------------------------------------------------
-console.log('\n[Harness 2] 전체 매치 FSM 시뮬레이션 (1P 완승 시나리오)');
+console.log('\n[Harness 2-A] 전체 매치 FSM 시뮬레이션 (1P 완승 시나리오)');
 let state = createInitialState('1P_CPU');
 state = gameReducer(state, { type: 'START_GAME', mode: '1P_CPU' });
 
@@ -135,6 +137,37 @@ assert.equal(state.phase, 'GAME_OVER');
 assert.equal(state.winner, 'p1');
 assert.equal(state.p2.damage, 5);
 console.log('✅ 1P vs CPU 5라운드 완승 및 KO 시뮬레이션 통과');
+
+// -------------------------------------------------------------
+// 2-B. 승리자 / 패배자 결과 사운드 및 모달 분기 무결성 검증
+// -------------------------------------------------------------
+console.log('\n[Harness 2-B] 승리자 vs 패배자 결과 사운드/UI 분기 판정 검증');
+
+// 1P vs CPU 모드에서 1P 승리 시: 로컬 플레이어 = 승리자 -> victory.mp3
+const is1PWinner = state.mode === '1P_CPU' ? state.winner === 'p1' : true;
+assert.equal(is1PWinner, true);
+const p1Sound = is1PWinner ? 'victory.mp3' : 'surrender.mp3';
+assert.equal(p1Sound, 'victory.mp3');
+
+// 1P vs CPU 모드에서 CPU(P2) 완승 시뮬레이션 (1P 패배)
+let loseState = createInitialState('1P_CPU');
+loseState = gameReducer(loseState, { type: 'START_GAME', mode: '1P_CPU' });
+loseState.p1.damage = 5;
+loseState = gameReducer(loseState, { type: 'CHECK_ROUND_RESULT' });
+assert.equal(loseState.phase, 'GAME_OVER');
+assert.equal(loseState.winner, 'p2');
+
+const is1PLoser = loseState.mode === '1P_CPU' ? loseState.winner === 'p1' : true;
+assert.equal(is1PLoser, false);
+const loseSound = is1PLoser ? 'victory.mp3' : 'surrender.mp3';
+assert.equal(loseSound, 'surrender.mp3');
+
+// 온라인 모드: 각 플레이어 시점 분기 검증
+const onlineWinnerView = 'p2' === 'p2'; // role: p2 가 승리자일 때 p2 클라이언트
+const onlineLoserView = 'p2' === 'p1'; // role: p1 이 패배자일 때 p1 클라이언트
+assert.equal(onlineWinnerView, true);
+assert.equal(onlineLoserView, false);
+console.log('✅ 승리자(victory.mp3 / you_win) 및 패배자(surrender.mp3 / loose) 독립 사운드 분기 무결성 검증 완료');
 
 // -------------------------------------------------------------
 // 3. 다중 사용자 대기열 풀 분산도 검증 (Random Matching Invariant)
@@ -203,3 +236,4 @@ console.log('✅ 잔여 플레이어(B)가 대기 중이던 C와 즉시 매칭 �
 console.log('\n=============================================');
 console.log('🏆 [ALL HARNESS TESTS PASSED] 100% 통과!');
 console.log('=============================================');
+

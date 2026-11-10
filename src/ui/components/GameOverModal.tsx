@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { RotateCcw, Trophy, Home, Users } from 'lucide-react';
+import { RotateCcw, Trophy, Home, Users, Skull } from 'lucide-react';
 import type { GameEngineState } from '../../models/types';
 import { fireVictoryConfetti } from '../../utils/confetti';
 import { soundManager } from '../../services/sound/soundManager';
@@ -23,21 +23,55 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   const isOnline = state.mode === 'ONLINE_MATCH';
   const opponentLeft = state.online?.opponentLeft;
 
+  // 로컬 플레이어 기준 승패 판단 (1P_CPU는 p1, ONLINE_MATCH는 myRoleInRoom, 2P_LOCAL은 로컬 공유)
+  const isLocalWinner =
+    state.mode === 'ONLINE_MATCH'
+      ? state.winner === state.online?.myRoleInRoom
+      : state.mode === '1P_CPU'
+        ? state.winner === 'p1'
+        : true;
+
   useEffect(() => {
-    soundManager.playVictory();
-    fireVictoryConfetti();
-  }, []);
+    if (isLocalWinner) {
+      soundManager.playVictory();
+      fireVictoryConfetti();
+    } else {
+      soundManager.playSurrender();
+    }
+  }, [isLocalWinner]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn select-none">
-      <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-4 border-amber-500 rounded-3xl p-6 text-center shadow-[0_0_50px_rgba(245,158,11,0.3)] flex flex-col items-center">
-        {/* 트로피 아이콘 */}
-        <div className="w-20 h-20 rounded-full bg-amber-500/20 border-4 border-amber-400 flex items-center justify-center -mt-14 mb-3 shadow-lg">
-          <Trophy className="w-10 h-10 text-amber-400 animate-bounce" />
+      <div
+        className={`w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-4 rounded-3xl p-6 text-center flex flex-col items-center ${
+          isLocalWinner
+            ? 'border-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.3)]'
+            : 'border-rose-600 shadow-[0_0_50px_rgba(225,29,72,0.3)]'
+        }`}
+      >
+        {/* 승패 아이콘 */}
+        <div
+          className={`w-20 h-20 rounded-full border-4 flex items-center justify-center -mt-14 mb-3 shadow-lg ${
+            isLocalWinner
+              ? 'bg-amber-500/20 border-amber-400'
+              : 'bg-rose-500/20 border-rose-500'
+          }`}
+        >
+          {isLocalWinner ? (
+            <Trophy className="w-10 h-10 text-amber-400 animate-bounce" />
+          ) : (
+            <Skull className="w-10 h-10 text-rose-400 animate-pulse" />
+          )}
         </div>
 
-        <div className="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-950/80 px-3 py-1 rounded-full border border-amber-600 mb-2">
-          K.O. MATCH DECIDED!
+        <div
+          className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-2 ${
+            isLocalWinner
+              ? 'text-amber-400 bg-amber-950/80 border-amber-600'
+              : 'text-rose-400 bg-rose-950/80 border-rose-600'
+          }`}
+        >
+          {isLocalWinner ? 'K.O. VICTORY!' : 'K.O. DEFEAT!'}
         </div>
 
         <h2 className="text-3xl sm:text-4xl font-black text-white font-comic drop-shadow-md">
