@@ -1,0 +1,233 @@
+import type {
+  ChamDirection,
+  GameEngineState,
+  GameMode,
+  PlayerState,
+  RPSChoice,
+} from '../../models/types';
+import { evaluateCham, evaluateRPS, incrementDamage } from './rules';
+
+export type GameAction =
+  | { type: 'START_GAME'; mode: GameMode }
+  | { type: 'TICK_COUNTDOWN'; countdown: number }
+  | { type: 'START_RPS' }
+  | { type: 'SET_RPS_INPUT'; playerId: 'p1' | 'p2'; choice: RPSChoice }
+  | { type: 'RESOLVE_RPS' }
+  | { type: 'RETRY_RPS_TIE' }
+  | { type: 'SET_CHAM_INPUT'; playerId: 'p1' | 'p2'; direction: ChamDirection }
+  | { type: 'RESOLVE_CHAM' }
+  | { type: 'CHECK_ROUND_RESULT' }
+  | { type: 'NEXT_ROUND' }
+  | { type: 'UPDATE_TIMER'; ratio: number }
+  | { type: 'RESET_TO_TITLE' };
+
+export function createInitialPlayer(id: 'p1' | 'p2', isAi: boolean, name: string): PlayerState {
+  return {
+    id,
+    name,
+    damage: 0,
+    rpsChoice: null,
+    chamDirection: null,
+    role: null,
+    isAi,
+    score: 0,
+  };
+}
+
+export function createInitialState(mode: GameMode = '1P_CPU'): GameEngineState {
+  return {
+    mode,
+    phase: 'TITLE',
+    round: 1,
+    countdown: 3,
+    timerRemainingRatio: 1.0,
+    p1: createInitialPlayer('p1', false, mode === '1P_CPU' ? '나 (1P)' : '플레이어 1'),
+    p2: createInitialPlayer('p2', mode === '1P_CPU', mode === '1P_CPU' ? '알파참 (AI)' : '플레이어 2'),
+    lastOutcome: null,
+    hitTarget: null,
+    winner: null,
+    message: '게임을 시작하세요!',
+  };
+}
+
+export function gameReducer(state: GameEngineState, action: GameAction): GameEngineState {
+  switch (action.type) {
+    case 'START_GAME': {
+      const mode = action.mode;
+      return {
+        ...createInitialState(mode),
+        phase: 'READY',
+        countdown: 3,
+        round: 1,
+        message: '준비... 라운드 1!',
+      };
+    }
+
+    case 'TICK_COUNTDOWN': {
+      return {
+        ...state,
+        countdown: action.countdown,
+        message: `${action.countdown}!`,
+      };
+    }
+
+    case 'START_RPS': {
+      return {
+        ...state,
+        phase: 'RPS_INPUT',
+        timerRemainingRatio: 1.0,
+        p1: { ...state.p1, rpsChoice: null, role: null },
+        p2: { ...state.p2, rpsChoice: null, role: null },
+        message: '안 내면 진 거 가위 바위...',
+      };
+    }
+
+    case 'SET_RPS_INPUT': {
+      if (state.phase !== 'RPS_INPUT') return state;
+      const key = action.playerId;
+      return {
+        ...state,
+        [key]: {
+          ...state[key],
+          rpsChoice: action.choice,
+        },
+      };
+    }
+
+    case 'RESOLVE_RPS': {
+      if (state.phase !== 'RPS_INPUT') return state;
+
+      // 미입력 시 강제 기본값 적용
+      const p1Choice: RPSChoice = state.p1.rpsChoice ?? 'ROCK';
+      const p2Choice: RPSChoice = state.p2.rpsChoice ?? 'SCISSORS';
+
+      const { p1Role, p2Role } = evaluateRPS(p1Choice, p2Choice);
+
+      if (p1Role === 'TIE') {
+        return {
+          ...state,
+          p1: { ...state.p1, rpsChoice: p1Choice, role: 'TIE' },
+          p2: { ...state.p2, rpsChoice: p2Choice, role: 'TIE' },
+          lastOutcome: 'TIE',
+          message: '비겼다! 다시 한번!',
+        };
+      }
+
+      const attackerName = p1Role === 'ATTACKER' ? state.p1.name : state.p2.name;
+
+      return {
+        ...state,
+        phase: 'CHAM_INPUT',
+        timerRemainingRatio: 1.0,
+        p1: { ...state.p1, rpsChoice: p1Choice, role: p1Role, chamDirection: null },
+        p2: { ...state.p2, rpsChoice: p2Choice, role: p2Role, chamDirection: null },
+        lastOutcome: null,
+        message: `${attackerName} 공격! 참! 참! 참!`,
+      };
+    }
+
+    case 'RETRY_RPS_TIE': {
+      return {
+        ...state,
+        phase: 'RPS_INPUT',
+        timerRemainingRatio: 1.0,
+        p1: { ...state.p1, rpsChoice: null, role: null },
+        p2: { ...state.p2, rpsChoice: null, role: null },
+        message: '가위... 바위...',
+      };
+    }
+
+    case 'SET_CHAM_INPUT': {
+      if (state.phase !== 'CHAM_INPUT') return state;
+      const key = action.playerId;
+      return {
+        ...state,
+        [key]: {
+          ...state[key],
+          chamDirection: action.direction,
+        },
+      };
+    }
+
+    case 'RESOLVE_CHAM': {
+      if (state.phase !== 'CHAM_INPUT') return state;
+
+      const p1Dir = state.p1.chamDirection ?? 'LEFT';
+      const p2Dir = state.p2.chamDirection ?? 'RIGHT';
+
+      const attackerId = state.p1.role === 'ATTACKER' ? 'p1' : 'p2';
+      const defenderId = attackerId === 'p1' ? 'p2' : 'p1';
+
+      const attackerDir = attackerId === 'p1' ? p1Dir : p2Dir;
+      const defenderDir = defenderId === 'p1' ? p1Dir : p2Dir;
+
+      const { isHit } = evaluateCham(attackerDir, defenderDir);
+
+      let nextP1 = { ...state.p1, chamDirection: p1Dir };
+      let nextP2 = { ...state.p2, chamDirection: p2Dir };
+      let hitTarget: 'p1' | 'p2' | null = null;
+
+      if (isHit) {
+        hitTarget = defenderId;
+        if (defenderId === 'p1') {
+          nextP1.damage = incrementDamage(nextP1.damage);
+        } else {
+          nextP2.damage = incrementDamage(nextP2.damage);
+        }
+      }
+
+      return {
+        ...state,
+        phase: 'RESOLVE',
+        p1: nextP1,
+        p2: nextP2,
+        lastOutcome: isHit ? 'HIT' : 'DODGE',
+        hitTarget,
+        message: isHit ? '찰싹! 명중 (POW!)' : '휘익~ 빗맞힘 (MISS!)',
+      };
+    }
+
+    case 'CHECK_ROUND_RESULT': {
+      if (state.p1.damage >= 5) {
+        return {
+          ...state,
+          phase: 'GAME_OVER',
+          winner: 'p2',
+          message: `${state.p2.name} 최종 승리!`,
+        };
+      }
+      if (state.p2.damage >= 5) {
+        return {
+          ...state,
+          phase: 'GAME_OVER',
+          winner: 'p1',
+          message: `${state.p1.name} 최종 승리!`,
+        };
+      }
+
+      return {
+        ...state,
+        phase: 'READY',
+        round: state.round + 1,
+        countdown: 3,
+        lastOutcome: null,
+        hitTarget: null,
+        message: `다음 라운드 ${state.round + 1} 준비!`,
+      };
+    }
+
+    case 'UPDATE_TIMER': {
+      return {
+        ...state,
+        timerRemainingRatio: Math.max(0, Math.min(1, action.ratio)),
+      };
+    }
+
+    case 'RESET_TO_TITLE': {
+      return createInitialState(state.mode);
+    }
+
+    default:
+      return state;
+  }
+}
