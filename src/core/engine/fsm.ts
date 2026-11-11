@@ -223,7 +223,7 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
     }
 
     case 'START_CHAM_PHASE': {
-      if (state.phase !== 'RPS_RESULT') return state;
+      if (state.phase !== 'RPS_RESULT' && state.phase !== 'ROLE_SWAP') return state;
       const attackerName = state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name;
       return {
         ...state,

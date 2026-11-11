@@ -32,12 +32,16 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
 
   const hasCustom = assetRegistry.hasCustomImage(id, damage);
   const customFaceUrl = assetRegistry.getCustomImageUrl(id, damage);
-  const displayImageUrl = rpsSprite || (hasCustom ? customFaceUrl : null);
 
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
   const isChamOrResolve = phase === 'CHAM_INPUT' || phase === 'RESOLVE';
+
+  // 1인칭 전용 회피 스프라이트 매핑 (좌측 회피 시 고화질 생성 에셋 우선 렌더링)
+  const isDodgeLeft = isResolve && lastOutcome === 'DODGE' && direction === 'LEFT';
+  const dodgeSprite = isDodgeLeft ? '/assets/images/first_person/opp_dodge_left.png' : null;
+  const displayImageUrl = dodgeSprite || rpsSprite || (hasCustom ? customFaceUrl : null);
 
   // 1. 상대방 회피 / 피격 리액션 애니메이션 클래스 결정
   let bodyAnimClass = '';

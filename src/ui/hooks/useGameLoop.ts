@@ -60,7 +60,13 @@ export function useGameLoop() {
         });
       },
       onChamStart: () => {
-        // 참참참 입력 시작
+        // 참참참 실시간 턴 개시 (RPS 직후 또는 ROLE_SWAP / RESOLVE 후 CHAM_INPUT 단계로 전이)
+        const curPhase = stateRef.current.phase;
+        if (curPhase === 'ROLE_SWAP' || curPhase === 'RESOLVE') {
+          dispatch({ type: 'START_NEXT_CHAM' });
+        } else {
+          dispatch({ type: 'START_CHAM_PHASE' });
+        }
       },
       onChamResult: (res) => {
         dispatch({
@@ -177,6 +183,12 @@ export function useGameLoop() {
 
       const timer = setTimeout(() => {
         dispatch({ type: 'CHECK_ROUND_RESULT' });
+        if (state.mode === 'ONLINE_MATCH' && state.online?.myRoleInRoom === 'p1') {
+          // 공격 성공(HIT)이고 게임 오버가 아닐 때 다음 참참참 시작 신호 브로드캐스트
+          if (state.lastOutcome === 'HIT' && state.p1.damage < 5 && state.p2.damage < 5) {
+            roomSessionService.startChamPhase();
+          }
+        }
       }, GAME_CONFIG.RESOLVE_DISPLAY_MS);
 
       return () => clearTimeout(timer);

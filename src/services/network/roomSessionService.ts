@@ -67,7 +67,12 @@ class RoomSessionService {
       await supabase.removeChannel(this.channel);
     }
 
-    this.channel = supabase.channel(`cham_room_${roomId}`);
+    // FEAT-NET: broadcast.self = true 활성화로 브로드캐스터(P1) 자신도 동일한 이벤트 버스로 상태 동기화 보장
+    this.channel = supabase.channel(`cham_room_${roomId}`, {
+      config: {
+        broadcast: { self: true },
+      },
+    });
 
     // 브로드캐스트 이벤트 리스너 등록
     this.channel
@@ -89,6 +94,7 @@ class RoomSessionService {
         this.callbacks?.onRpsResult(payload);
       })
       .on('broadcast', { event: 'CHAM_START' }, () => {
+        this.resetTurnInputs();
         this.callbacks?.onChamStart();
       })
       .on('broadcast', { event: 'CHAM_INPUT' }, ({ payload }) => {
@@ -144,12 +150,14 @@ class RoomSessionService {
 
   public startRpsPhase(): void {
     if (this.myRole === 'p1') {
+      this.resetTurnInputs();
       this.broadcast('RPS_START', {});
     }
   }
 
   public startChamPhase(): void {
     if (this.myRole === 'p1') {
+      this.resetTurnInputs();
       this.broadcast('CHAM_START', {});
     }
   }

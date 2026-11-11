@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
 
 interface PlayerSelfStageProps {
@@ -28,15 +28,21 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   isHit,
   rpsChoice,
 }) => {
+  const [backImgFailed, setBackImgFailed] = useState(false);
+
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
   const isChamOrResolve = phase === 'CHAM_INPUT' || phase === 'RESOLVE';
 
-  // 1. 내 도구 1인칭 3D 애니메이션 클래스 결정
+  // 1. 내 도구 1인칭 3D 애니메이션 이미지 및 클래스 결정
   const dirKey = direction ? direction.toLowerCase() : 'up';
+  // 1인칭 전용 뿅망치 스프라이트가 있으면 우선 적용
+  const fpLeftHammer = '/assets/images/first_person/self_hammer_left.png';
   const toolSrc = isAttacker
-    ? `/assets/images/tools/hammer_${dirKey}.png`
+    ? direction === 'LEFT'
+      ? fpLeftHammer
+      : `/assets/images/tools/hammer_${dirKey}.png`
     : isDefender
     ? `/assets/images/tools/potlid_${dirKey}.png`
     : null;
@@ -71,7 +77,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
       {/* 1. 1인칭 플레이어 도구 오버레이 레이어 (하단에서 전방으로 뻗어 나감) */}
       {isChamOrResolve && toolSrc && (
         <div
-          className={`absolute -top-16 sm:-top-24 z-30 transition-all duration-150 flex items-center justify-center w-36 h-36 sm:w-56 sm:h-56 ${
+          className={`absolute -top-20 sm:-top-28 z-30 transition-all duration-150 flex items-center justify-center w-40 h-40 sm:w-60 sm:h-60 ${
             isAttacker ? 'right-2 sm:right-10' : 'left-4 sm:left-12'
           } ${toolAnimClass}`}
         >
@@ -84,7 +90,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
       )}
 
       {/* 2. 내 캐릭터 뒷모습 본체 (등 & 뒤통수 아케이드 실루엣) */}
-      <div className="relative flex flex-col items-center justify-end w-44 h-28 sm:w-72 sm:h-44 overflow-visible">
+      <div className="relative flex flex-col items-center justify-end w-48 h-32 sm:w-80 sm:h-52 overflow-visible">
         {/* '나 (YOU)' 배지 및 공격/수비 태그 */}
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 whitespace-nowrap">
           <span className="text-[10px] sm:text-xs font-black bg-sky-500 text-white px-2.5 py-0.5 rounded-full border border-sky-300 shadow-md">
@@ -103,67 +109,69 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
           )}
         </div>
 
-        {/* 90년대 아케이드 감성의 정교한 뒷모습(Back View) 벡터 실루엣 */}
-        <svg
-          viewBox="0 0 200 130"
-          className="w-full h-full drop-shadow-[0_-8px_16px_rgba(0,0,0,0.6)]"
-        >
-          <defs>
-            <linearGradient id="selfBodyGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#1e293b" />
-              <stop offset="100%" stopColor="#090d16" />
-            </linearGradient>
-            <linearGradient id="selfHairGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#334155" />
-              <stop offset="100%" stopColor="#0f172a" />
-            </linearGradient>
-            <linearGradient id="selfCollarGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#0284c7" />
-              <stop offset="100%" stopColor="#0369a1" />
-            </linearGradient>
-          </defs>
+        {/* 1인칭 고품질 생성 에셋 우선 렌더링, 부재 시 정교한 벡터 실루엣 폴백 */}
+        {!backImgFailed ? (
+          <img
+            src="/assets/images/first_person/self_back_idle.png"
+            alt={`${name} back view`}
+            onError={() => setBackImgFailed(true)}
+            className="w-full h-full object-contain drop-shadow-[0_-8px_20px_rgba(0,0,0,0.7)]"
+          />
+        ) : (
+          <svg
+            viewBox="0 0 200 130"
+            className="w-full h-full drop-shadow-[0_-8px_16px_rgba(0,0,0,0.6)]"
+          >
+            <defs>
+              <linearGradient id="selfBodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1e293b" />
+                <stop offset="100%" stopColor="#090d16" />
+              </linearGradient>
+              <linearGradient id="selfHairGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#334155" />
+                <stop offset="100%" stopColor="#0f172a" />
+              </linearGradient>
+              <linearGradient id="selfCollarGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#0284c7" />
+                <stop offset="100%" stopColor="#0369a1" />
+              </linearGradient>
+            </defs>
 
-          {/* 넓은 등 및 어깨 실루엣 */}
-          <path
-            d="M 10 130 C 15 80, 50 65, 80 65 L 120 65 C 150 65, 185 80, 190 130 Z"
-            fill="url(#selfBodyGrad)"
-            stroke="#475569"
-            strokeWidth="3"
-          />
-
-          {/* 셔츠 깃 / 칼라 */}
-          <path
-            d="M 75 65 Q 100 80 125 65 Q 100 68 75 65 Z"
-            fill="url(#selfCollarGrad)"
-            stroke="#38bdf8"
-            strokeWidth="2"
-          />
-
-          {/* 뒤통수 머리 및 헤어 스타일 실루엣 */}
-          <ellipse
-            cx="100"
-            cy="40"
-            rx="34"
-            ry="36"
-            fill="url(#selfHairGrad)"
-            stroke="#64748b"
-            strokeWidth="3"
-          />
-          {/* 뒤통수 헤어 텍스처 (아케이드 뾰족 머리 볼륨) */}
-          <path
-            d="M 68 40 Q 64 25 78 16 Q 100 8 122 16 Q 136 25 132 40 C 130 18, 70 18, 68 40 Z"
-            fill="#1e293b"
-          />
-          {/* 목덜미 */}
-          <rect
-            x="88"
-            y="54"
-            width="24"
-            height="14"
-            rx="4"
-            fill="#0f172a"
-          />
-        </svg>
+            <path
+              d="M 10 130 C 15 80, 50 65, 80 65 L 120 65 C 150 65, 185 80, 190 130 Z"
+              fill="url(#selfBodyGrad)"
+              stroke="#475569"
+              strokeWidth="3"
+            />
+            <path
+              d="M 75 65 Q 100 80 125 65 Q 100 68 75 65 Z"
+              fill="url(#selfCollarGrad)"
+              stroke="#38bdf8"
+              strokeWidth="2"
+            />
+            <ellipse
+              cx="100"
+              cy="40"
+              rx="34"
+              ry="36"
+              fill="url(#selfHairGrad)"
+              stroke="#64748b"
+              strokeWidth="3"
+            />
+            <path
+              d="M 68 40 Q 64 25 78 16 Q 100 8 122 16 Q 136 25 132 40 C 130 18, 70 18, 68 40 Z"
+              fill="#1e293b"
+            />
+            <rect
+              x="88"
+              y="54"
+              width="24"
+              height="14"
+              rx="4"
+              fill="#0f172a"
+            />
+          </svg>
+        )}
 
         {/* 내 RPS 선택 표시 */}
         {phase === 'RPS_RESULT' && rpsChoice && (
