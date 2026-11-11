@@ -72,6 +72,15 @@ const requiredSounds = [
   'loose.mp3',
 ];
 
+const requiredTools = [
+  'hammer_left.png',
+  'hammer_up.png',
+  'hammer_right.png',
+  'potlid_left.png',
+  'potlid_up.png',
+  'potlid_right.png',
+];
+
 for (const img of requiredImages) {
   const p = path.join(process.cwd(), 'public/assets/images', img);
   assert(fs.existsSync(p), `Missing required image: ${img}`);
@@ -84,11 +93,15 @@ for (const rps of requiredRps) {
   const p = path.join(process.cwd(), 'public/assets/images/rps', rps);
   assert(fs.existsSync(p), `Missing RPS sprite: ${rps}`);
 }
+for (const tool of requiredTools) {
+  const p = path.join(process.cwd(), 'public/assets/tools', tool);
+  assert(fs.existsSync(p), `Missing tool sprite: ${tool}`);
+}
 for (const snd of requiredSounds) {
   const p = path.join(process.cwd(), 'public/assets/sounds', snd);
   assert(fs.existsSync(p), `Missing sound file: ${snd}`);
 }
-console.log('✅ 총 41개 필수 이미지/오디오 에셋 물리 파일 100% 실존 확인 (you_win/loose 포함)');
+console.log('✅ 총 47개 필수 이미지/도구(망치/냄비)/오디오 에셋 물리 파일 100% 실존 확인');
 
 // -------------------------------------------------------------
 // 2. 전체 매치 시뮬레이션 하네스 (Full Game Journey Simulation)
@@ -111,15 +124,18 @@ assert.equal(state.phase, 'CHAM_INPUT');
 assert.equal(state.p1.role, 'ATTACKER');
 assert.equal(state.p2.role, 'DEFENDER');
 
-// 3. 이후 라운드는 가위바위보 없이 2초 참참참 턴이 연속 진행됨
+// 3. 이후 라운드는 가위바위보 없이 2초 참참참 턴이 연속 진행됨 (좌 / 상 / 우 3방향 판정)
+const testDirs: ('LEFT' | 'UP' | 'RIGHT')[] = ['LEFT', 'UP', 'RIGHT', 'LEFT', 'UP'];
+
 for (let round = 1; round <= 5; round++) {
   assert.equal(state.phase, 'CHAM_INPUT');
   assert.equal(state.round, round);
   assert.equal(state.p1.role, 'ATTACKER'); // 공격 성공자는 계속 공격 유지
 
-  // 참참참: 1P Left, 2P Left -> HIT!
-  state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
-  state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'LEFT' });
+  const dir = testDirs[round - 1];
+  // 참참참 3방향 입력: 같은 방향이면 HIT! (가드 실패)
+  state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: dir });
+  state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: dir });
   state = gameReducer(state, { type: 'RESOLVE_CHAM' });
   assert.equal(state.phase, 'RESOLVE');
   assert.equal(state.lastOutcome, 'HIT');

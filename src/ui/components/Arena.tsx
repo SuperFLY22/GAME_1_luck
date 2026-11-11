@@ -32,9 +32,10 @@ export const Arena: React.FC<ArenaProps> = ({
   const isHit = state.lastOutcome === 'HIT';
   const isScreenShake = isHit && state.phase === 'RESOLVE';
 
-  // 참참참 방향 기호 표시 헬퍼
+  // 참참참 방향 기호 표시 헬퍼 (좌 / 상 / 우 3방향)
   const getChamEmoji = (dir: ChamDirection) => {
     if (dir === 'LEFT') return '👈 왼쪽';
+    if (dir === 'UP') return '👆 위쪽';
     if (dir === 'RIGHT') return '오른쪽 👉';
     return '❓ 대기 중';
   };
@@ -48,24 +49,6 @@ export const Arena: React.FC<ArenaProps> = ({
     state.phase === 'RPS_INPUT' && state.p2.rpsChoice
       ? `/assets/images/rps/rps_2p_${state.p2.rpsChoice.toLowerCase()}.png`
       : null;
-
-  let p1ActionSprite: string | null = null;
-  if ((state.phase === 'CHAM_INPUT' || state.phase === 'RESOLVE') && state.p1.chamDirection) {
-    const dir = state.p1.chamDirection.toLowerCase();
-    p1ActionSprite =
-      state.p1.role === 'ATTACKER'
-        ? `/assets/images/actions/attack_${dir}.png`
-        : `/assets/images/actions/defend_${dir}.png`;
-  }
-
-  let p2ActionSprite: string | null = null;
-  if ((state.phase === 'CHAM_INPUT' || state.phase === 'RESOLVE') && state.p2.chamDirection) {
-    const dir = state.p2.chamDirection.toLowerCase();
-    p2ActionSprite =
-      state.p2.role === 'ATTACKER'
-        ? `/assets/images/actions/attack_${dir}_2p.png`
-        : `/assets/images/actions/defend_${dir}_2p.png`;
-  }
 
   return (
     <div
@@ -134,7 +117,7 @@ export const Arena: React.FC<ArenaProps> = ({
             direction={state.p1.chamDirection}
             isHit={state.hitTarget === 'p1'}
             role={state.p1.role}
-            actionSprite={p1ActionSprite}
+            phase={state.phase}
             rpsSprite={p1RpsSprite}
           />
           {/* 선택 말풍선 */}
@@ -207,7 +190,7 @@ export const Arena: React.FC<ArenaProps> = ({
             direction={state.p2.chamDirection}
             isHit={state.hitTarget === 'p2'}
             role={state.p2.role}
-            actionSprite={p2ActionSprite}
+            phase={state.phase}
             rpsSprite={p2RpsSprite}
           />
           {/* 선택 말풍선 */}

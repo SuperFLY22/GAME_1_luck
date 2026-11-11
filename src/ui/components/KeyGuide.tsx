@@ -28,15 +28,9 @@ export const KeyGuide: React.FC<KeyGuideProps> = ({ mode, phase }) => {
             <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
               {isRps ? 'A : 가위 ✌️' : 'A : 왼쪽 👈'}
             </span>
-            {isRps ? (
-              <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-                W : 바위 ✊
-              </span>
-            ) : (
-              <span className="px-2 py-1 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-500 line-through">
-                W : 불가
-              </span>
-            )}
+            <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
+              {isRps ? 'W : 바위 ✊' : 'W : 위쪽 👆'}
+            </span>
             <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
               {isRps ? 'D : 보 🖐️' : 'D : 오른쪽 👉'}
             </span>
@@ -51,15 +45,9 @@ export const KeyGuide: React.FC<KeyGuideProps> = ({ mode, phase }) => {
               <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
                 {isRps ? '← : 가위 ✌️' : '← : 왼쪽 👈'}
               </span>
-              {isRps ? (
-                <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-                  ↑ : 바위 ✊
-                </span>
-              ) : (
-                <span className="px-2 py-1 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-500 line-through">
-                  ↑ : 불가
-                </span>
-              )}
+              <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
+                {isRps ? '↑ : 바위 ✊' : '↑ : 위쪽 👆'}
+              </span>
               <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
                 {isRps ? '→ : 보 🖐️' : '→ : 오른쪽 👉'}
               </span>

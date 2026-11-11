@@ -22,13 +22,15 @@ assert.deepEqual(evaluateRPS('SCISSORS', 'SCISSORS'), { p1Role: 'TIE', p2Role: '
 assert.deepEqual(evaluateRPS('PAPER', 'PAPER'), { p1Role: 'TIE', p2Role: 'TIE' });
 console.log('✅ RPS 9대 경우의 수 및 무승부 검증 통과');
 
-console.log('--- 2. 참참참 좌표계 및 타격/회피 검증 ---');
-// 절대 좌표계: 같은 방향이면 HIT, 다르면 DODGE
+console.log('--- 2. 참참참 좌/상/우 3방향 좌표계 및 타격/회피 검증 ---');
+// 절대 좌표계: 같은 방향이면 HIT(가드 실패), 다르면 DODGE(가드 성공)
 assert.equal(evaluateCham('LEFT', 'LEFT').isHit, true);
+assert.equal(evaluateCham('UP', 'UP').isHit, true);
 assert.equal(evaluateCham('RIGHT', 'RIGHT').isHit, true);
 assert.equal(evaluateCham('LEFT', 'RIGHT').isHit, false);
-assert.equal(evaluateCham('RIGHT', 'LEFT').isHit, false);
-console.log('✅ 참참참 화면 절대 좌표 판정 통과');
+assert.equal(evaluateCham('UP', 'LEFT').isHit, false);
+assert.equal(evaluateCham('RIGHT', 'UP').isHit, false);
+console.log('✅ 참참참 좌/상/우 3방향 타격 및 가드 판정 통과');
 
 console.log('--- 3. 데미지 누적 및 상한선 (5) 검증 ---');
 assert.equal(incrementDamage(0), 1);

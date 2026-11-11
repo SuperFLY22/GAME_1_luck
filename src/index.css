@@ -49,3 +49,56 @@
   font-family: 'Black Han Sans', 'Impact', -apple-system, sans-serif;
   letter-spacing: 0.05em;
 }
+
+/* 뿅망치 0.08초 강렬한 스윙 애니메이션 (좌 -30deg / 상 0deg 찍기 / 우 +30deg) */
+@keyframes hammer-swing-left {
+  0% { transform: rotate(-55deg) translate(-10px, -25px) scale(1.05); }
+  60% { transform: rotate(-25deg) translate(-25px, 20px) scale(1.25); }
+  100% { transform: rotate(-30deg) translate(-20px, 12px) scale(1.15); }
+}
+
+@keyframes hammer-swing-up {
+  0% { transform: rotate(0deg) translate(0px, -35px) scale(1.05); }
+  60% { transform: rotate(0deg) translate(0px, 25px) scale(1.25); }
+  100% { transform: rotate(0deg) translate(0px, 15px) scale(1.15); }
+}
+
+@keyframes hammer-swing-right {
+  0% { transform: rotate(55deg) translate(10px, -25px) scale(1.05); }
+  60% { transform: rotate(25deg) translate(25px, 20px) scale(1.25); }
+  100% { transform: rotate(30deg) translate(20px, 12px) scale(1.15); }
+}
+
+.animate-hammer-left {
+  animation: hammer-swing-left 0.08s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+.animate-hammer-up {
+  animation: hammer-swing-up 0.08s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+.animate-hammer-right {
+  animation: hammer-swing-right 0.08s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+/* 냄비뚜껑 가드 실패: 튕겨 날아가고(Pop-off/Rotate 탈락) */
+@keyframes potlid-pop-off {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  25% { transform: translate(-25px, -70px) rotate(-110deg) scale(1.15); opacity: 1; }
+  60% { transform: translate(60px, -150px) rotate(320deg) scale(0.9); opacity: 0.85; }
+  100% { transform: translate(140px, 120px) rotate(720deg) scale(0.3); opacity: 0; }
+}
+
+.animate-potlid-pop-off {
+  animation: potlid-pop-off 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* 냄비뚜껑 가드 성공: 망치를 튕겨내며 굳건한 가드 */
+@keyframes guard-block {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.2) translateY(-8px); filter: brightness(1.4); }
+  70% { transform: scale(1.05) translateY(-3px); }
+  100% { transform: scale(1); }
+}
+
+.animate-guard-block {
+  animation: guard-block 0.25s ease-out forwards;
+}

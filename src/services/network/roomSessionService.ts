@@ -6,7 +6,7 @@ import type {
   RPSChoice,
   Role,
 } from '../../models/types';
-import { evaluateCham, evaluateRPS, incrementDamage } from '../../core/engine/rules';
+import { evaluateCham, evaluateRPS, incrementDamage, getCpuChamDirection } from '../../core/engine/rules';
 
 export interface RoomCallbacks {
   onStartReady: () => void;
@@ -212,8 +212,8 @@ class RoomSessionService {
 
   public resolveChamOnTimeout(): void {
     if (this.myRole !== 'p1') return;
-    if (this.p1Cham === null) this.p1Cham = Math.random() > 0.5 ? 'LEFT' : 'RIGHT';
-    if (this.p2Cham === null) this.p2Cham = Math.random() > 0.5 ? 'LEFT' : 'RIGHT';
+    if (this.p1Cham === null) this.p1Cham = getCpuChamDirection();
+    if (this.p2Cham === null) this.p2Cham = getCpuChamDirection();
     this.checkChamResolution();
   }
 

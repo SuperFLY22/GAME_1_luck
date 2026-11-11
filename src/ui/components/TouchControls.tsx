@@ -92,28 +92,39 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             )}
 
             {isCham && (
-              <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="grid grid-cols-3 gap-2 w-full">
                 <button
                   type="button"
                   onClick={() => submitHandler('cham', 'LEFT')}
-                  className={`py-3.5 px-3 font-black text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                  className={`py-3 px-2 font-black text-sm sm:text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                     currentCham === 'LEFT'
-                      ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105'
+                      ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105 shadow-md'
                       : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
                   }`}
                 >
-                  👈 왼쪽
+                  👈 좌
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitHandler('cham', 'UP')}
+                  className={`py-3 px-2 font-black text-sm sm:text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    currentCham === 'UP'
+                      ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105 shadow-md'
+                      : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
+                  }`}
+                >
+                  👆 상
                 </button>
                 <button
                   type="button"
                   onClick={() => submitHandler('cham', 'RIGHT')}
-                  className={`py-3.5 px-3 font-black text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                  className={`py-3 px-2 font-black text-sm sm:text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                     currentCham === 'RIGHT'
-                      ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105'
+                      ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105 shadow-md'
                       : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
                   }`}
                 >
-                  오른쪽 👉
+                  우 👉
                 </button>
               </div>
             )}
@@ -162,28 +173,39 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 </div>
               )}
               {isCham && (
-                <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="grid grid-cols-3 gap-1.5 w-full">
                   <button
                     type="button"
                     onClick={() => onP1Input('cham', 'LEFT')}
-                    className={`py-3.5 px-3 font-black text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    className={`py-3 px-1.5 font-black text-xs sm:text-sm rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                       p1ChosenCham === 'LEFT'
-                        ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105'
+                        ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105 shadow-md'
                         : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
                     }`}
                   >
-                    👈 왼쪽
+                    👈 좌
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onP1Input('cham', 'UP')}
+                    className={`py-3 px-1.5 font-black text-xs sm:text-sm rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      p1ChosenCham === 'UP'
+                        ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105 shadow-md'
+                        : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
+                    }`}
+                  >
+                    👆 상
                   </button>
                   <button
                     type="button"
                     onClick={() => onP1Input('cham', 'RIGHT')}
-                    className={`py-3.5 px-3 font-black text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    className={`py-3 px-1.5 font-black text-xs sm:text-sm rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                       p1ChosenCham === 'RIGHT'
-                        ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105'
+                        ? 'bg-sky-400 border-sky-600 text-slate-950 scale-105 shadow-md'
                         : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
                     }`}
                   >
-                    오른쪽 👉
+                    우 👉
                   </button>
                 </div>
               )}
@@ -230,28 +252,39 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                 </div>
               )}
               {isCham && (
-                <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="grid grid-cols-3 gap-1.5 w-full">
                   <button
                     type="button"
                     onClick={() => onP2Input('cham', 'LEFT')}
-                    className={`py-3.5 px-3 font-black text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    className={`py-3 px-1.5 font-black text-xs sm:text-sm rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                       p2ChosenCham === 'LEFT'
-                        ? 'bg-rose-400 border-rose-600 text-slate-950 scale-105'
+                        ? 'bg-rose-400 border-rose-600 text-slate-950 scale-105 shadow-md'
                         : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
                     }`}
                   >
-                    👈 왼쪽
+                    👈 좌
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onP2Input('cham', 'UP')}
+                    className={`py-3 px-1.5 font-black text-xs sm:text-sm rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                      p2ChosenCham === 'UP'
+                        ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105 shadow-md'
+                        : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
+                    }`}
+                  >
+                    👆 상
                   </button>
                   <button
                     type="button"
                     onClick={() => onP2Input('cham', 'RIGHT')}
-                    className={`py-3.5 px-3 font-black text-base rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+                    className={`py-3 px-1.5 font-black text-xs sm:text-sm rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                       p2ChosenCham === 'RIGHT'
-                        ? 'bg-rose-400 border-rose-600 text-slate-950 scale-105'
+                        ? 'bg-rose-400 border-rose-600 text-slate-950 scale-105 shadow-md'
                         : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
                     }`}
                   >
-                    오른쪽 👉
+                    우 👉
                   </button>
                 </div>
               )}

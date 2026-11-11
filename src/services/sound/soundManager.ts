@@ -123,9 +123,32 @@ class SoundManager {
   }
 
   /**
-   * 2. 왜곡된 저주파 펀치 폭발음 (hit1/2/3 무작위 변형 지원)
+   * 2. 왜곡된 저주파 펀치 폭발음 + 뿅망치 '삑-' 사운드 동시 재생 (가드 실패 피격)
    */
   public playHit(): void {
+    if (this.isMuted) return;
+
+    // 뿅망치 특유의 익살스러운 '삑-' 고주파 삑삑이 사운드 합성
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+      const squeakOsc = ctx.createOscillator();
+      const squeakGain = ctx.createGain();
+
+      squeakOsc.type = 'sine';
+      squeakOsc.frequency.setValueAtTime(1400, now);
+      squeakOsc.frequency.exponentialRampToValueAtTime(2600, now + 0.04);
+      squeakOsc.frequency.exponentialRampToValueAtTime(950, now + 0.09);
+
+      squeakGain.gain.setValueAtTime(0.35, now);
+      squeakGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+      squeakOsc.connect(squeakGain);
+      squeakGain.connect(ctx.destination);
+      squeakOsc.start(now);
+      squeakOsc.stop(now + 0.1);
+    } catch {}
+
     const hitIndex = Math.floor(Math.random() * 3) + 1;
     const hitUrl = `/assets/sounds/hit${hitIndex}.mp3`;
 
@@ -182,9 +205,29 @@ class SoundManager {
   }
 
   /**
-   * 3. 경쾌한 바람 가르는 쉭 소리 (MISS / 회피)
+   * 3. 냄비뚜껑 가드 성공 '챙-' 금속 타격음 + 바람 가르는 쉭 소리 (가드 성공)
    */
   public playDodge(): void {
+    if (this.isMuted) return;
+
+    // 냄비뚜껑 가드 성공 '챙-' 금속 타격음 동시 합성
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+      [880, 1760, 3520].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = idx === 0 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.3 / (idx + 1), now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      });
+    } catch {}
+
     this.tryPlayExternalOrSynthesize(ASSET_PATHS.SOUNDS.DODGE, () => {
       const ctx = this.getContext();
       const now = ctx.currentTime;

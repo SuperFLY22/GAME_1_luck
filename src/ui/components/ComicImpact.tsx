@@ -51,9 +51,16 @@ export const ComicImpact: React.FC<ComicImpactProps> = ({ outcome, target }) => 
       )}
 
       {isDodge && (
-        <div className="animate-bounce">
-          <div className="bg-cyan-400 text-slate-950 font-black text-2xl sm:text-3xl px-6 py-2 rounded-2xl border-4 border-slate-900 shadow-[0_8px_0_#0f172a] rotate-6">
-            MISS! 💨
+        <div className="flex flex-col items-center justify-center animate-bounce">
+          <div className="relative flex items-center justify-center">
+            {/* 황금빛 금속 충돌 스파크 이펙트 */}
+            <div className="absolute -inset-6 bg-amber-400/30 rounded-full blur-xl animate-ping" />
+            <div className="relative bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black text-2xl sm:text-3xl px-6 py-2.5 rounded-2xl border-4 border-slate-900 shadow-[0_8px_0_#0f172a] rotate-3 flex items-center gap-2">
+              <span>🛡️ GUARD!</span>
+              <span className="text-xs bg-slate-950 text-amber-300 px-2 py-0.5 rounded-lg border border-amber-500 font-mono tracking-widest">
+                챙-!
+              </span>
+            </div>
           </div>
         </div>
       )}

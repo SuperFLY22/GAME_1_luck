@@ -16,7 +16,7 @@ export type GamePhase =
 
 export type RPSChoice = 'ROCK' | 'SCISSORS' | 'PAPER' | null;
 
-export type ChamDirection = 'LEFT' | 'RIGHT' | null;
+export type ChamDirection = 'LEFT' | 'UP' | 'RIGHT' | null;
 
 export type Role = 'ATTACKER' | 'DEFENDER' | 'TIE' | null;
 

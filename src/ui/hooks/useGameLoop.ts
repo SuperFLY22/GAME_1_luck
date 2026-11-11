@@ -282,6 +282,7 @@ export function useGameLoop() {
           else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'LEFT');
         } else if (p1Up.includes(e.code) || p1Up.includes(e.key)) {
           if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'ROCK');
+          else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'UP');
         } else if (p1Right.includes(e.code) || p1Right.includes(e.key)) {
           if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'PAPER');
           else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'RIGHT');
@@ -300,6 +301,7 @@ export function useGameLoop() {
           else if (cur.phase === 'CHAM_INPUT') handleP2Input('cham', 'LEFT');
         } else if (p2Up.includes(e.code) || p2Up.includes(e.key)) {
           if (cur.phase === 'RPS_INPUT') handleP2Input('rps', 'ROCK');
+          else if (cur.phase === 'CHAM_INPUT') handleP2Input('cham', 'UP');
         } else if (p2Right.includes(e.code) || p2Right.includes(e.key)) {
           if (cur.phase === 'RPS_INPUT') handleP2Input('rps', 'PAPER');
           else if (cur.phase === 'CHAM_INPUT') handleP2Input('cham', 'RIGHT');

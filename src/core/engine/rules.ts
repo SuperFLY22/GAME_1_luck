@@ -24,20 +24,16 @@ export function evaluateRPS(
 }
 
 /**
- * 참참참 판정 (관전자 화면 절대 좌표계 기준)
- * 공격자의 지목 방향과 수비자의 회피 방향이 일치하면 피격(HIT)
+ * CPU 의사 결정 헬퍼
  */
-export function evaluateCham(
-  attackerDir: ChamDirection,
-  defenderDir: ChamDirection
-): { isHit: boolean } {
-  // 둘 중 하나라도 방향을 선택하지 않았을 경우 기본값 랜덤 처리되거나 피격 판정
-  const finalAttacker = attackerDir ?? (Math.random() > 0.5 ? 'LEFT' : 'RIGHT');
-  const finalDefender = defenderDir ?? (Math.random() > 0.5 ? 'LEFT' : 'RIGHT');
+export function getCpuRpsChoice(): RPSChoice {
+  const choices: RPSChoice[] = ['ROCK', 'SCISSORS', 'PAPER'];
+  return choices[Math.floor(Math.random() * choices.length)];
+}
 
-  return {
-    isHit: finalAttacker === finalDefender,
-  };
+export function getCpuChamDirection(): ChamDirection {
+  const dirs: ('LEFT' | 'UP' | 'RIGHT')[] = ['LEFT', 'UP', 'RIGHT'];
+  return dirs[Math.floor(Math.random() * dirs.length)];
 }
 
 /**
@@ -49,13 +45,17 @@ export function incrementDamage(current: DamageLevel): DamageLevel {
 }
 
 /**
- * CPU 의사 결정 헬퍼
+ * 참참참 판정 (좌 / 상 / 우 3방향 판정)
+ * 공격자의 지목 방향과 수비자의 가드/회피 방향이 일치하면 피격(HIT, 가드 실패)
  */
-export function getCpuRpsChoice(): RPSChoice {
-  const choices: RPSChoice[] = ['ROCK', 'SCISSORS', 'PAPER'];
-  return choices[Math.floor(Math.random() * choices.length)];
-}
+export function evaluateCham(
+  attackerDir: ChamDirection,
+  defenderDir: ChamDirection
+): { isHit: boolean } {
+  const finalAttacker = attackerDir ?? getCpuChamDirection();
+  const finalDefender = defenderDir ?? getCpuChamDirection();
 
-export function getCpuChamDirection(): ChamDirection {
-  return Math.random() > 0.5 ? 'LEFT' : 'RIGHT';
+  return {
+    isHit: finalAttacker === finalDefender,
+  };
 }
