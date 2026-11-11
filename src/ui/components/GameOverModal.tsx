@@ -89,19 +89,29 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         )}
 
         {/* 결과 스탯 요약 박스 */}
-        <div className="w-full bg-slate-800/80 rounded-2xl p-4 my-5 border-2 border-slate-700 flex justify-around items-center">
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-bold text-sky-400">{state.p1.name}</span>
-            <span className="text-2xl font-black text-white">피격 {state.p1.damage}회</span>
-            <span className="text-xs text-slate-400">{isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
+        <div className="w-full bg-slate-800/80 rounded-2xl p-4 my-5 border-2 border-slate-700">
+          {/* 총 대전 턴 수 */}
+          <div className="text-center mb-3 pb-2 border-b border-slate-700">
+            <span className="text-xs text-slate-400 font-bold">⚔️ 총 대전 턴 수</span>
+            <div className="text-2xl font-black text-white">{state.round} 턴</div>
           </div>
+          {/* 플레이어별 스탯 */}
+          <div className="flex justify-around items-start">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs font-bold text-sky-400">{state.p1.name}</span>
+              <span className="text-2xl font-black text-white">피격 {state.p1.damage}회</span>
+              <span className="text-xs text-emerald-400 font-bold">🛡️ 가드 {state.p1.guardCount ?? 0}회 성공</span>
+              <span className="text-xs text-slate-400">{isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
+            </div>
 
-          <div className="h-10 w-0.5 bg-slate-700" />
+            <div className="h-16 w-0.5 bg-slate-700" />
 
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-bold text-rose-400">{state.p2.name}</span>
-            <span className="text-2xl font-black text-white">피격 {state.p2.damage}회</span>
-            <span className="text-xs text-slate-400">{!isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs font-bold text-rose-400">{state.p2.name}</span>
+              <span className="text-2xl font-black text-white">피격 {state.p2.damage}회</span>
+              <span className="text-xs text-emerald-400 font-bold">🛡️ 가드 {state.p2.guardCount ?? 0}회 성공</span>
+              <span className="text-xs text-slate-400">{!isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
+            </div>
           </div>
         </div>
 

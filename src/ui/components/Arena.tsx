@@ -19,6 +19,7 @@ interface ArenaProps {
   onGoTitle: () => void;
   onP1Input: (type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => void;
   onP2Input: (type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => void;
+  myPlayerId?: 'p1' | 'p2'; // FEAT-02: 온라인/솔로 모드에서 "내가 누구인지" 전달
 }
 
 export const Arena: React.FC<ArenaProps> = ({
@@ -28,6 +29,7 @@ export const Arena: React.FC<ArenaProps> = ({
   onGoTitle,
   onP1Input,
   onP2Input,
+  myPlayerId,
 }) => {
   const isHit = state.lastOutcome === 'HIT';
   const isScreenShake = isHit && state.phase === 'RESOLVE';
@@ -108,8 +110,28 @@ export const Arena: React.FC<ArenaProps> = ({
       <main className="relative w-full max-w-4xl mx-auto my-auto flex items-center justify-between px-2 sm:px-8">
         <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />
 
+        {/* FEAT-01: 공수 전환 알림 배너 — 가드 성공 직후 CHAM_INPUT 진입 시 1.4초 표시 */}
+        {state.phase === 'CHAM_INPUT' && state.roleReversed && (
+          <div className="absolute top-20 inset-x-0 flex justify-center z-40 pointer-events-none animate-slideDown">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-black text-base sm:text-lg px-6 py-2.5 rounded-2xl border-4 border-white/20 shadow-[0_8px_30px_rgba(139,92,246,0.5)]">
+              🔄 공수 전환! 수비 성공!
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-lg font-mono">
+                {state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} 이제 공격!
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 1P 캐릭터 */}
-        <div className="flex-1 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center relative">
+          {/* FEAT-02: 내가 1P일 때 (솔로/로컬 2P 화면공유 아닐 때) "나" 배지 표시 */}
+          {myPlayerId === 'p1' && (
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-40">
+              <span className="text-[10px] font-black bg-sky-500 text-white px-2 py-0.5 rounded-full border border-sky-300 shadow-md">
+                👤 나 (1P)
+              </span>
+            </div>
+          )}
           <CharacterView
             playerId="p1"
             name={state.p1.name}
@@ -129,7 +151,7 @@ export const Arena: React.FC<ArenaProps> = ({
             )}
             {state.phase === 'CHAM_INPUT' && state.p1.chamDirection && (
               <span className="text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-2 py-0.5 rounded-full animate-pulse">
-                {getChamEmoji(state.p1.chamDirection)}
+                ✅ 선택 완료! {/* BUG-01: 방향 숨김 — RESOLVE 전까지 상대방에게 노출 방지 */}
               </span>
             )}
             {state.phase === 'RESOLVE' && (
@@ -164,7 +186,7 @@ export const Arena: React.FC<ArenaProps> = ({
               <span className="text-xl sm:text-2xl font-black text-amber-300 bg-rose-950/90 px-4 py-1.5 rounded-xl border-2 border-rose-500 animate-pulse shadow-md">
                 참! 참! 참!
               </span>
-              <TimerBar ratio={state.timerRemainingRatio} label="2초 카운트다운!" totalSeconds={2.0} isUrgent />
+              <TimerBar ratio={state.timerRemainingRatio} label="2초 카운트다운!" totalSeconds={2.0} isUrgent={state.timerRemainingRatio < 0.4} />
             </div>
           )}
 
@@ -182,7 +204,15 @@ export const Arena: React.FC<ArenaProps> = ({
         </div>
 
         {/* 2P 캐릭터 */}
-        <div className="flex-1 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center relative">
+          {/* FEAT-02: 내가 2P일 때 "나" 배지 표시 */}
+          {myPlayerId === 'p2' && (
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-40">
+              <span className="text-[10px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full border border-rose-300 shadow-md">
+                👤 나 (2P)
+              </span>
+            </div>
+          )}
           <CharacterView
             playerId="p2"
             name={state.p2.name}
@@ -202,7 +232,7 @@ export const Arena: React.FC<ArenaProps> = ({
             )}
             {state.phase === 'CHAM_INPUT' && state.p2.chamDirection && (
               <span className="text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-2 py-0.5 rounded-full animate-pulse">
-                {getChamEmoji(state.p2.chamDirection)}
+                ✅ 선택 완료! {/* BUG-01: 방향 숨김 — RESOLVE 전까지 상대방에게 노출 방지 */}
               </span>
             )}
             {state.phase === 'RESOLVE' && (
@@ -220,6 +250,8 @@ export const Arena: React.FC<ArenaProps> = ({
           mode={state.mode}
           phase={state.phase}
           myRoleInRoom={state.online?.myRoleInRoom}
+          p1Role={state.p1.role}
+          p2Role={state.p2.role}
           p1ChosenRps={state.p1.rpsChoice}
           p1ChosenCham={state.p1.chamDirection}
           p2ChosenRps={state.p2.rpsChoice}

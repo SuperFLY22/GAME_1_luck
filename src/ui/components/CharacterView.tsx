@@ -43,12 +43,13 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
 
-  // 1. 도구 이미지 결정 (좌 / 상 / 우)
-  const dirKey = direction ? direction.toLowerCase() : 'up';
+  // 1. 도구 이미지 결정 (좌 / 상 / 우) — BUG-01: CHAM_INPUT 중에는 방향 숨김(중립 UP 유지), RESOLVE 때만 해당 방향 스프라이트 표시
+  const resolvedDir = isResolve ? direction : null;
+  const dirKey = resolvedDir ? resolvedDir.toLowerCase() : 'up';
   const toolSrc = isAttacker
-    ? `/assets/tools/hammer_${dirKey}.png`
+    ? `/assets/images/tools/hammer_${dirKey}.png`
     : isDefender
-    ? `/assets/tools/potlid_${dirKey}.png`
+    ? `/assets/images/tools/potlid_${dirKey}.png`
     : null;
 
   // 2. 도구 애니메이션 클래스 결정
@@ -61,11 +62,8 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
         else if (direction === 'RIGHT') toolAnimClass = 'animate-hammer-right';
         else toolAnimClass = 'animate-hammer-up';
       } else {
-        // 대기 중 방향 틸트
-        if (direction === 'LEFT') toolAnimClass = '-rotate-[25deg] -translate-x-3';
-        else if (direction === 'RIGHT') toolAnimClass = 'rotate-[25deg] translate-x-3';
-        else if (direction === 'UP') toolAnimClass = '-translate-y-3';
-        else toolAnimClass = 'animate-pulse';
+        // BUG-01: CHAM_INPUT 대기 중 방향 무관하게 단순 pulse만 (방향 숨김)
+        toolAnimClass = direction ? 'animate-pulse scale-110' : 'animate-pulse';
       }
     } else if (isDefender) {
       if (isResolve) {
@@ -77,20 +75,19 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
           toolAnimClass = 'animate-guard-block';
         }
       } else {
-        // 대기 중 방향 가드
-        if (direction === 'LEFT') toolAnimClass = '-rotate-[20deg] -translate-x-3';
-        else if (direction === 'RIGHT') toolAnimClass = 'rotate-[20deg] translate-x-3';
-        else if (direction === 'UP') toolAnimClass = '-translate-y-4';
-        else toolAnimClass = '-translate-y-1';
+        // BUG-01: CHAM_INPUT 대기 중 방향 무관하게 단순 pulse만 (방향 숨김)
+        toolAnimClass = direction ? 'animate-pulse opacity-90' : '-translate-y-1';
       }
     }
   }
 
-  // 3. 캐릭터 고개/몸통 방향 틸트
+  // 3. 캐릭터 고개/몸통 방향 틸트 — BUG-01: RESOLVE 단계에서만 최종 판정 방향으로 틸트
   let charTransform = 'rotate(0deg)';
-  if (direction === 'LEFT') charTransform = 'rotate(-10deg) translateX(-10px)';
-  else if (direction === 'RIGHT') charTransform = 'rotate(10deg) translateX(10px)';
-  else if (direction === 'UP') charTransform = 'translateY(-12px)';
+  if (isResolve) {
+    if (direction === 'LEFT') charTransform = 'rotate(-10deg) translateX(-10px)';
+    else if (direction === 'RIGHT') charTransform = 'rotate(10deg) translateX(10px)';
+    else if (direction === 'UP') charTransform = 'translateY(-12px)';
+  }
 
   return (
     <div className="flex flex-col items-center">

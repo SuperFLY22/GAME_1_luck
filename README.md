@@ -32,7 +32,7 @@ GAME_1_luck/
 │   ├── utils/                # 파티클 및 헬퍼
 │   └── config/               # 게임 타이머, 키 매핑, 에셋 경로 상수
 ├── tests/                    # 게임 FSM, 매치메이킹, 물리 에셋 하네스 테스트
-├── docs/                     # 시스템 아키텍처 및 상세 가이드
+├── docs/                     # [문서] architecture.md, CODEMAP.md (전체 코드맵)
 ├── index.html                # 진입점
 ├── package.json
 └── vite.config.ts            # 번들러 및 빌드 설정

@@ -102,3 +102,15 @@
 .animate-guard-block {
   animation: guard-block 0.25s ease-out forwards;
 }
+
+/* 공수 전환 알림 배너: 위에서 슬라이드 등장 후 페이드 아웃 */
+@keyframes slideDown {
+  0%   { transform: translateY(-40px); opacity: 0; }
+  20%  { transform: translateY(0px);   opacity: 1; }
+  80%  { transform: translateY(0px);   opacity: 1; }
+  100% { transform: translateY(-10px); opacity: 0; }
+}
+
+.animate-slideDown {
+  animation: slideDown 1.4s ease-in-out forwards;
+}

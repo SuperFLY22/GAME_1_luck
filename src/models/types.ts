@@ -31,6 +31,7 @@ export interface PlayerState {
   role: Role;
   isAi: boolean;
   score: number;
+  guardCount: number;  // 가드 성공 횟수 (수비자로서 DODGE 처리 성공 수)
 }
 
 export interface OnlineMatchContext {
@@ -55,5 +56,6 @@ export interface GameEngineState {
   hitTarget: 'p1' | 'p2' | null;
   winner: 'p1' | 'p2' | null;
   message: string;
+  roleReversed: boolean; // 직전 턴에서 수비 성공 → 공수 전환 여부 (배너 표시용)
   online?: OnlineMatchContext;
 }

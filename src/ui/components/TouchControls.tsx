@@ -1,10 +1,12 @@
 import React from 'react';
-import type { ChamDirection, GameMode, GamePhase, RPSChoice } from '../../models/types';
+import type { ChamDirection, GameMode, GamePhase, RPSChoice, Role } from '../../models/types';
 
 interface TouchControlsProps {
   mode: GameMode;
   phase: GamePhase;
   myRoleInRoom?: 'p1' | 'p2';
+  p1Role?: Role;
+  p2Role?: Role;
   p1ChosenRps: RPSChoice;
   p1ChosenCham: ChamDirection;
   p2ChosenRps: RPSChoice;
@@ -17,6 +19,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   mode,
   phase,
   myRoleInRoom = 'p1',
+  p1Role,
+  p2Role,
   p1ChosenRps,
   p1ChosenCham,
   p2ChosenRps,
@@ -33,6 +37,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
   const currentRps = isOnlineP2 ? p2ChosenRps : p1ChosenRps;
   const currentCham = isOnlineP2 ? p2ChosenCham : p1ChosenCham;
+  const currentRole = isOnlineP2 ? p2Role : p1Role;
   const submitHandler = isOnlineP2 ? onP2Input : onP1Input;
 
   return (
@@ -49,8 +54,22 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
         {/* 단일 플레이어 조작 패드 (1P, CPU, 온라인 대전 공용) */}
         {!isLocal2P ? (
           <div className="flex flex-col items-center gap-2 bg-slate-900/80 p-2.5 rounded-2xl border-2 border-sky-500/50 shadow-lg">
-            <div className="text-xs font-black text-sky-400">
-              내 조작 패드 {mode === 'ONLINE_MATCH' ? `(${myRoleInRoom.toUpperCase()})` : ''}
+            <div className={`text-xs font-black flex items-center gap-1.5 ${isOnlineP2 ? 'text-rose-400' : 'text-sky-400'}`}>
+              <span>{isOnlineP2 ? '👤 나 (2P)' : '👤 나 (1P)'}</span>
+              {mode === 'ONLINE_MATCH' && (
+                <span className="text-[10px] text-slate-400 font-mono">({myRoleInRoom.toUpperCase()})</span>
+              )}
+              {currentRole && currentRole !== 'TIE' && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                    currentRole === 'ATTACKER'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                      : 'bg-blue-500/20 text-blue-300 border-blue-500/50'
+                  }`}
+                >
+                  {currentRole === 'ATTACKER' ? '💥 공격 중' : '🛡️ 수비 중'}
+                </span>
+              )}
             </div>
 
             {isRps && (
@@ -134,7 +153,20 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
           <>
             {/* 1P 컨트롤러 */}
             <div className="flex flex-col items-center gap-2 bg-slate-900/80 p-2.5 rounded-2xl border-2 border-sky-500/50 shadow-lg">
-              <div className="text-xs font-black text-sky-400">1P (왼쪽)</div>
+              <div className="text-xs font-black text-sky-400 flex items-center gap-1.5">
+                <span>1P (왼쪽)</span>
+                {p1Role && p1Role !== 'TIE' && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                      p1Role === 'ATTACKER'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                        : 'bg-blue-500/20 text-blue-300 border-blue-500/50'
+                    }`}
+                  >
+                    {p1Role === 'ATTACKER' ? '💥 공격' : '🛡️ 수비'}
+                  </span>
+                )}
+              </div>
               {isRps && (
                 <div className="grid grid-cols-3 gap-2 w-full">
                   <button
@@ -213,7 +245,20 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
             {/* 2P 컨트롤러 */}
             <div className="flex flex-col items-center gap-2 bg-slate-900/80 p-2.5 rounded-2xl border-2 border-rose-500/50 shadow-lg">
-              <div className="text-xs font-black text-rose-400">2P (오른쪽)</div>
+              <div className="text-xs font-black text-rose-400 flex items-center gap-1.5">
+                <span>2P (오른쪽)</span>
+                {p2Role && p2Role !== 'TIE' && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                      p2Role === 'ATTACKER'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                        : 'bg-blue-500/20 text-blue-300 border-blue-500/50'
+                    }`}
+                  >
+                    {p2Role === 'ATTACKER' ? '💥 공격' : '🛡️ 수비'}
+                  </span>
+                )}
+              </div>
               {isRps && (
                 <div className="grid grid-cols-3 gap-2 w-full">
                   <button

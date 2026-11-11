@@ -61,22 +61,31 @@ export function createInitialPlayer(id: 'p1' | 'p2', isAi: boolean, name: string
     role: null,
     isAi,
     score: 0,
+    guardCount: 0,
   };
 }
 
 export function createInitialState(mode: GameMode = '1P_CPU'): GameEngineState {
+  const is1PCpu = mode === '1P_CPU';
+  const isLocal2P = mode === '2P_LOCAL';
   return {
     mode,
     phase: 'TITLE',
     round: 1,
     countdown: 3,
     timerRemainingRatio: 1.0,
-    p1: createInitialPlayer('p1', false, mode === '1P_CPU' ? '나 (1P)' : '플레이어 1'),
-    p2: createInitialPlayer('p2', mode === '1P_CPU', mode === '1P_CPU' ? '알파참 (AI)' : '플레이어 2'),
+    // BUG-02: 2P_LOCAL 플레이어 이름 명확히 구분
+    p1: createInitialPlayer('p1', false,
+      is1PCpu ? '나 (1P)' : isLocal2P ? '플레이어 1 (1P)' : '나'
+    ),
+    p2: createInitialPlayer('p2', is1PCpu,
+      is1PCpu ? '알파참 (AI)' : isLocal2P ? '플레이어 2 (2P)' : '상대방'
+    ),
     lastOutcome: null,
     hitTarget: null,
     winner: null,
     message: '게임을 시작하세요!',
+    roleReversed: false, // 초기 상태: 공수 전환 없음
   };
 }
 
@@ -262,6 +271,13 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         } else {
           nextP2.damage = incrementDamage(nextP2.damage);
         }
+      } else {
+        // 가드 성공: 수비자의 guardCount +1 누적
+        if (defenderId === 'p1') {
+          nextP1.guardCount = (nextP1.guardCount ?? 0) + 1;
+        } else {
+          nextP2.guardCount = (nextP2.guardCount ?? 0) + 1;
+        }
       }
 
       return {
@@ -345,6 +361,7 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         p1: { ...state.p1, role: nextP1Role, chamDirection: null },
         p2: { ...state.p2, role: nextP2Role, chamDirection: null },
         message: turnMsg,
+        roleReversed: !isHit, // DODGE(가드성공)일 때 true → 배너 표시, HIT(연속공격)일 때 false
       };
     }
 
