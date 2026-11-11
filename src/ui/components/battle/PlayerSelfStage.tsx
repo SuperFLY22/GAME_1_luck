@@ -22,6 +22,7 @@ interface PlayerSelfStageProps {
  */
 export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   name,
+  damage,
   direction,
   role,
   phase,
@@ -36,15 +37,26 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   const isChamOrResolve = phase === 'CHAM_INPUT' || phase === 'RESOLVE';
 
   // 1. 내 도구 1인칭 3D 애니메이션 이미지 및 클래스 결정
-  const dirKey = direction ? direction.toLowerCase() : 'up';
-  // 1인칭 전용 뿅망치 스프라이트가 있으면 우선 적용
-  const fpLeftHammer = '/assets/images/first_person/self_hammer_left.png';
+  // 1인칭 전용 뿅망치(승인된 마스터 에셋) 적용
+  const fpLeftHammer = '/assets/images/first_person/self_attack_left.png';
+  const fpUpHammer = '/assets/images/first_person/self_attack_up.png';
+  const fpRightHammer = '/assets/images/first_person/self_attack_right.png';
+  const fpLeftGuard = '/assets/images/first_person/self_guard_left.png';
+  const fpUpGuard = '/assets/images/first_person/self_guard_up.png';
+  const fpRightGuard = '/assets/images/first_person/self_guard_right.png';
+
   const toolSrc = isAttacker
     ? direction === 'LEFT'
       ? fpLeftHammer
-      : `/assets/images/tools/hammer_${dirKey}.png`
+      : direction === 'RIGHT'
+      ? fpRightHammer
+      : fpUpHammer
     : isDefender
-    ? `/assets/images/tools/potlid_${dirKey}.png`
+    ? direction === 'LEFT'
+      ? fpLeftGuard
+      : direction === 'RIGHT'
+      ? fpRightGuard
+      : fpUpGuard
     : null;
 
   let toolAnimClass = '';
@@ -112,7 +124,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
         {/* 1인칭 고품질 생성 에셋 우선 렌더링, 부재 시 정교한 벡터 실루엣 폴백 */}
         {!backImgFailed ? (
           <img
-            src="/assets/images/first_person/self_back_idle.png"
+            src={`/assets/images/first_person/self_state_${damage}.png`}
             alt={`${name} back view`}
             onError={() => setBackImgFailed(true)}
             className="w-full h-full object-contain drop-shadow-[0_-8px_20px_rgba(0,0,0,0.7)]"

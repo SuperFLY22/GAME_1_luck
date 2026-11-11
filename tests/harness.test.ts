@@ -18,31 +18,6 @@ const requiredImages = [
   'bg_arcade.png',
   'impact_pow.png',
   'impact_bang.png',
-  'p1_state_0.png',
-  'p1_state_1.png',
-  'p1_state_2.png',
-  'p1_state_3.png',
-  'p1_state_4.png',
-  'p1_state_5.png',
-  'p2_state_0.png',
-  'p2_state_1.png',
-  'p2_state_2.png',
-  'p2_state_3.png',
-  'p2_state_4.png',
-  'p2_state_5.png',
-];
-
-const requiredActions = [
-  'attack_left.png',
-  'attack_right.png',
-  'attack_up.png',
-  'defend_left.png',
-  'defend_right.png',
-  'defend_up.png',
-  'attack_left_2p.png',
-  'attack_right_2p.png',
-  'defend_left_2p.png',
-  'defend_right_2p.png',
 ];
 
 const requiredRps = [
@@ -67,36 +42,54 @@ const requiredSounds = [
   'loose.mp3',
 ];
 
-const requiredTools = [
-  'hammer_left.png',
-  'hammer_up.png',
-  'hammer_right.png',
-  'potlid_left.png',
-  'potlid_up.png',
-  'potlid_right.png',
+const requiredFirstPerson = [
+  // 1인칭 플레이어 공격 3종 & 방어 3종
+  'self_attack_left.png',
+  'self_attack_up.png',
+  'self_attack_right.png',
+  'self_guard_left.png',
+  'self_guard_up.png',
+  'self_guard_right.png',
+  // 1인칭 플레이어 뒷모습 데미지 0~5단계
+  'self_state_0.png',
+  'self_state_1.png',
+  'self_state_2.png',
+  'self_state_3.png',
+  'self_state_4.png',
+  'self_state_5.png',
+  // 상대방 회피 3종 & 공격 3종
+  'opp_dodge_left.png',
+  'opp_dodge_up.png',
+  'opp_dodge_right.png',
+  'opp_attack_left.png',
+  'opp_attack_up.png',
+  'opp_attack_right.png',
+  // 상대방 정면 데미지 0~5단계
+  'opp_state_0.png',
+  'opp_state_1.png',
+  'opp_state_2.png',
+  'opp_state_3.png',
+  'opp_state_4.png',
+  'opp_state_5.png',
 ];
 
 for (const img of requiredImages) {
   const p = path.join(process.cwd(), 'public/assets/images', img);
   assert(fs.existsSync(p), `Missing required image: ${img}`);
 }
-for (const act of requiredActions) {
-  const p = path.join(process.cwd(), 'public/assets/images/actions', act);
-  assert(fs.existsSync(p), `Missing action sprite: ${act}`);
+for (const fp of requiredFirstPerson) {
+  const p = path.join(process.cwd(), 'public/assets/images/first_person', fp);
+  assert(fs.existsSync(p), `Missing first-person sprite: ${fp}`);
 }
 for (const rps of requiredRps) {
   const p = path.join(process.cwd(), 'public/assets/images/rps', rps);
   assert(fs.existsSync(p), `Missing RPS sprite: ${rps}`);
 }
-for (const tool of requiredTools) {
-  const p = path.join(process.cwd(), 'public/assets/tools', tool);
-  assert(fs.existsSync(p), `Missing tool sprite: ${tool}`);
-}
 for (const snd of requiredSounds) {
   const p = path.join(process.cwd(), 'public/assets/sounds', snd);
   assert(fs.existsSync(p), `Missing sound file: ${snd}`);
 }
-console.log('✅ 총 47개 필수 이미지/도구(망치/냄비)/오디오 에셋 물리 파일 100% 실존 확인');
+console.log('✅ 1인칭 아케이드 배틀 필수 이미지/오디오 에셋 물리 파일 100% 실존 확인');
 
 // -------------------------------------------------------------
 // 2. 전체 매치 시뮬레이션 하네스 (Full Game Journey Simulation)

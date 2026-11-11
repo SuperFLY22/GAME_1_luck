@@ -38,10 +38,13 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
   const isResolve = phase === 'RESOLVE';
   const isChamOrResolve = phase === 'CHAM_INPUT' || phase === 'RESOLVE';
 
-  // 1인칭 전용 회피 스프라이트 매핑 (좌측 회피 시 고화질 생성 에셋 우선 렌더링)
-  const isDodgeLeft = isResolve && lastOutcome === 'DODGE' && direction === 'LEFT';
-  const dodgeSprite = isDodgeLeft ? '/assets/images/first_person/opp_dodge_left.png' : null;
-  const displayImageUrl = dodgeSprite || rpsSprite || (hasCustom ? customFaceUrl : null);
+  const dirKey = direction ? direction.toLowerCase() : 'up';
+
+  // 1인칭 전용 회피/공격/데미지 스프라이트 매핑
+  const isDodge = isResolve && lastOutcome === 'DODGE' && direction;
+  const dodgeSprite = isDodge ? `/assets/images/first_person/opp_dodge_${dirKey}.png` : null;
+  const fpFaceUrl = `/assets/images/first_person/opp_state_${damage}.png`;
+  const displayImageUrl = dodgeSprite || rpsSprite || fpFaceUrl || (hasCustom ? customFaceUrl : null);
 
   // 1. 상대방 회피 / 피격 리액션 애니메이션 클래스 결정
   let bodyAnimClass = '';
@@ -55,12 +58,11 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
     }
   }
 
-  // 2. 상대방 도구 렌더링 (공격 시: 화면 앞으로 내리찍는 뿅망치, 수비 시: 냄비뚜껑 가드)
-  const dirKey = direction ? direction.toLowerCase() : 'up';
+  // 2. 상대방 도구 렌더링 (공격 시: 1인칭 전방 뿅망치, 수비 시: 냄비뚜껑 가드)
   const toolSrc = isAttacker
-    ? `/assets/images/tools/hammer_${dirKey}.png`
+    ? `/assets/images/first_person/opp_attack_${dirKey}.png`
     : isDefender
-    ? `/assets/images/tools/potlid_${dirKey}.png`
+    ? `/assets/images/first_person/opp_guard_${dirKey}.png`
     : null;
 
   let toolAnimClass = '';
