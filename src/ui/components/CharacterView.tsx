@@ -35,57 +35,33 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
   const hasCustom = assetRegistry.hasCustomImage(playerId, damage);
   const customFaceUrl = assetRegistry.getCustomImageUrl(playerId, damage);
 
-  // 현재 표시할 캐릭터 본체 이미지 (RPS 손 > 단계별 표정 0~5)
-  const displayImageUrl = rpsSprite || (hasCustom ? customFaceUrl : null);
-
-  const isChamOrResolve = phase === 'CHAM_INPUT' || phase === 'RESOLVE';
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
 
-  // 1. 도구 이미지 결정 (좌 / 상 / 우) — BUG-01: CHAM_INPUT 중에는 방향 숨김(중립 UP 유지), RESOLVE 때만 해당 방향 스프라이트 표시
-  const resolvedDir = isResolve ? direction : null;
-  const dirKey = resolvedDir ? resolvedDir.toLowerCase() : 'up';
-  const toolSrc = isAttacker
-    ? `/assets/images/tools/hammer_${dirKey}.png`
-    : isDefender
-    ? `/assets/images/tools/potlid_${dirKey}.png`
-    : null;
-
-  // 2. 도구 애니메이션 클래스 결정 (방향별 명확한 공격 및 방어 가드 모션)
-  let toolAnimClass = '';
-  if (isChamOrResolve) {
+  // 참참참 액션 스프라이트 결정:
+  // 사용자가 방향을 선택하고 판정이 일어나는 RESOLVE 단계에서
+  // 평상시 얼굴 대신 캐릭터가 직접 좌/상/우로 찌르거나(공격) 피하는(수비) actions 이미지 노출
+  let actionImageUrl: string | null = null;
+  if (isResolve && direction) {
+    const dirKey = direction.toLowerCase();
+    const playerSuffix = playerId === 'p2' ? '_2p' : '';
     if (isAttacker) {
-      if (isResolve) {
-        // 공격자: 지정한 방향으로 망치를 강타 (좌 / 상 내리찍기 / 우)
-        if (direction === 'LEFT') toolAnimClass = 'animate-hammer-left';
-        else if (direction === 'RIGHT') toolAnimClass = 'animate-hammer-right';
-        else toolAnimClass = 'animate-hammer-up';
-      } else {
-        // CHAM_INPUT 대기 중: 공격 태세 모션 (가벼운 펄스 및 준비 모션)
-        toolAnimClass = direction ? 'animate-pulse scale-110' : 'animate-pulse';
-      }
+      actionImageUrl = `/assets/images/actions/attack_${dirKey}${playerSuffix}.png`;
     } else if (isDefender) {
-      if (isResolve) {
-        if (isHit) {
-          // 가드 실패 (피격): 냄비뚜껑이 튕겨 날아감 (Pop-off 탈락)
-          toolAnimClass = 'animate-potlid-pop-off';
-        } else {
-          // 가드 성공: 선택한 방향으로 냄비뚜껑을 번쩍 내밀며 굳건한 방어!
-          if (direction === 'LEFT') toolAnimClass = 'animate-guard-left';
-          else if (direction === 'RIGHT') toolAnimClass = 'animate-guard-right';
-          else toolAnimClass = 'animate-guard-up';
-        }
-      } else {
-        // CHAM_INPUT 대기 중: 가슴 앞 방어 태세
-        toolAnimClass = direction ? 'animate-pulse opacity-95 scale-105' : '-translate-y-1';
-      }
+      actionImageUrl = `/assets/images/actions/defend_${dirKey}${playerSuffix}.png`;
     }
   }
 
-  // 3. 캐릭터 고개/몸통 방향 틸트 — RESOLVE 단계에서만 최종 판정 방향으로 틸트
+  // 현재 표시할 캐릭터 이미지 우선순위:
+  // 1. 참참참 판정 순간 (RESOLVE): 공격/수비 액션 스프라이트 (내가 어디로 공격했고 상대가 어디로 수비했는지 직관적 표현)
+  // 2. 가위바위보 순간 (RPS): 가위/바위/보 손 스프라이트
+  // 3. 평상시 / 턴 결과 상태: 0~5단계 데미지 표정 스프라이트
+  const displayImageUrl = actionImageUrl || rpsSprite || (hasCustom ? customFaceUrl : null);
+
+  // 캐릭터 고개/몸통 방향 틸트 — 액션 스프라이트가 아닐 때(기본 표정/SVG)만 틸트 적용
   let charTransform = 'rotate(0deg)';
-  if (isResolve) {
+  if (isResolve && !actionImageUrl) {
     if (direction === 'LEFT') charTransform = 'rotate(-10deg) translateX(-12px)';
     else if (direction === 'RIGHT') charTransform = 'rotate(10deg) translateX(12px)';
     else if (direction === 'UP') charTransform = 'translateY(-14px)';
@@ -102,7 +78,7 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
   return (
     <div className="flex flex-col items-center w-full min-w-0">
       <div
-        className={`relative flex items-center justify-center min-w-0 w-full min-h-[140px] sm:min-h-[220px] rounded-2xl transition-all duration-300 p-1 sm:p-2 ${
+        className={`relative flex items-center justify-center min-w-0 w-full min-h-[150px] sm:min-h-[230px] rounded-2xl transition-all duration-300 p-1 sm:p-2 mt-4 sm:mt-5 ${
           isAttacker && (phase === 'CHAM_INPUT' || phase === 'RESOLVE' || phase === 'ROLE_SWAP')
             ? 'aura-attacker border-2 border-amber-400 bg-amber-950/20'
             : isDefender && (phase === 'CHAM_INPUT' || phase === 'RESOLVE' || phase === 'ROLE_SWAP')
@@ -113,8 +89,8 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
         {/* 캐릭터 본체 레이어 */}
         {displayImageUrl && !imgFailed ? (
           <div
-            className={`w-28 h-36 sm:w-60 sm:h-72 transition-transform duration-200 select-none flex items-center justify-center relative ${
-              isHit ? 'animate-bounce scale-95' : ''
+            className={`w-32 h-40 sm:w-64 sm:h-76 transition-all duration-150 select-none flex items-center justify-center relative ${
+              isHit ? 'animate-bounce scale-95' : actionImageUrl ? 'animate-scaleUp' : ''
             }`}
             style={{ transform: charTransform }}
           >
@@ -122,7 +98,7 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
               src={displayImageUrl}
               alt={`${name} sprite`}
               onError={() => setImgFailed(true)}
-              className="w-full h-full object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.45)]"
+              className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
             />
           </div>
         ) : (
@@ -135,55 +111,36 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
           />
         )}
 
-        {/* 공격(뿅망치) / 수비(냄비뚜껑) 도구 오버레이 레이어 */}
-        {isChamOrResolve && toolSrc && (
-          <div
-            className={`absolute z-20 pointer-events-none transition-all duration-150 flex items-center justify-center ${
-              isAttacker
-                ? 'w-24 h-24 sm:w-44 sm:h-44 -bottom-2 ' +
-                  (playerId === 'p1' ? 'right-0 sm:-right-4' : 'left-0 sm:-left-4')
-                : 'w-24 h-24 sm:w-44 sm:h-44 -bottom-1 ' +
-                  (playerId === 'p1' ? 'left-0 sm:-left-2' : 'right-0 sm:-right-2')
-            } ${toolAnimClass}`}
-          >
-            <img
-              src={toolSrc}
-              alt={isAttacker ? 'Toy Hammer' : 'Pot Lid'}
-              className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.6)]"
-            />
-          </div>
-        )}
-
-        {/* 1. 현재 공격하는 자 / 수비하는 자 역할 뱃지 (요청 1 확실한 표현) */}
+        {/* 1. 현재 공격하는 자 / 수비하는 자 역할 뱃지 (상단 잘림 없이 명확한 네온 뱃지 노출) */}
         {role && role !== 'TIE' && (
           <div
-            className={`absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 px-2.5 py-0.5 sm:px-4 sm:py-1 rounded-full text-[11px] sm:text-xs font-black tracking-wider uppercase border-2 z-30 whitespace-nowrap shadow-lg flex items-center gap-1 ${
+            className={`absolute -top-3.5 sm:-top-4 left-1/2 -translate-x-1/2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-black tracking-wider uppercase border-2 z-30 whitespace-nowrap shadow-xl flex items-center gap-1.5 ${
               role === 'ATTACKER'
-                ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 border-amber-300 ring-2 ring-amber-400/80 animate-pulse scale-105'
-                : 'bg-gradient-to-r from-blue-600 to-sky-500 text-white border-sky-300 ring-2 ring-sky-400/60'
+                ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/80 animate-pulse scale-105'
+                : 'bg-gradient-to-r from-sky-500 to-blue-600 text-white border-sky-200 ring-2 ring-sky-400/80'
             }`}
           >
             {role === 'ATTACKER' ? (
               <>
-                <span>🔥</span>
+                <span className="text-sm">🔥</span>
                 <span>공격 (ATTACK)</span>
               </>
             ) : (
               <>
-                <span>🛡️</span>
+                <span className="text-sm">🛡️</span>
                 <span>수비 (GUARD)</span>
               </>
             )}
           </div>
         )}
 
-        {/* 2. RESOLVE 단계에서 확실한 방향성 표시 태그 (요청 2-d) */}
+        {/* 2. RESOLVE 단계에서 확실한 방향성 표시 태그 */}
         {isResolve && direction && (
           <div
-            className={`absolute bottom-2 left-1/2 -translate-x-1/2 z-30 px-2 sm:px-3 py-0.5 rounded-lg border font-black text-[11px] sm:text-xs shadow-md whitespace-nowrap animate-scaleUp ${
+            className={`absolute bottom-2 left-1/2 -translate-x-1/2 z-30 px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-lg border-2 font-black text-[11px] sm:text-xs shadow-lg whitespace-nowrap animate-scaleUp ${
               isAttacker
-                ? 'bg-rose-900/90 text-rose-200 border-rose-500 shadow-rose-500/30'
-                : 'bg-sky-900/90 text-sky-200 border-sky-500 shadow-sky-500/30'
+                ? 'bg-rose-950/95 text-rose-200 border-rose-400 shadow-rose-500/40'
+                : 'bg-sky-950/95 text-sky-200 border-sky-400 shadow-sky-500/40'
             }`}
           >
             {isAttacker ? '💥 타격:' : '🛡️ 방어:'} {getDirLabel(direction)}

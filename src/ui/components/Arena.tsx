@@ -121,7 +121,7 @@ export const Arena: React.FC<ArenaProps> = ({
       </section>
 
       {/* 3. 메인 배틀 아레나 (캐릭터 vs 캐릭터 + 중앙 상태 알림) */}
-      <main className="relative w-full max-w-4xl mx-auto my-auto flex items-center justify-between px-0.5 sm:px-8 gap-0.5 sm:gap-4 overflow-hidden">
+      <main className="relative w-full max-w-4xl mx-auto my-auto flex items-center justify-between px-0.5 sm:px-8 gap-0.5 sm:gap-4 overflow-visible pt-4 sm:pt-6">
         <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />
 
         {/* FEAT-01 & 요청 2-e: 공수 전환 알림 오버레이 (ROLE_SWAP Pause 단계에서 1.5초간 명확한 인지 제공) */}
@@ -145,11 +145,11 @@ export const Arena: React.FC<ArenaProps> = ({
 
         {/* 1P 캐릭터 */}
         <div className="flex-1 flex flex-col items-center relative min-w-0">
-          {/* FEAT-02: 내가 1P일 때 (솔로/로컬 2P 화면공유 아닐 때) "나" 배지 표시 */}
+          {/* FEAT-02: 내가 1P일 때 "나" 배지 표시 (중앙 뱃지와 겹치지 않도록 카드 좌상단 배치) */}
           {myPlayerId === 'p1' && (
-            <div className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2 z-40 whitespace-nowrap">
-              <span className="text-[9px] sm:text-[10px] font-black bg-sky-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full border border-sky-300 shadow-md">
-                👤 나 (1P)
+            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-40 whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-black bg-sky-500 text-white px-2 py-0.5 rounded-full border border-sky-300 shadow-md">
+                👤 나
               </span>
             </div>
           )}
@@ -256,11 +256,11 @@ export const Arena: React.FC<ArenaProps> = ({
 
         {/* 2P 캐릭터 */}
         <div className="flex-1 flex flex-col items-center relative min-w-0">
-          {/* FEAT-02: 내가 2P일 때 "나" 배지 표시 */}
+          {/* FEAT-02: 내가 2P일 때 "나" 배지 표시 (중앙 뱃지와 겹치지 않도록 카드 우상단 배치) */}
           {myPlayerId === 'p2' && (
-            <div className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2 z-40 whitespace-nowrap">
-              <span className="text-[9px] sm:text-[10px] font-black bg-rose-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full border border-rose-300 shadow-md">
-                👤 나 (2P)
+            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-40 whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full border border-rose-300 shadow-md">
+                👤 나
               </span>
             </div>
           )}
