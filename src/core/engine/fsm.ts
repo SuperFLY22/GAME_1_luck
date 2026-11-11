@@ -145,7 +145,7 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         timerRemainingRatio: 1.0,
         p1: { ...state.p1, rpsChoice: null, role: null },
         p2: { ...state.p2, rpsChoice: null, role: null },
-        message: '안 내면 진 거 가위 바위...',
+        message: '선공을 정하는 가위 바위...',
       };
     }
 
@@ -187,7 +187,7 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         p1: { ...state.p1, rpsChoice: p1Choice, role: p1Role, chamDirection: null },
         p2: { ...state.p2, rpsChoice: p2Choice, role: p2Role, chamDirection: null },
         lastOutcome: null,
-        message: `${attackerName} 공격! 참! 참! 참!`,
+        message: `${attackerName} 선공 확정! 2초 카운트 참! 참! 참!`,
       };
     }
 
@@ -210,7 +210,7 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         p1: { ...state.p1, rpsChoice: action.p1Choice, role: action.p1Role, chamDirection: null },
         p2: { ...state.p2, rpsChoice: action.p2Choice, role: action.p2Role, chamDirection: null },
         lastOutcome: null,
-        message: `${attackerName} 공격! 참! 참! 참!`,
+        message: `${attackerName} 선공 확정! 2초 카운트 참! 참! 참!`,
       };
     }
 
@@ -315,14 +315,36 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         };
       }
 
+      // 1. 공격 성공(HIT) 시: 공격권 유지 (계속 공격)
+      // 2. 수비 성공(DODGE) 시: 공수 전환 (수비수가 공격수로 전환)
+      const isHit = state.lastOutcome === 'HIT';
+      const nextP1Role: Role = isHit
+        ? state.p1.role
+        : state.p1.role === 'ATTACKER'
+          ? 'DEFENDER'
+          : 'ATTACKER';
+      const nextP2Role: Role = isHit
+        ? state.p2.role
+        : state.p2.role === 'ATTACKER'
+          ? 'DEFENDER'
+          : 'ATTACKER';
+
+      const nextAttackerName = nextP1Role === 'ATTACKER' ? state.p1.name : state.p2.name;
+      const turnMsg = isHit
+        ? `${nextAttackerName} 공격 성공! 연속 공격! 참! 참! 참!`
+        : `수비 성공! 공수 전환 ➔ ${nextAttackerName} 공격! 참! 참! 참!`;
+
       return {
         ...state,
-        phase: 'READY',
+        phase: 'CHAM_INPUT',
         round: state.round + 1,
-        countdown: 3,
+        countdown: 0,
+        timerRemainingRatio: 1.0,
         lastOutcome: null,
         hitTarget: null,
-        message: `다음 라운드 ${state.round + 1} 준비!`,
+        p1: { ...state.p1, role: nextP1Role, chamDirection: null },
+        p2: { ...state.p2, role: nextP2Role, chamDirection: null },
+        message: turnMsg,
       };
     }
 

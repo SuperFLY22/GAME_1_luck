@@ -66,15 +66,32 @@ assert.equal(state.lastOutcome, 'HIT');
 assert.equal(state.hitTarget, 'p2');
 assert.equal(state.p2.damage, 1);
 
-// 5. 라운드 종료 체크 -> 다음 라운드 준비
+// 5. 라운드 종료 체크: 공격 성공 시 공격권 유지 및 가위바위보 없이 바로 다음 참참참(CHAM_INPUT) 진입
 state = gameReducer(state, { type: 'CHECK_ROUND_RESULT' });
-assert.equal(state.phase, 'READY');
+assert.equal(state.phase, 'CHAM_INPUT');
 assert.equal(state.round, 2);
+assert.equal(state.p1.role, 'ATTACKER'); // 공격 성공자 계속 공격!
+assert.equal(state.p2.role, 'DEFENDER');
 
-// 6. 5회 피격 KO 체크
+// 6. 2턴: 1P(공격) LEFT, 2P(수비) RIGHT -> DODGE! (수비 성공)
+state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
+state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
+state = gameReducer(state, { type: 'RESOLVE_CHAM' });
+assert.equal(state.phase, 'RESOLVE');
+assert.equal(state.lastOutcome, 'DODGE');
+assert.equal(state.p2.damage, 1); // 데미지 증가 없음
+
+// 7. 수비 성공 시 다음 턴: 공수 전환 검증 (P2가 공격수로 전환!)
+state = gameReducer(state, { type: 'CHECK_ROUND_RESULT' });
+assert.equal(state.phase, 'CHAM_INPUT');
+assert.equal(state.round, 3);
+assert.equal(state.p1.role, 'DEFENDER'); // 공수 전환!
+assert.equal(state.p2.role, 'ATTACKER'); // 공수 전환!
+
+// 8. 5회 피격 KO 체크
 state.p2.damage = 5;
 state = gameReducer(state, { type: 'CHECK_ROUND_RESULT' });
 assert.equal(state.phase, 'GAME_OVER');
 assert.equal(state.winner, 'p1');
 
-console.log('✅ FSM 전체 상태 전이 사이클 및 KO 판정 검증 통과');
+console.log('✅ FSM 시작 시 1회 가위바위보 + 공격 성공 시 공격 유지 + 수비 성공 시 공수 전환 사이클 검증 통과');

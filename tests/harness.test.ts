@@ -93,26 +93,29 @@ console.log('✅ 총 41개 필수 이미지/오디오 에셋 물리 파일 100% 
 // -------------------------------------------------------------
 // 2. 전체 매치 시뮬레이션 하네스 (Full Game Journey Simulation)
 // -------------------------------------------------------------
-console.log('\n[Harness 2-A] 전체 매치 FSM 시뮬레이션 (1P 완승 시나리오)');
+console.log('\n[Harness 2-A] 전체 매치 FSM 시뮬레이션 (최초 1회 RPS + 연속 공격 완승 시나리오)');
 let state = createInitialState('1P_CPU');
 state = gameReducer(state, { type: 'START_GAME', mode: '1P_CPU' });
 
+// 1. 최초 게임 시작 카운트다운
+assert.equal(state.phase, 'READY');
+state = gameReducer(state, { type: 'TICK_COUNTDOWN', countdown: 1 });
+state = gameReducer(state, { type: 'START_RPS' });
+assert.equal(state.phase, 'RPS_INPUT');
+
+// 2. 최초 1회만 선공 결정을 위한 가위바위보 진행
+state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
+state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'SCISSORS' });
+state = gameReducer(state, { type: 'RESOLVE_RPS' });
+assert.equal(state.phase, 'CHAM_INPUT');
+assert.equal(state.p1.role, 'ATTACKER');
+assert.equal(state.p2.role, 'DEFENDER');
+
+// 3. 이후 라운드는 가위바위보 없이 2초 참참참 턴이 연속 진행됨
 for (let round = 1; round <= 5; round++) {
-  assert.equal(state.phase, 'READY');
-  assert.equal(state.round, round);
-
-  // Ready 카운트다운
-  state = gameReducer(state, { type: 'TICK_COUNTDOWN', countdown: 1 });
-  state = gameReducer(state, { type: 'START_RPS' });
-  assert.equal(state.phase, 'RPS_INPUT');
-
-  // 1P: Rock, 2P: Scissors -> 1P 공격수
-  state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
-  state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'SCISSORS' });
-  state = gameReducer(state, { type: 'RESOLVE_RPS' });
   assert.equal(state.phase, 'CHAM_INPUT');
-  assert.equal(state.p1.role, 'ATTACKER');
-  assert.equal(state.p2.role, 'DEFENDER');
+  assert.equal(state.round, round);
+  assert.equal(state.p1.role, 'ATTACKER'); // 공격 성공자는 계속 공격 유지
 
   // 참참참: 1P Left, 2P Left -> HIT!
   state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
@@ -128,7 +131,7 @@ for (let round = 1; round <= 5; round++) {
     assert.equal(isMatchPoint, true, `Round ${round} should be match point`);
   }
 
-  // 라운드 결과 검사
+  // 라운드 결과 검사 -> 공격 성공이므로 계속 공격권 유지하며 즉시 CHAM_INPUT 진입
   state = gameReducer(state, { type: 'CHECK_ROUND_RESULT' });
 }
 
@@ -136,12 +139,51 @@ for (let round = 1; round <= 5; round++) {
 assert.equal(state.phase, 'GAME_OVER');
 assert.equal(state.winner, 'p1');
 assert.equal(state.p2.damage, 5);
-console.log('✅ 1P vs CPU 5라운드 완승 및 KO 시뮬레이션 통과');
+console.log('✅ 1회 RPS 선공 결정 + 5연속 참참참 공격 성공 및 KO 시뮬레이션 통과');
 
 // -------------------------------------------------------------
-// 2-B. 승리자 / 패배자 결과 사운드 및 모달 분기 무결성 검증
+// 2-B. 수비 성공 시 공수 전환 (Role Reversal) 하네스 검증
 // -------------------------------------------------------------
-console.log('\n[Harness 2-B] 승리자 vs 패배자 결과 사운드/UI 분기 판정 검증');
+console.log('\n[Harness 2-B] 수비 성공 시 공수 전환(Role Reversal) 무결성 검증');
+let revState = createInitialState('1P_CPU');
+revState = gameReducer(revState, { type: 'START_GAME', mode: '1P_CPU' });
+revState = gameReducer(revState, { type: 'START_RPS' });
+revState = gameReducer(revState, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
+revState = gameReducer(revState, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'SCISSORS' });
+revState = gameReducer(revState, { type: 'RESOLVE_RPS' });
+assert.equal(revState.p1.role, 'ATTACKER');
+assert.equal(revState.p2.role, 'DEFENDER');
+
+// 1턴: 1P Left, 2P Right -> 수비 성공 (DODGE)
+revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
+revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
+revState = gameReducer(revState, { type: 'RESOLVE_CHAM' });
+assert.equal(revState.lastOutcome, 'DODGE');
+assert.equal(revState.p2.damage, 0);
+
+// 결과 검사 -> 수비 성공했으므로 공수 전환! (P1=DEFENDER, P2=ATTACKER)
+revState = gameReducer(revState, { type: 'CHECK_ROUND_RESULT' });
+assert.equal(revState.phase, 'CHAM_INPUT');
+assert.equal(revState.round, 2);
+assert.equal(revState.p1.role, 'DEFENDER'); // 1P 수비수로 전환
+assert.equal(revState.p2.role, 'ATTACKER'); // 2P 공격수로 전환
+
+// 2턴: 2P(공격) Right, 1P(수비) Left -> 다시 수비 성공 (DODGE)
+revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
+revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
+revState = gameReducer(revState, { type: 'RESOLVE_CHAM' });
+assert.equal(revState.lastOutcome, 'DODGE');
+
+// 결과 검사 -> 다시 공수 전환! (P1=ATTACKER, P2=DEFENDER)
+revState = gameReducer(revState, { type: 'CHECK_ROUND_RESULT' });
+assert.equal(revState.p1.role, 'ATTACKER'); // 1P 다시 공격수로 복귀!
+assert.equal(revState.p2.role, 'DEFENDER');
+console.log('✅ 수비 성공 시 실시간 공수 전환 및 공수 핑퐁 턴 무결성 검증 통과');
+
+// -------------------------------------------------------------
+// 2-C. 승리자 / 패배자 결과 사운드 및 모달 분기 무결성 검증
+// -------------------------------------------------------------
+console.log('\n[Harness 2-C] 승리자 vs 패배자 결과 사운드/UI 분기 판정 검증');
 
 // 1P vs CPU 모드에서 1P 승리 시: 로컬 플레이어 = 승리자 -> victory.mp3
 const is1PWinner = state.mode === '1P_CPU' ? state.winner === 'p1' : true;

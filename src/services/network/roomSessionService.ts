@@ -181,8 +181,12 @@ class RoomSessionService {
 
       let hitTarget: 'p1' | 'p2' | null = null;
       if (isHit) {
-        // P1이 공격수였다면 피격자는 P2, 아니면 P1
+        // 공격 성공 시 피격자 데미지 부여 및 공격권(currentAttacker) 유지
         hitTarget = this.currentAttacker === 'p1' ? 'p2' : 'p1';
+      } else {
+        // 수비 성공 시 데미지 없음 및 공수 전환!
+        hitTarget = null;
+        this.currentAttacker = this.currentAttacker === 'p1' ? 'p2' : 'p1';
       }
 
       if (hitTarget === 'p1') this.p1Damage = incrementDamage(this.p1Damage);
@@ -204,6 +208,13 @@ class RoomSessionService {
 
       this.resetTurnInputs();
     }
+  }
+
+  public resolveChamOnTimeout(): void {
+    if (this.myRole !== 'p1') return;
+    if (this.p1Cham === null) this.p1Cham = Math.random() > 0.5 ? 'LEFT' : 'RIGHT';
+    if (this.p2Cham === null) this.p2Cham = Math.random() > 0.5 ? 'LEFT' : 'RIGHT';
+    this.checkChamResolution();
   }
 
   public leaveRoom(): void {

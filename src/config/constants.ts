@@ -5,8 +5,8 @@
 export const GAME_CONFIG = {
   MAX_DAMAGE: 5,
   COUNTDOWN_STEP_MS: 500, // READY 단계 3, 2, 1 각 0.5초
-  RPS_LIMIT_MS: 1500,     // 가위바위보 대기 시간 1.5초
-  CHAM_LIMIT_MS: 800,     // 찰나의 참참참 타이머 0.8초
+  RPS_LIMIT_MS: 1500,     // 최초 선공 결정 가위바위보 대기 시간 1.5초
+  CHAM_LIMIT_MS: 2000,    // 참참참 카운트다운 타이머 2.0초 (공격/수비 방향 결정)
   RESOLVE_DISPLAY_MS: 1300, // 피격/회피 결과 연출 시간
   NEXT_ROUND_DELAY_MS: 1000,
 } as const;

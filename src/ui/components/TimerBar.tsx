@@ -5,12 +5,14 @@ interface TimerBarProps {
   ratio: number; // 0.0 ~ 1.0
   label?: string;
   isUrgent?: boolean;
+  totalSeconds?: number;
 }
 
 export const TimerBar: React.FC<TimerBarProps> = ({
   ratio,
   label = '타이머',
   isUrgent = false,
+  totalSeconds = 1.5,
 }) => {
   const percentage = Math.max(0, Math.min(100, Math.round(ratio * 100)));
 
@@ -30,7 +32,7 @@ export const TimerBar: React.FC<TimerBarProps> = ({
           {label}
         </span>
         <span className={`${ratio < 0.3 ? 'text-red-400 font-extrabold text-sm' : 'text-slate-400'}`}>
-          {(ratio * 1.5).toFixed(1)}s
+          {(ratio * totalSeconds).toFixed(1)}s
         </span>
       </div>
 

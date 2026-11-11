@@ -37,7 +37,7 @@ export function useGameLoop() {
   useEffect(() => {
     p1SubmittedRef.current = false;
     p2SubmittedRef.current = false;
-  }, [state.phase]);
+  }, [state.phase, state.round]);
 
   // 1. 온라인 룸 세션 연결 및 이벤트 바인딩
   const setupOnlineRoom = useCallback((data: MatchFoundData) => {
@@ -123,7 +123,7 @@ export function useGameLoop() {
       const aiDelay =
         state.phase === 'RPS_INPUT'
           ? 400 + Math.random() * 400
-          : 200 + Math.random() * 200;
+          : 500 + Math.random() * 800; // 2초 카운트다운 중 0.5~1.3초 사이에 AI 결정
       aiTimer = setTimeout(() => {
         if (stateRef.current.phase === 'RPS_INPUT') {
           const cpuChoice = getCpuRpsChoice();
@@ -143,16 +143,27 @@ export function useGameLoop() {
 
       dispatch({ type: 'UPDATE_TIMER', ratio: remainingRatio });
 
-      const bothInputted =
-        p1SubmittedRef.current &&
-        (stateRef.current.p2.isAi ? p2SubmittedRef.current : p2SubmittedRef.current);
+      const isRps = stateRef.current.phase === 'RPS_INPUT';
+      const rpsBothInputted = isRps && p1SubmittedRef.current && p2SubmittedRef.current;
 
-      if (remainingRatio <= 0 || bothInputted) {
+      // RPS는 둘 다 선택 시 즉시 결과 판정
+      // 참참참은 2초 카운트다운 동안 방향을 결정하고 타이머 종료 시(remainingRatio <= 0) 결과 반영!
+      if (remainingRatio <= 0 || rpsBothInputted) {
         if (stateRef.current.mode !== 'ONLINE_MATCH') {
           if (stateRef.current.phase === 'RPS_INPUT') {
             dispatch({ type: 'RESOLVE_RPS' });
           } else if (stateRef.current.phase === 'CHAM_INPUT') {
+            if (!stateRef.current.p1.chamDirection) {
+              dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: getCpuChamDirection() });
+            }
+            if (!stateRef.current.p2.chamDirection) {
+              dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: getCpuChamDirection() });
+            }
             dispatch({ type: 'RESOLVE_CHAM' });
+          }
+        } else {
+          if (stateRef.current.phase === 'CHAM_INPUT' && remainingRatio <= 0) {
+            roomSessionService.resolveChamOnTimeout();
           }
         }
         return;
@@ -167,7 +178,7 @@ export function useGameLoop() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (aiTimer) clearTimeout(aiTimer);
     };
-  }, [state.phase, state.mode]);
+  }, [state.phase, state.round, state.mode]);
 
   // 4. 결과 연출 및 사운드
   useEffect(() => {
@@ -220,7 +231,6 @@ export function useGameLoop() {
         dispatch({ type: 'SET_RPS_INPUT', playerId: 'p1', choice: value as RPSChoice });
         if (isOnline) roomSessionService.submitRps(value as RPSChoice);
       } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
-        if (p1SubmittedRef.current) return;
         p1SubmittedRef.current = true;
         dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: value as ChamDirection });
         if (isOnline) roomSessionService.submitCham(value as ChamDirection);
@@ -243,7 +253,6 @@ export function useGameLoop() {
         dispatch({ type: 'SET_RPS_INPUT', playerId: 'p2', choice: value as RPSChoice });
         if (isOnline) roomSessionService.submitRps(value as RPSChoice);
       } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
-        if (p2SubmittedRef.current) return;
         p2SubmittedRef.current = true;
         dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: value as ChamDirection });
         if (isOnline) roomSessionService.submitCham(value as ChamDirection);
