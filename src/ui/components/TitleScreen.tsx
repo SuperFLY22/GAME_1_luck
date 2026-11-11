@@ -21,13 +21,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center select-none">
+    <div className="w-full max-w-lg mx-auto py-4 sm:py-8 px-4 flex flex-col items-center justify-center text-center select-none">
       {/* 음소거 토글 버튼 */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 z-20">
         <button
           type="button"
           onClick={onToggleMute}
-          className="p-2.5 bg-slate-900 border-2 border-slate-700 rounded-xl text-slate-300 hover:text-white transition-colors shadow-lg"
+          className="p-2.5 bg-slate-900/90 border-2 border-slate-700 rounded-xl text-slate-300 hover:text-white transition-colors shadow-lg"
           title={isMuted ? '소리 켜기' : '음소거'}
         >
           {isMuted ? <VolumeX className="w-5 h-5 text-rose-400" /> : <Volume2 className="w-5 h-5 text-emerald-400" />}
@@ -35,15 +35,15 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </div>
 
       {/* 로고 & 타이틀 */}
-      <div className="relative mb-5">
+      <div className="relative mb-3 sm:mb-5">
         <div className="text-amber-400 text-xs sm:text-sm font-black tracking-widest uppercase mb-1 bg-amber-950/80 px-3 py-1 rounded-full border border-amber-600 inline-block shadow-md">
           🔥 ULTRA RETRO COMIC ARCADE 🔥
         </div>
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-amber-400 to-rose-600 drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] tracking-tight font-comic">
-          참! 참! 참!
+          이리와 딱 대
         </h1>
         <p className="text-slate-400 text-sm sm:text-base font-bold mt-1">
-          가위바위보로 공격권을 잡고, 0.8초의 찰나에 뺨을 때려라!
+          가위바위보로 공격권을 잡고, 0.8초의 찰나에 찰싹!
         </p>
       </div>
 

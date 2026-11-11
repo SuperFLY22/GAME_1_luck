@@ -273,7 +273,7 @@ export function useGameLoop() {
         if (isOnline) {
           roomSessionService.submitCham(value as ChamDirection);
         } else {
-          // 1P vs CPU 또는 로컬 모드: 상대방(P2/AI)이 이미 선택했다면 3초를 기다리지 않고 즉시 판정!
+          // 1P vs CPU: 상대방(CPU)이 이미 선택했다면 3초를 기다리지 않고 즉시 판정!
           if (p2SubmittedRef.current || Boolean(cur.p2.chamDirection)) {
             setTimeout(() => {
               if (stateRef.current.phase === 'CHAM_INPUT') {
