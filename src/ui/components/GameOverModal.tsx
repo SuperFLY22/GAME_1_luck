@@ -23,13 +23,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   const isOnline = state.mode === 'ONLINE_MATCH';
   const opponentLeft = state.online?.opponentLeft;
 
-  // 로컬 플레이어 기준 승패 판단 (1P_CPU는 p1, ONLINE_MATCH는 myRoleInRoom, 2P_LOCAL은 로컬 공유)
-  const isLocalWinner =
-    state.mode === 'ONLINE_MATCH'
-      ? state.winner === state.online?.myRoleInRoom
-      : state.mode === '1P_CPU'
-        ? state.winner === 'p1'
-        : true;
+  // 플레이어 기준 승패 판단 (ONLINE_MATCH는 myRoleInRoom, 1P_CPU는 항상 p1)
+  const isLocalWinner = isOnline
+    ? state.winner === state.online?.myRoleInRoom
+    : state.winner === 'p1';
 
   useEffect(() => {
     if (isLocalWinner) {

@@ -72,12 +72,10 @@ export const App: React.FC = () => {
             onP1Input={handleP1Input}
             onP2Input={handleP2Input}
             myPlayerId={
-              // FEAT-02: 온라인은 서버 지정 역할, 솔로(1P_CPU)는 항상 p1, 로컬 2P는 화면공유라 undefined
+              // 온라인은 서버 지정 역할(p1 또는 p2), 솔로(1P_CPU)는 항상 p1
               state.mode === 'ONLINE_MATCH'
                 ? state.online?.myRoleInRoom
-                : state.mode === '1P_CPU'
-                ? 'p1'
-                : undefined
+                : 'p1'
             }
           />
           {state.phase === 'GAME_OVER' && (

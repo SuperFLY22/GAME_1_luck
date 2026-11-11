@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { GAME_CONFIG, KEY_BINDINGS } from '../../config/constants';
+import { GAME_CONFIG } from '../../config/constants';
 import {
   createInitialState,
   gameReducer,
@@ -102,34 +102,24 @@ export function useGameLoop() {
     return () => clearTimeout(timer);
   }, [state.phase, state.countdown, state.mode, state.online?.myRoleInRoom]);
 
-  // 3. 타이머 루프 (RPS_INPUT & CHAM_INPUT)
+  // 3. 참참참 타이머 루프 (CHAM_INPUT 전용: 2초 카운트다운)
+  // * 가위바위보(RPS_INPUT)는 시간제한 없이 자유롭게 고민 후 선택!
   useEffect(() => {
-    if (state.phase !== 'RPS_INPUT' && state.phase !== 'CHAM_INPUT') {
+    if (state.phase !== 'CHAM_INPUT') {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       return;
     }
 
-    const duration =
-      state.phase === 'RPS_INPUT'
-        ? GAME_CONFIG.RPS_LIMIT_MS
-        : GAME_CONFIG.CHAM_LIMIT_MS;
-
+    const duration = GAME_CONFIG.CHAM_LIMIT_MS;
     timerStartRef.current = performance.now();
     timerDurationRef.current = duration;
 
-    // AI 자동 입력 (1P vs CPU 전용)
+    // AI 자동 입력 (1P vs CPU 전용: 0.5~1.3초 사이에 참참참 방향 결정)
     let aiTimer: ReturnType<typeof setTimeout> | null = null;
     if (state.p2.isAi) {
-      const aiDelay =
-        state.phase === 'RPS_INPUT'
-          ? 400 + Math.random() * 400
-          : 500 + Math.random() * 800; // 2초 카운트다운 중 0.5~1.3초 사이에 AI 결정
+      const aiDelay = 500 + Math.random() * 800;
       aiTimer = setTimeout(() => {
-        if (stateRef.current.phase === 'RPS_INPUT') {
-          const cpuChoice = getCpuRpsChoice();
-          dispatch({ type: 'SET_RPS_INPUT', playerId: 'p2', choice: cpuChoice });
-          p2SubmittedRef.current = true;
-        } else if (stateRef.current.phase === 'CHAM_INPUT') {
+        if (stateRef.current.phase === 'CHAM_INPUT') {
           const cpuDir = getCpuChamDirection();
           dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: cpuDir });
           p2SubmittedRef.current = true;
@@ -143,28 +133,18 @@ export function useGameLoop() {
 
       dispatch({ type: 'UPDATE_TIMER', ratio: remainingRatio });
 
-      const isRps = stateRef.current.phase === 'RPS_INPUT';
-      const rpsBothInputted = isRps && p1SubmittedRef.current && p2SubmittedRef.current;
-
-      // RPS는 둘 다 선택 시 즉시 결과 판정
-      // 참참참은 2초 카운트다운 동안 방향을 결정하고 타이머 종료 시(remainingRatio <= 0) 결과 반영!
-      if (remainingRatio <= 0 || rpsBothInputted) {
+      // 참참참 2초 카운트다운 종료 시 결과 판정
+      if (remainingRatio <= 0) {
         if (stateRef.current.mode !== 'ONLINE_MATCH') {
-          if (stateRef.current.phase === 'RPS_INPUT') {
-            dispatch({ type: 'RESOLVE_RPS' });
-          } else if (stateRef.current.phase === 'CHAM_INPUT') {
-            if (!stateRef.current.p1.chamDirection) {
-              dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: getCpuChamDirection() });
-            }
-            if (!stateRef.current.p2.chamDirection) {
-              dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: getCpuChamDirection() });
-            }
-            dispatch({ type: 'RESOLVE_CHAM' });
+          if (!stateRef.current.p1.chamDirection) {
+            dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: getCpuChamDirection() });
           }
+          if (!stateRef.current.p2.chamDirection) {
+            dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: getCpuChamDirection() });
+          }
+          dispatch({ type: 'RESOLVE_CHAM' });
         } else {
-          if (stateRef.current.phase === 'CHAM_INPUT' && remainingRatio <= 0) {
-            roomSessionService.resolveChamOnTimeout();
-          }
+          roomSessionService.resolveChamOnTimeout();
         }
         return;
       }
@@ -178,9 +158,9 @@ export function useGameLoop() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (aiTimer) clearTimeout(aiTimer);
     };
-  }, [state.phase, state.round, state.mode]);
+  }, [state.phase, state.round, state.mode, state.p2.isAi]);
 
-  // 4. 결과 연출 및 사운드
+  // 4. 결과 연출 및 사운드 (RESOLVE & RPS_RESULT)
   useEffect(() => {
     if (state.phase === 'RESOLVE') {
       if (state.lastOutcome === 'HIT') {
@@ -196,15 +176,27 @@ export function useGameLoop() {
       return () => clearTimeout(timer);
     }
 
-    if (state.lastOutcome === 'TIE') {
+    // 가위바위보 결과 노출 (1.5초간 서로 무엇을 냈는지 확인 후 다음 단계로 전이)
+    if (state.phase === 'RPS_RESULT') {
+      const isTie = state.lastOutcome === 'TIE';
       const timer = setTimeout(() => {
-        dispatch({ type: 'RETRY_RPS_TIE' });
-        soundManager.playRPSChant();
-      }, 700);
+        if (isTie) {
+          dispatch({ type: 'RETRY_RPS_TIE' });
+          soundManager.playRPSChant();
+          if (state.mode === 'ONLINE_MATCH' && state.online?.myRoleInRoom === 'p1') {
+            roomSessionService.startRpsPhase();
+          }
+        } else {
+          dispatch({ type: 'START_CHAM_PHASE' });
+          if (state.mode === 'ONLINE_MATCH' && state.online?.myRoleInRoom === 'p1') {
+            roomSessionService.startChamPhase();
+          }
+        }
+      }, 1500);
 
       return () => clearTimeout(timer);
     }
-  }, [state.phase, state.lastOutcome]);
+  }, [state.phase, state.lastOutcome, state.mode, state.online?.myRoleInRoom]);
 
   // 5. BGM 제어
   useEffect(() => {
@@ -229,7 +221,20 @@ export function useGameLoop() {
         if (p1SubmittedRef.current) return;
         p1SubmittedRef.current = true;
         dispatch({ type: 'SET_RPS_INPUT', playerId: 'p1', choice: value as RPSChoice });
-        if (isOnline) roomSessionService.submitRps(value as RPSChoice);
+        if (isOnline) {
+          roomSessionService.submitRps(value as RPSChoice);
+        } else if (cur.mode === '1P_CPU') {
+          // 1P vs CPU: 1P가 고르면 CPU도 즉시 패를 결정하여 동시 판정
+          const cpuChoice = getCpuRpsChoice();
+          p2SubmittedRef.current = true;
+          dispatch({ type: 'SET_RPS_INPUT', playerId: 'p2', choice: cpuChoice });
+          dispatch({ type: 'RESOLVE_RPS' });
+        } else {
+          // 2P_LOCAL: 2P가 이미 선택했다면 즉시 결과 판정
+          if (p2SubmittedRef.current) {
+            dispatch({ type: 'RESOLVE_RPS' });
+          }
+        }
       } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
         p1SubmittedRef.current = true;
         dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: value as ChamDirection });
@@ -251,7 +256,14 @@ export function useGameLoop() {
         if (p2SubmittedRef.current) return;
         p2SubmittedRef.current = true;
         dispatch({ type: 'SET_RPS_INPUT', playerId: 'p2', choice: value as RPSChoice });
-        if (isOnline) roomSessionService.submitRps(value as RPSChoice);
+        if (isOnline) {
+          roomSessionService.submitRps(value as RPSChoice);
+        } else {
+          // 2P_LOCAL: 1P가 이미 선택했다면 즉시 결과 판정
+          if (p1SubmittedRef.current) {
+            dispatch({ type: 'RESOLVE_RPS' });
+          }
+        }
       } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
         p2SubmittedRef.current = true;
         dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: value as ChamDirection });
@@ -261,51 +273,34 @@ export function useGameLoop() {
     []
   );
 
-  // 7. 키보드 바인딩
+  // 7. 키보드 바인딩 (WASD 및 방향키 모두 지원)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
       const cur = stateRef.current;
-      const isSolo = cur.mode === '1P_CPU';
       const isOnline = cur.mode === 'ONLINE_MATCH';
-      const myRole = cur.online?.myRoleInRoom;
+      const myRole = cur.online?.myRoleInRoom ?? 'p1';
 
-      // 1P 조작
-      const p1Bindings = isSolo ? KEY_BINDINGS.SOLO_P1 : KEY_BINDINGS.P1_LOCAL;
-      const p1Left = p1Bindings.LEFT as readonly string[];
-      const p1Up = p1Bindings.UP as readonly string[];
-      const p1Right = p1Bindings.RIGHT as readonly string[];
+      // 로컬 플레이어 핸들러 선택 (온라인 P2 배정 시 onP2Input, 그 외 1P)
+      const submitHandler = isOnline && myRole === 'p2' ? handleP2Input : handleP1Input;
 
-      if (!isOnline || myRole === 'p1') {
-        if (p1Left.includes(e.code) || p1Left.includes(e.key)) {
-          if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'SCISSORS');
-          else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'LEFT');
-        } else if (p1Up.includes(e.code) || p1Up.includes(e.key)) {
-          if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'ROCK');
-          else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'UP');
-        } else if (p1Right.includes(e.code) || p1Right.includes(e.key)) {
-          if (cur.phase === 'RPS_INPUT') handleP1Input('rps', 'PAPER');
-          else if (cur.phase === 'CHAM_INPUT') handleP1Input('cham', 'RIGHT');
-        }
+      const code = e.code;
+      const key = e.key;
+
+      // 왼쪽: A, ArrowLeft
+      if (code === 'KeyA' || key === 'a' || key === 'A' || key === 'ArrowLeft' || code === 'ArrowLeft') {
+        if (cur.phase === 'RPS_INPUT') submitHandler('rps', 'SCISSORS');
+        else if (cur.phase === 'CHAM_INPUT') submitHandler('cham', 'LEFT');
       }
-
-      // 2P 조작
-      if (!isSolo && (!isOnline || myRole === 'p2')) {
-        const p2Bindings = KEY_BINDINGS.P2_LOCAL;
-        const p2Left = p2Bindings.LEFT as readonly string[];
-        const p2Up = p2Bindings.UP as readonly string[];
-        const p2Right = p2Bindings.RIGHT as readonly string[];
-
-        if (p2Left.includes(e.code) || p2Left.includes(e.key)) {
-          if (cur.phase === 'RPS_INPUT') handleP2Input('rps', 'SCISSORS');
-          else if (cur.phase === 'CHAM_INPUT') handleP2Input('cham', 'LEFT');
-        } else if (p2Up.includes(e.code) || p2Up.includes(e.key)) {
-          if (cur.phase === 'RPS_INPUT') handleP2Input('rps', 'ROCK');
-          else if (cur.phase === 'CHAM_INPUT') handleP2Input('cham', 'UP');
-        } else if (p2Right.includes(e.code) || p2Right.includes(e.key)) {
-          if (cur.phase === 'RPS_INPUT') handleP2Input('rps', 'PAPER');
-          else if (cur.phase === 'CHAM_INPUT') handleP2Input('cham', 'RIGHT');
-        }
+      // 위쪽: W, ArrowUp
+      else if (code === 'KeyW' || key === 'w' || key === 'W' || key === 'ArrowUp' || code === 'ArrowUp') {
+        if (cur.phase === 'RPS_INPUT') submitHandler('rps', 'ROCK');
+        else if (cur.phase === 'CHAM_INPUT') submitHandler('cham', 'UP');
+      }
+      // 오른쪽: D, ArrowRight
+      else if (code === 'KeyD' || key === 'd' || key === 'D' || key === 'ArrowRight' || code === 'ArrowRight') {
+        if (cur.phase === 'RPS_INPUT') submitHandler('rps', 'PAPER');
+        else if (cur.phase === 'CHAM_INPUT') submitHandler('cham', 'RIGHT');
       }
     };
 

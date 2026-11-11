@@ -2,13 +2,14 @@
  * 게임 도메인 모델 및 상태 인터페이스 정의
  */
 
-export type GameMode = '1P_CPU' | '2P_LOCAL' | 'ONLINE_MATCH';
+export type GameMode = 'ONLINE_MATCH' | '1P_CPU';
 
 export type GamePhase =
   | 'TITLE'
   | 'LOBBY'
   | 'READY'
   | 'RPS_INPUT'
+  | 'RPS_RESULT'
   | 'CHAM_INPUT'
   | 'RESOLVE'
   | 'CHECK_WINNER'

@@ -23,6 +23,7 @@ export type GameAction =
   | { type: 'START_RPS' }
   | { type: 'SET_RPS_INPUT'; playerId: 'p1' | 'p2'; choice: RPSChoice }
   | { type: 'RESOLVE_RPS' }
+  | { type: 'START_CHAM_PHASE' }
   | { type: 'RETRY_RPS_TIE' }
   | { type: 'SET_CHAM_INPUT'; playerId: 'p1' | 'p2'; direction: ChamDirection }
   | { type: 'RESOLVE_CHAM' }
@@ -65,22 +66,16 @@ export function createInitialPlayer(id: 'p1' | 'p2', isAi: boolean, name: string
   };
 }
 
-export function createInitialState(mode: GameMode = '1P_CPU'): GameEngineState {
+export function createInitialState(mode: GameMode = 'ONLINE_MATCH'): GameEngineState {
   const is1PCpu = mode === '1P_CPU';
-  const isLocal2P = mode === '2P_LOCAL';
   return {
     mode,
     phase: 'TITLE',
     round: 1,
     countdown: 3,
     timerRemainingRatio: 1.0,
-    // BUG-02: 2P_LOCAL 플레이어 이름 명확히 구분
-    p1: createInitialPlayer('p1', false,
-      is1PCpu ? '나 (1P)' : isLocal2P ? '플레이어 1 (1P)' : '나'
-    ),
-    p2: createInitialPlayer('p2', is1PCpu,
-      is1PCpu ? '알파참 (AI)' : isLocal2P ? '플레이어 2 (2P)' : '상대방'
-    ),
+    p1: createInitialPlayer('p1', false, is1PCpu ? '나 (1P)' : '나'),
+    p2: createInitialPlayer('p2', is1PCpu, is1PCpu ? '알파참 (AI)' : '상대방'),
     lastOutcome: null,
     hitTarget: null,
     winner: null,
@@ -180,10 +175,11 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
       if (p1Role === 'TIE') {
         return {
           ...state,
+          phase: 'RPS_RESULT',
           p1: { ...state.p1, rpsChoice: p1Choice, role: 'TIE' },
           p2: { ...state.p2, rpsChoice: p2Choice, role: 'TIE' },
           lastOutcome: 'TIE',
-          message: '비겼다! 다시 한번!',
+          message: '비겼습니다! 다시 한번!',
         };
       }
 
@@ -191,12 +187,12 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
 
       return {
         ...state,
-        phase: 'CHAM_INPUT',
+        phase: 'RPS_RESULT',
         timerRemainingRatio: 1.0,
         p1: { ...state.p1, rpsChoice: p1Choice, role: p1Role, chamDirection: null },
         p2: { ...state.p2, rpsChoice: p2Choice, role: p2Role, chamDirection: null },
         lastOutcome: null,
-        message: `${attackerName} 선공 확정! 2초 카운트 참! 참! 참!`,
+        message: `${attackerName} 선공 확정!`,
       };
     }
 
@@ -204,22 +200,37 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
       if (action.isTie) {
         return {
           ...state,
+          phase: 'RPS_RESULT',
           p1: { ...state.p1, rpsChoice: action.p1Choice, role: 'TIE' },
           p2: { ...state.p2, rpsChoice: action.p2Choice, role: 'TIE' },
           lastOutcome: 'TIE',
-          message: '비겼다! 다시 한번!',
+          message: '비겼습니다! 다시 한번!',
         };
       }
 
       const attackerName = action.p1Role === 'ATTACKER' ? state.p1.name : state.p2.name;
       return {
         ...state,
-        phase: 'CHAM_INPUT',
+        phase: 'RPS_RESULT',
         timerRemainingRatio: 1.0,
         p1: { ...state.p1, rpsChoice: action.p1Choice, role: action.p1Role, chamDirection: null },
         p2: { ...state.p2, rpsChoice: action.p2Choice, role: action.p2Role, chamDirection: null },
         lastOutcome: null,
-        message: `${attackerName} 선공 확정! 2초 카운트 참! 참! 참!`,
+        message: `${attackerName} 선공 확정!`,
+      };
+    }
+
+    case 'START_CHAM_PHASE': {
+      if (state.phase !== 'RPS_RESULT') return state;
+      const attackerName = state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name;
+      return {
+        ...state,
+        phase: 'CHAM_INPUT',
+        timerRemainingRatio: 1.0,
+        p1: { ...state.p1, chamDirection: null },
+        p2: { ...state.p2, chamDirection: null },
+        lastOutcome: null,
+        message: `${attackerName} 선공! 2초 카운트 참! 참! 참!`,
       };
     }
 
@@ -228,9 +239,10 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         ...state,
         phase: 'RPS_INPUT',
         timerRemainingRatio: 1.0,
-        p1: { ...state.p1, rpsChoice: null, role: null },
-        p2: { ...state.p2, rpsChoice: null, role: null },
-        message: '가위... 바위...',
+        lastOutcome: null,
+        p1: { ...state.p1, rpsChoice: null, role: null, chamDirection: null },
+        p2: { ...state.p2, rpsChoice: null, role: null, chamDirection: null },
+        message: '선공 결정 가위... 바위... 보!',
       };
     }
 

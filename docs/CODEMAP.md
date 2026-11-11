@@ -104,7 +104,7 @@ GAME_1_luck/
 ## 4. 핵심 데이터 모델 및 계약 (src/models/types.ts)
 
 ```typescript
-export type GameMode = '1P_CPU' | '1P_2P_LOCAL' | 'ONLINE_MATCH';
+export type GameMode = '1P_CPU' | 'ONLINE_MATCH';
 
 export type GamePhase =
   | 'TITLE'

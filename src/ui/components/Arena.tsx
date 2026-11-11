@@ -42,13 +42,21 @@ export const Arena: React.FC<ArenaProps> = ({
     return '❓ 대기 중';
   };
 
-  // 1P / 2P 동적 액션 및 손 스프라이트 매핑
+  // 가위바위보 손 기호 표시 헬퍼
+  const getRpsEmoji = (choice: RPSChoice) => {
+    if (choice === 'SCISSORS') return '✌️ 가위';
+    if (choice === 'ROCK') return '✊ 바위';
+    if (choice === 'PAPER') return '🖐️ 보';
+    return '❓';
+  };
+
+  // 1P / 2P 동적 액션 및 손 스프라이트 매핑 (RPS_RESULT 단계에서 양쪽이 낸 손을 당당하게 공개)
   const p1RpsSprite =
-    state.phase === 'RPS_INPUT' && state.p1.rpsChoice
+    state.phase === 'RPS_RESULT' && state.p1.rpsChoice
       ? `/assets/images/rps/rps_1p_${state.p1.rpsChoice.toLowerCase()}.png`
       : null;
   const p2RpsSprite =
-    state.phase === 'RPS_INPUT' && state.p2.rpsChoice
+    state.phase === 'RPS_RESULT' && state.p2.rpsChoice
       ? `/assets/images/rps/rps_2p_${state.p2.rpsChoice.toLowerCase()}.png`
       : null;
 
@@ -71,7 +79,7 @@ export const Arena: React.FC<ArenaProps> = ({
 
         <div className="flex flex-col items-center">
           <span className="text-xs font-extrabold text-amber-400 tracking-wider">
-            {state.phase === 'RPS_INPUT' ? '선공 결정전' : `TURN ${state.round}`}
+            {state.phase === 'RPS_INPUT' || state.phase === 'RPS_RESULT' ? '선공 결정전' : `TURN ${state.round}`}
           </span>
           <span className="text-[10px] text-slate-400 font-semibold">
             {state.mode === 'ONLINE_MATCH'
@@ -145,8 +153,13 @@ export const Arena: React.FC<ArenaProps> = ({
           {/* 선택 말풍선 */}
           <div className="mt-2 min-h-[30px] flex items-center justify-center">
             {state.phase === 'RPS_INPUT' && state.p1.rpsChoice && (
-              <span className="text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-2 py-0.5 rounded-full animate-bounce">
+              <span className="text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-2.5 py-0.5 rounded-full animate-pulse">
                 선택 완료!
+              </span>
+            )}
+            {state.phase === 'RPS_RESULT' && state.p1.rpsChoice && (
+              <span className="text-sm font-black bg-sky-500/30 text-white border-2 border-sky-400 px-3 py-1 rounded-xl shadow-md animate-bounce">
+                {getRpsEmoji(state.p1.rpsChoice)}
               </span>
             )}
             {state.phase === 'CHAM_INPUT' && state.p1.chamDirection && (
@@ -173,11 +186,30 @@ export const Arena: React.FC<ArenaProps> = ({
           )}
 
           {state.phase === 'RPS_INPUT' && (
-            <div className="flex flex-col items-center gap-2 w-full">
+            <div className="flex flex-col items-center gap-1.5 w-full">
               <span className="text-base sm:text-xl font-black text-white bg-slate-900/90 px-4 py-1.5 rounded-xl border-2 border-amber-400 shadow-md">
-                선공 결정 가위! 바위!...
+                선공 결정 가위! 바위! 보!
               </span>
-              <TimerBar ratio={state.timerRemainingRatio} label="선공 결정!" totalSeconds={1.5} />
+              <span className="text-xs text-amber-300 font-bold bg-slate-800/80 px-3 py-1 rounded-lg border border-slate-700">
+                ⏳ 제한시간 없음! 자유롭게 선택하세요
+              </span>
+            </div>
+          )}
+
+          {state.phase === 'RPS_RESULT' && (
+            <div className="flex flex-col items-center gap-2 w-full animate-scaleUp">
+              <span
+                className={`text-base sm:text-xl font-black px-4 py-1.5 rounded-xl border-2 shadow-lg ${
+                  state.lastOutcome === 'TIE'
+                    ? 'text-amber-300 bg-amber-950/90 border-amber-400 animate-pulse'
+                    : 'text-emerald-300 bg-emerald-950/90 border-emerald-400'
+                }`}
+              >
+                {state.message}
+              </span>
+              <div className="text-xs sm:text-sm font-bold text-slate-200 bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-700">
+                {state.p1.name} ({getRpsEmoji(state.p1.rpsChoice)}) vs {state.p2.name} ({getRpsEmoji(state.p2.rpsChoice)})
+              </div>
             </div>
           )}
 
@@ -226,8 +258,13 @@ export const Arena: React.FC<ArenaProps> = ({
           {/* 선택 말풍선 */}
           <div className="mt-2 min-h-[30px] flex items-center justify-center">
             {state.phase === 'RPS_INPUT' && state.p2.rpsChoice && (
-              <span className="text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-2 py-0.5 rounded-full animate-bounce">
+              <span className="text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-2.5 py-0.5 rounded-full animate-pulse">
                 선택 완료!
+              </span>
+            )}
+            {state.phase === 'RPS_RESULT' && state.p2.rpsChoice && (
+              <span className="text-sm font-black bg-rose-500/30 text-white border-2 border-rose-400 px-3 py-1 rounded-xl shadow-md animate-bounce">
+                {getRpsEmoji(state.p2.rpsChoice)}
               </span>
             )}
             {state.phase === 'CHAM_INPUT' && state.p2.chamDirection && (

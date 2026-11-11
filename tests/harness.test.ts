@@ -120,9 +120,13 @@ assert.equal(state.phase, 'RPS_INPUT');
 state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
 state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'SCISSORS' });
 state = gameReducer(state, { type: 'RESOLVE_RPS' });
-assert.equal(state.phase, 'CHAM_INPUT');
+assert.equal(state.phase, 'RPS_RESULT');
 assert.equal(state.p1.role, 'ATTACKER');
 assert.equal(state.p2.role, 'DEFENDER');
+
+// RPS 결과 확인 후 참참참 진입
+state = gameReducer(state, { type: 'START_CHAM_PHASE' });
+assert.equal(state.phase, 'CHAM_INPUT');
 
 // 3. 이후 라운드는 가위바위보 없이 2초 참참참 턴이 연속 진행됨 (좌 / 상 / 우 3방향 판정)
 const testDirs: ('LEFT' | 'UP' | 'RIGHT')[] = ['LEFT', 'UP', 'RIGHT', 'LEFT', 'UP'];
@@ -167,8 +171,12 @@ revState = gameReducer(revState, { type: 'START_RPS' });
 revState = gameReducer(revState, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
 revState = gameReducer(revState, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'SCISSORS' });
 revState = gameReducer(revState, { type: 'RESOLVE_RPS' });
+assert.equal(revState.phase, 'RPS_RESULT');
 assert.equal(revState.p1.role, 'ATTACKER');
 assert.equal(revState.p2.role, 'DEFENDER');
+
+revState = gameReducer(revState, { type: 'START_CHAM_PHASE' });
+assert.equal(revState.phase, 'CHAM_INPUT');
 
 // 1턴: 1P Left, 2P Right -> 수비 성공 (DODGE)
 revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });

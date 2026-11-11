@@ -51,13 +51,33 @@ assert.equal(state.countdown, 3);
 state = gameReducer(state, { type: 'START_RPS' });
 assert.equal(state.phase, 'RPS_INPUT');
 
-// 3. 입력: 1P 바위, 2P 가위 -> 1P 공격수
+// 2-1. 가위바위보 무승부(TIE) 및 재시도 검증
+state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
+state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'ROCK' });
+state = gameReducer(state, { type: 'RESOLVE_RPS' });
+assert.equal(state.phase, 'RPS_RESULT');
+assert.equal(state.lastOutcome, 'TIE');
+assert.equal(state.p1.role, 'TIE');
+assert.equal(state.p2.role, 'TIE');
+
+// 무승부 후 재시도 액션
+state = gameReducer(state, { type: 'RETRY_RPS_TIE' });
+assert.equal(state.phase, 'RPS_INPUT');
+assert.equal(state.p1.rpsChoice, null);
+assert.equal(state.p2.rpsChoice, null);
+assert.equal(state.lastOutcome, null);
+
+// 3. 재입력: 1P 바위, 2P 가위 -> 1P 공격수 승리
 state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p1', choice: 'ROCK' });
 state = gameReducer(state, { type: 'SET_RPS_INPUT', playerId: 'p2', choice: 'SCISSORS' });
 state = gameReducer(state, { type: 'RESOLVE_RPS' });
-assert.equal(state.phase, 'CHAM_INPUT');
+assert.equal(state.phase, 'RPS_RESULT');
 assert.equal(state.p1.role, 'ATTACKER');
 assert.equal(state.p2.role, 'DEFENDER');
+
+// 3-1. 참참참 시작 단계로 전이
+state = gameReducer(state, { type: 'START_CHAM_PHASE' });
+assert.equal(state.phase, 'CHAM_INPUT');
 
 // 4. 참참참 입력: 공격수 1P=LEFT, 수비수 2P=LEFT -> HIT!
 state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });

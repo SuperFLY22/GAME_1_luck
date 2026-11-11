@@ -15,45 +15,26 @@ export const KeyGuide: React.FC<KeyGuideProps> = ({ mode, phase }) => {
   }
 
   return (
-    <div className="hidden sm:flex flex-col items-center gap-2 p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-700 shadow-xl backdrop-blur-sm max-w-xl mx-auto">
+    <div className="hidden sm:flex flex-col items-center gap-2 p-3 bg-slate-900/90 rounded-2xl border-2 border-slate-700 shadow-xl backdrop-blur-sm max-w-xl mx-auto select-none">
       <div className="text-xs font-black text-amber-300 uppercase tracking-widest">
-        🎮 키보드 가이드 ({mode === '1P_CPU' ? '1P vs CPU' : '로컬 2P 대전'})
+        🎮 키보드 가이드 ({mode === 'ONLINE_MATCH' ? '실시간 온라인 대전' : 'AI 솔로 대전'})
       </div>
 
       <div className="flex items-center gap-8 text-xs font-bold text-slate-200">
-        {/* 1P 조작 안내 */}
         <div className="flex flex-col items-center gap-1">
-          <span className="text-sky-400 font-extrabold">{mode === '1P_CPU' ? '1P (또는 방향키)' : '1P (왼쪽 플레이어)'}</span>
+          <span className="text-sky-400 font-extrabold">내 입력 (WASD 또는 방향키 지원)</span>
           <div className="flex items-center gap-2">
             <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-              {isRps ? 'A : 가위 ✌️' : 'A : 왼쪽 👈'}
+              {isRps ? 'A 또는 ← : 가위 ✌️' : 'A 또는 ← : 왼쪽 👈'}
             </span>
             <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-              {isRps ? 'W : 바위 ✊' : 'W : 위쪽 👆'}
+              {isRps ? 'W 또는 ↑ : 바위 ✊' : 'W 또는 ↑ : 위쪽 👆'}
             </span>
             <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-              {isRps ? 'D : 보 🖐️' : 'D : 오른쪽 👉'}
+              {isRps ? 'D 또는 → : 보 🖐️' : 'D 또는 → : 오른쪽 👉'}
             </span>
           </div>
         </div>
-
-        {/* 2P 조작 안내 (2P 모드일 때만 표시) */}
-        {mode === '2P_LOCAL' && (
-          <div className="flex flex-col items-center gap-1 border-l-2 border-slate-700 pl-8">
-            <span className="text-rose-400 font-extrabold">2P (오른쪽 플레이어)</span>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-                {isRps ? '← : 가위 ✌️' : '← : 왼쪽 👈'}
-              </span>
-              <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-                {isRps ? '↑ : 바위 ✊' : '↑ : 위쪽 👆'}
-              </span>
-              <span className="px-2 py-1 bg-slate-800 border-2 border-slate-600 rounded-lg shadow-sm text-amber-400">
-                {isRps ? '→ : 보 🖐️' : '→ : 오른쪽 👉'}
-              </span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

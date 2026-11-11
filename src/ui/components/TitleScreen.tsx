@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Globe, Swords, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Bot, Globe, Volume2, VolumeX, Sparkles } from 'lucide-react';
 import type { GameMode } from '../../models/types';
 import { soundManager } from '../../services/sound/soundManager';
 
@@ -72,8 +72,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         )}
       </div>
 
-      {/* 실시간 온라인 매칭 메인 추천 버튼 */}
-      <div className="w-full max-w-md mt-4">
+      {/* 모드 선택 카드 영역: 온라인 매칭(메인) & AI 연습(테스트) */}
+      <div className="w-full max-w-md flex flex-col gap-3 mt-4">
+        {/* 1. 실시간 온라인 매칭 (메인 모드) */}
         <button
           type="button"
           onClick={() => handleStart('ONLINE_MATCH')}
@@ -95,28 +96,28 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </div>
           <span className="text-xl group-hover:translate-x-1 transition-transform">➡️</span>
         </button>
-      </div>
 
-      {/* 로컬 대전 및 CPU 모드 카드 버튼 */}
-      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-3">
+        {/* 2. AI 대전 모드 (테스트 & 솔로 연습) */}
         <button
           type="button"
           onClick={() => handleStart('1P_CPU')}
-          className="flex-1 flex flex-col items-center justify-center gap-1 p-3.5 bg-gradient-to-b from-sky-600 to-blue-800 hover:from-sky-500 hover:to-blue-700 text-white font-black rounded-xl border-b-4 border-blue-950 active:border-b-0 active:translate-y-1 transition-all shadow-lg group"
+          className="w-full flex items-center justify-between p-3.5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-black rounded-2xl border-2 border-slate-700 hover:border-sky-500/50 active:translate-y-0.5 transition-all shadow-lg group"
         >
-          <Bot className="w-6 h-6 group-hover:rotate-12 transition-transform text-amber-300" />
-          <span className="text-base tracking-wide">1P vs CPU (솔로 연습)</span>
-          <span className="text-[11px] text-sky-200 font-medium">인공지능과 1:1 대결</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleStart('2P_LOCAL')}
-          className="flex-1 flex flex-col items-center justify-center gap-1 p-3.5 bg-gradient-to-b from-amber-600 to-rose-800 hover:from-amber-500 hover:to-rose-700 text-white font-black rounded-xl border-b-4 border-rose-950 active:border-b-0 active:translate-y-1 transition-all shadow-lg group"
-        >
-          <Swords className="w-6 h-6 group-hover:-rotate-12 transition-transform text-yellow-200" />
-          <span className="text-base tracking-wide">1P vs 2P (로컬 2인)</span>
-          <span className="text-[11px] text-amber-200 font-medium">한 화면에서 2인 플레이</span>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-950/60 border border-sky-400/40 flex items-center justify-center group-hover:rotate-12 transition-transform">
+              <Bot className="w-6 h-6 text-sky-400" />
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black text-slate-100">AI 대전 (연습 모드)</span>
+                <span className="text-[10px] bg-sky-900 text-sky-200 border border-sky-700 px-1.5 py-0.2 rounded font-bold">
+                  TEST SOLO
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 font-medium">알파참 AI와 가볍게 1:1 테스트 플레이</span>
+            </div>
+          </div>
+          <span className="text-sm font-bold text-slate-400 group-hover:text-sky-300 transition-colors">시작 🤖</span>
         </button>
       </div>
 
