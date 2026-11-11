@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { assetRegistry } from './services/assets/assetRegistry';
+import React, { useState } from 'react';
 import { soundManager } from './services/sound/soundManager';
 import { Arena } from './ui/components/Arena';
 import { GameOverModal } from './ui/components/GameOverModal';
@@ -21,11 +20,6 @@ export const App: React.FC = () => {
   } = useGameLoop();
 
   const [isMuted, setIsMuted] = useState(soundManager.getIsMuted());
-
-  // 앱 기동 시 에셋 폴더 프로브 1회 실행
-  useEffect(() => {
-    assetRegistry.probeCustomAssets();
-  }, []);
 
   const handleStartGame = (mode: Parameters<typeof startGame>[0]) => {
     if (mode !== 'ONLINE_MATCH') {

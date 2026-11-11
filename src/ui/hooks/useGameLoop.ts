@@ -13,6 +13,7 @@ import type {
 import { matchmakingService, type MatchFoundData } from '../../services/network/matchmakingService';
 import { roomSessionService } from '../../services/network/roomSessionService';
 import { soundManager } from '../../services/sound/soundManager';
+import { useKeyboardControls } from './useKeyboardControls';
 
 export function useGameLoop() {
   const [state, dispatch] = useReducer(gameReducer, undefined, () =>
@@ -328,40 +329,12 @@ export function useGameLoop() {
     []
   );
 
-  // 7. 키보드 바인딩 (WASD 및 방향키 모두 지원)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      const cur = stateRef.current;
-      const isOnline = cur.mode === 'ONLINE_MATCH';
-      const myRole = cur.online?.myRoleInRoom ?? 'p1';
-
-      // 로컬 플레이어 핸들러 선택 (온라인 P2 배정 시 onP2Input, 그 외 1P)
-      const submitHandler = isOnline && myRole === 'p2' ? handleP2Input : handleP1Input;
-
-      const code = e.code;
-      const key = e.key;
-
-      // 왼쪽: A, ArrowLeft
-      if (code === 'KeyA' || key === 'a' || key === 'A' || key === 'ArrowLeft' || code === 'ArrowLeft') {
-        if (cur.phase === 'RPS_INPUT') submitHandler('rps', 'SCISSORS');
-        else if (cur.phase === 'CHAM_INPUT') submitHandler('cham', 'LEFT');
-      }
-      // 위쪽: W, ArrowUp
-      else if (code === 'KeyW' || key === 'w' || key === 'W' || key === 'ArrowUp' || code === 'ArrowUp') {
-        if (cur.phase === 'RPS_INPUT') submitHandler('rps', 'ROCK');
-        else if (cur.phase === 'CHAM_INPUT') submitHandler('cham', 'UP');
-      }
-      // 오른쪽: D, ArrowRight
-      else if (code === 'KeyD' || key === 'd' || key === 'D' || key === 'ArrowRight' || code === 'ArrowRight') {
-        if (cur.phase === 'RPS_INPUT') submitHandler('rps', 'PAPER');
-        else if (cur.phase === 'CHAM_INPUT') submitHandler('cham', 'RIGHT');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleP1Input, handleP2Input]);
+  // 7. 키보드 바인딩 (전용 훅으로 분리)
+  useKeyboardControls({
+    stateRef,
+    onP1Input: handleP1Input,
+    onP2Input: handleP2Input,
+  });
 
   // 8. 모드별 시작 함수
   const startGame = (mode: GameMode) => {

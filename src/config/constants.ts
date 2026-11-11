@@ -33,8 +33,6 @@ export const KEY_BINDINGS = {
 
 export const ASSET_PATHS = {
   IMAGES: {
-    P1_BASE: '/assets/images/p1_state_', // p1_state_0.png ~ 5.png
-    P2_BASE: '/assets/images/p2_state_', // p2_state_0.png ~ 5.png
     BACKGROUND: '/assets/images/bg_arcade.png',
   },
   SOUNDS: {
