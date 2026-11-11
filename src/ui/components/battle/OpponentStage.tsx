@@ -61,11 +61,8 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
     } else {
       activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
     }
-  } else if (phase === 'RPS_RESULT' && rpsSprite) {
-    // 가위바위보 손 공개
-    activeSpriteUrl = rpsSprite;
   } else {
-    // 기본 대기 / 카운트다운: 데미지 단계별 정면 얼굴 (0~5)
+    // 선공 결정(가위바위보) 및 기본 대기 / 카운트다운: 항상 데미지 단계별 정면 얼굴 (0~5)
     activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
   }
 
@@ -122,11 +119,28 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
           />
         </div>
 
-        {/* RPS 선택 말풍선 */}
+        {/* 가위바위보 결과 (캐릭터 본체 우측 배치) */}
         {phase === 'RPS_RESULT' && rpsChoice && (
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-30 bg-rose-950/90 border border-rose-400 text-white font-black text-xs sm:text-sm px-2.5 py-0.5 rounded-lg shadow-lg animate-bounce whitespace-nowrap">
-            {rpsChoice === 'ROCK' ? '✊ 바위' : rpsChoice === 'SCISSORS' ? '✌️ 가위' : '🖐️ 보'}
-          </div>
+          <aside
+            aria-label="상대방 가위바위보 결과"
+            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-30 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-rose-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-scaleUp pointer-events-none"
+          >
+            <div className="text-[10px] sm:text-xs font-black text-rose-300">선택</div>
+            {rpsSprite ? (
+              <img
+                src={rpsSprite}
+                alt={rpsChoice}
+                className="w-10 h-10 sm:w-14 sm:h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(244,63,94,0.6)]"
+              />
+            ) : (
+              <span className="text-2xl sm:text-3xl">
+                {rpsChoice === 'ROCK' ? '✊' : rpsChoice === 'SCISSORS' ? '✌️' : '🖐️'}
+              </span>
+            )}
+            <span className="text-white font-black text-[11px] sm:text-xs whitespace-nowrap bg-rose-600/90 border border-rose-400 px-2 py-0.5 rounded-md shadow-sm">
+              {rpsChoice === 'ROCK' ? '✊ 바위' : rpsChoice === 'SCISSORS' ? '✌️ 가위' : '🖐️ 보'}
+            </span>
+          </aside>
         )}
       </div>
     </div>

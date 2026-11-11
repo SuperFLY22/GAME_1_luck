@@ -25,14 +25,20 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
   const selfPlayer = isMeP1 ? state.p1 : state.p2;
   const oppPlayer = isMeP1 ? state.p2 : state.p1;
 
-  // 가위바위보 손 스프라이트 경로
+  // 가위바위보 손 스프라이트 경로 (public/assets/images/rps/rps_1p_*.png 및 rps_2p_*.png 매핑)
+  const getRpsSpriteUrl = (id: 'p1' | 'p2', choice: string | null) => {
+    if (!choice) return null;
+    const prefix = id === 'p1' ? '1p' : '2p';
+    return `/assets/images/rps/rps_${prefix}_${choice.toLowerCase()}.png`;
+  };
+
   const oppRpsSprite =
     state.phase === 'RPS_RESULT' && oppPlayer.rpsChoice
-      ? `/assets/images/rps/rps_${oppPlayer.id}_${oppPlayer.rpsChoice.toLowerCase()}.png`
+      ? getRpsSpriteUrl(oppPlayer.id, oppPlayer.rpsChoice)
       : null;
   const selfRpsSprite =
     state.phase === 'RPS_RESULT' && selfPlayer.rpsChoice
-      ? `/assets/images/rps/rps_${selfPlayer.id}_${selfPlayer.rpsChoice.toLowerCase()}.png`
+      ? getRpsSpriteUrl(selfPlayer.id, selfPlayer.rpsChoice)
       : null;
 
   // 참참참 방향 기호 헬퍼
@@ -81,7 +87,7 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
       </div>
 
       {/* 4. 중앙: 상태/카운트다운/타이머/방향 알림 바 */}
-      <div className="w-full max-w-sm flex flex-col items-center justify-center text-center my-auto z-30 px-2">
+      <div className="w-full max-w-sm flex flex-col items-center justify-center text-center my-auto z-30 px-2 min-h-[96px]">
         {state.phase === 'READY' && (
           <div className="animate-scaleUp">
             <span className="text-5xl sm:text-7xl font-black text-amber-400 font-comic drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
@@ -116,7 +122,7 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
         )}
 
         {state.phase === 'CHAM_INPUT' && (
-          <div className="flex flex-col items-center gap-1 w-full max-w-xs animate-scaleUp">
+          <div className="flex flex-col items-center gap-1.5 w-full max-w-xs animate-scaleUp py-0.5">
             <span className="text-xs sm:text-sm font-black text-amber-300 bg-amber-950/90 px-3 py-0.5 rounded-md border border-amber-500 shadow-md">
               🔥 {selfPlayer.role === 'ATTACKER' ? '나의 공격 차례!' : `${oppPlayer.name} 공격!`}
             </span>

@@ -31,6 +31,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   phase,
   isHit,
   rpsChoice,
+  rpsSprite,
 }) => {
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
@@ -82,8 +83,8 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
 
       {/* 2. 내 캐릭터 뒷모습 본체 (6단계 데미지 스프라이트 단독 렌더링) */}
       <div className="relative flex flex-col items-center justify-end w-52 h-36 sm:w-88 sm:h-60 overflow-visible">
-        {/* '나 (YOU)' 배지 및 공격/수비 태그 */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 whitespace-nowrap">
+        {/* '나 (YOU)' 배지 및 공격/수비 태그: 중앙 타이머와 겹치지 않도록 머리 위 대신 좌측 하단 코너에 배치 */}
+        <div className="absolute bottom-1 -left-4 sm:-left-8 z-40 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-1.5 whitespace-nowrap bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-md pointer-events-none">
           <span className="text-[10px] sm:text-xs font-black bg-sky-500 text-white px-2.5 py-0.5 rounded-full border border-sky-300 shadow-md">
             👤 나 ({name})
           </span>
@@ -107,11 +108,28 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
           className="w-full h-full object-contain drop-shadow-[0_-8px_20px_rgba(0,0,0,0.7)]"
         />
 
-        {/* 내 RPS 선택 표시 */}
+        {/* 내 RPS 선택 결과 (캐릭터 본체 우측 배치) */}
         {phase === 'RPS_RESULT' && rpsChoice && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40 bg-sky-950/90 border border-sky-400 text-white font-black text-xs sm:text-sm px-3 py-0.5 rounded-lg shadow-lg animate-bounce whitespace-nowrap">
-            {rpsChoice === 'ROCK' ? '✊ 바위' : rpsChoice === 'SCISSORS' ? '✌️ 가위' : '🖐️ 보'}
-          </div>
+          <aside
+            aria-label="내 가위바위보 결과"
+            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-40 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-sky-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(56,189,248,0.5)] animate-scaleUp pointer-events-none"
+          >
+            <div className="text-[10px] sm:text-xs font-black text-sky-300">내 선택</div>
+            {rpsSprite ? (
+              <img
+                src={rpsSprite}
+                alt={rpsChoice}
+                className="w-10 h-10 sm:w-14 sm:h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(56,189,248,0.6)]"
+              />
+            ) : (
+              <span className="text-2xl sm:text-3xl">
+                {rpsChoice === 'ROCK' ? '✊' : rpsChoice === 'SCISSORS' ? '✌️' : '🖐️'}
+              </span>
+            )}
+            <span className="text-white font-black text-[11px] sm:text-xs whitespace-nowrap bg-sky-600/90 border border-sky-400 px-2 py-0.5 rounded-md shadow-sm">
+              {rpsChoice === 'ROCK' ? '✊ 바위' : rpsChoice === 'SCISSORS' ? '✌️ 가위' : '🖐️ 보'}
+            </span>
+          </aside>
         )}
       </div>
     </div>
