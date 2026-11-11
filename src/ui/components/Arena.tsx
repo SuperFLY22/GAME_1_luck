@@ -62,46 +62,52 @@ export const Arena: React.FC<ArenaProps> = ({
 
   return (
     <div
-      className={`min-h-[100svh] flex flex-col justify-between py-3 px-2 sm:px-6 transition-all duration-100 select-none ${
+      className={`min-h-[100svh] flex flex-col justify-between py-2 sm:py-3 px-1 sm:px-6 transition-all duration-100 select-none relative ${
         isScreenShake ? 'animate-shake' : ''
       }`}
     >
+      {/* 90년대 아케이드 감성 CRT 비네팅 & 미세 스캔라인 오버레이 */}
+      <div className="fixed inset-0 crt-vignette crt-scanlines z-30 pointer-events-none" />
+
+      {/* 피격(HIT) 순간 강렬한 백색 임팩트 플래시 */}
+      {isHit && state.phase === 'RESOLVE' && (
+        <div className="fixed inset-0 bg-white pointer-events-none z-50 animate-hit-flash" />
+      )}
+
       {/* 1. 상단 바: 라운드 정보 및 시스템 버튼 */}
-      <header className="w-full flex items-center justify-between max-w-4xl mx-auto bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-2xl border-2 border-slate-800 shadow-md">
+      <header className="w-full flex items-center justify-between max-w-4xl mx-auto bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border-2 border-slate-800 shadow-md relative z-10">
         <button
           type="button"
           onClick={onGoTitle}
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-slate-700 transition-colors"
         >
-          <Home className="w-4 h-4" />
+          <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>메뉴</span>
         </button>
 
         <div className="flex flex-col items-center">
-          <span className="text-xs font-extrabold text-amber-400 tracking-wider">
+          <span className="text-[11px] sm:text-xs font-extrabold text-amber-400 font-pixel tracking-wider">
             {state.phase === 'RPS_INPUT' || state.phase === 'RPS_RESULT' ? '선공 결정전' : `TURN ${state.round}`}
           </span>
-          <span className="text-[10px] text-slate-400 font-semibold">
+          <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold font-pixel">
             {state.mode === 'ONLINE_MATCH'
-              ? '🌐 실시간 온라인 대전'
-              : state.mode === '1P_CPU'
-              ? '1P vs CPU'
-              : '1P vs 2P 로컬'}
+              ? '🌐 온라인 대전'
+              : '1P vs CPU (AI)'}
           </span>
         </div>
 
         <button
           type="button"
           onClick={onToggleMute}
-          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
+          className="p-1.5 sm:p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
           title={isMuted ? '소리 켜기' : '음소거'}
         >
-          {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+          {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />}
         </button>
       </header>
 
       {/* 2. 체력 게이지 영역 */}
-      <section className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-3 sm:gap-6 mt-2">
+      <section className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-2 sm:gap-6 mt-1 sm:mt-2">
         <HealthBar
           damage={state.p1.damage}
           playerName={state.p1.name}
@@ -115,27 +121,27 @@ export const Arena: React.FC<ArenaProps> = ({
       </section>
 
       {/* 3. 메인 배틀 아레나 (캐릭터 vs 캐릭터 + 중앙 상태 알림) */}
-      <main className="relative w-full max-w-4xl mx-auto my-auto flex items-center justify-between px-2 sm:px-8">
+      <main className="relative w-full max-w-4xl mx-auto my-auto flex items-center justify-between px-0.5 sm:px-8 gap-0.5 sm:gap-4 overflow-hidden">
         <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />
 
         {/* FEAT-01: 공수 전환 알림 배너 — 가드 성공 직후 CHAM_INPUT 진입 시 1.4초 표시 */}
         {state.phase === 'CHAM_INPUT' && state.roleReversed && (
-          <div className="absolute top-20 inset-x-0 flex justify-center z-40 pointer-events-none animate-slideDown">
-            <div className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-black text-base sm:text-lg px-6 py-2.5 rounded-2xl border-4 border-white/20 shadow-[0_8px_30px_rgba(139,92,246,0.5)]">
-              🔄 공수 전환! 수비 성공!
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-lg font-mono">
-                {state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} 이제 공격!
+          <div className="absolute top-2 sm:top-20 inset-x-0 flex justify-center z-40 pointer-events-none animate-slideDown">
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-black text-xs sm:text-lg px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl border-2 sm:border-4 border-white/20 shadow-[0_8px_30px_rgba(139,92,246,0.5)]">
+              🔄 공수 전환!
+              <span className="text-[10px] sm:text-xs bg-white/20 px-1.5 sm:px-2 py-0.5 rounded-lg font-mono">
+                {state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} 공격!
               </span>
             </div>
           </div>
         )}
 
         {/* 1P 캐릭터 */}
-        <div className="flex-1 flex flex-col items-center relative">
+        <div className="flex-1 flex flex-col items-center relative min-w-0">
           {/* FEAT-02: 내가 1P일 때 (솔로/로컬 2P 화면공유 아닐 때) "나" 배지 표시 */}
           {myPlayerId === 'p1' && (
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-40">
-              <span className="text-[10px] font-black bg-sky-500 text-white px-2 py-0.5 rounded-full border border-sky-300 shadow-md">
+            <div className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2 z-40 whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-black bg-sky-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full border border-sky-300 shadow-md">
                 👤 나 (1P)
               </span>
             </div>
@@ -151,55 +157,55 @@ export const Arena: React.FC<ArenaProps> = ({
             rpsSprite={p1RpsSprite}
           />
           {/* 선택 말풍선 */}
-          <div className="mt-2 min-h-[30px] flex items-center justify-center">
+          <div className="mt-1 sm:mt-2 min-h-[24px] sm:min-h-[30px] flex items-center justify-center text-center">
             {state.phase === 'RPS_INPUT' && state.p1.rpsChoice && (
-              <span className="text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-2.5 py-0.5 rounded-full animate-pulse">
+              <span className="text-[10px] sm:text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-1.5 sm:px-2.5 py-0.5 rounded-full animate-pulse whitespace-nowrap">
                 선택 완료!
               </span>
             )}
             {state.phase === 'RPS_RESULT' && state.p1.rpsChoice && (
-              <span className="text-sm font-black bg-sky-500/30 text-white border-2 border-sky-400 px-3 py-1 rounded-xl shadow-md animate-bounce">
+              <span className="text-xs sm:text-sm font-black bg-sky-500/30 text-white border sm:border-2 border-sky-400 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl shadow-md animate-bounce whitespace-nowrap">
                 {getRpsEmoji(state.p1.rpsChoice)}
               </span>
             )}
             {state.phase === 'CHAM_INPUT' && state.p1.chamDirection && (
-              <span className="text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-2 py-0.5 rounded-full animate-pulse">
-                ✅ 선택 완료! {/* BUG-01: 방향 숨김 — RESOLVE 전까지 상대방에게 노출 방지 */}
+              <span className="text-[10px] sm:text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-500 px-1.5 sm:px-2 py-0.5 rounded-full animate-pulse whitespace-nowrap">
+                ✅ 완료
               </span>
             )}
             {state.phase === 'RESOLVE' && (
-              <span className="text-xs font-bold text-slate-300">
-                {state.p1.role === 'ATTACKER' ? '공격' : '수비'}: {getChamEmoji(state.p1.chamDirection)}
+              <span className="text-[10px] sm:text-xs font-bold text-slate-300 whitespace-nowrap">
+                {getChamEmoji(state.p1.chamDirection)}
               </span>
             )}
           </div>
         </div>
 
         {/* 중앙 상태 표시창 (카운트다운 / 안내 메시지 / 타이머 바) */}
-        <div className="flex-1 max-w-[280px] sm:max-w-xs flex flex-col items-center justify-center text-center px-1 z-10">
+        <div className="flex-1 max-w-[110px] sm:max-w-xs flex flex-col items-center justify-center text-center px-0.5 sm:px-1 z-10 min-w-0">
           {state.phase === 'READY' && (
             <div className="animate-scaleUp">
-              <span className="text-6xl sm:text-7xl font-black text-amber-400 font-comic drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
+              <span className="text-4xl sm:text-7xl font-black text-amber-400 font-comic drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
                 {state.countdown > 0 ? state.countdown : 'GO!'}
               </span>
             </div>
           )}
 
           {state.phase === 'RPS_INPUT' && (
-            <div className="flex flex-col items-center gap-1.5 w-full">
-              <span className="text-base sm:text-xl font-black text-white bg-slate-900/90 px-4 py-1.5 rounded-xl border-2 border-amber-400 shadow-md">
-                선공 결정 가위! 바위! 보!
+            <div className="flex flex-col items-center gap-1 sm:gap-1.5 w-full">
+              <span className="text-xs sm:text-xl font-black text-white bg-slate-900/90 px-2 sm:px-4 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-amber-400 sm:border-2 shadow-md leading-tight">
+                가위! 바위! 보!
               </span>
-              <span className="text-xs text-amber-300 font-bold bg-slate-800/80 px-3 py-1 rounded-lg border border-slate-700">
-                ⏳ 제한시간 없음! 자유롭게 선택하세요
+              <span className="text-[9px] sm:text-xs text-amber-300 font-bold bg-slate-800/80 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-slate-700 leading-tight">
+                자유롭게 선택
               </span>
             </div>
           )}
 
           {state.phase === 'RPS_RESULT' && (
-            <div className="flex flex-col items-center gap-2 w-full animate-scaleUp">
+            <div className="flex flex-col items-center gap-1 sm:gap-2 w-full animate-scaleUp">
               <span
-                className={`text-base sm:text-xl font-black px-4 py-1.5 rounded-xl border-2 shadow-lg ${
+                className={`text-xs sm:text-xl font-black px-2 sm:px-4 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border sm:border-2 shadow-lg leading-tight ${
                   state.lastOutcome === 'TIE'
                     ? 'text-amber-300 bg-amber-950/90 border-amber-400 animate-pulse'
                     : 'text-emerald-300 bg-emerald-950/90 border-emerald-400'
@@ -207,15 +213,15 @@ export const Arena: React.FC<ArenaProps> = ({
               >
                 {state.message}
               </span>
-              <div className="text-xs sm:text-sm font-bold text-slate-200 bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-700">
+              <div className="hidden sm:block text-xs sm:text-sm font-bold text-slate-200 bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-700">
                 {state.p1.name} ({getRpsEmoji(state.p1.rpsChoice)}) vs {state.p2.name} ({getRpsEmoji(state.p2.rpsChoice)})
               </div>
             </div>
           )}
 
           {state.phase === 'CHAM_INPUT' && (
-            <div className="flex flex-col items-center gap-2 w-full">
-              <span className="text-xl sm:text-2xl font-black text-amber-300 bg-rose-950/90 px-4 py-1.5 rounded-xl border-2 border-rose-500 animate-pulse shadow-md">
+            <div className="flex flex-col items-center gap-1 sm:gap-2 w-full">
+              <span className="text-base sm:text-2xl font-black text-amber-300 bg-rose-950/90 px-2 sm:px-4 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border sm:border-2 border-rose-500 animate-pulse shadow-md leading-tight">
                 참! 참! 참!
               </span>
               <TimerBar ratio={state.timerRemainingRatio} label="2초 카운트다운!" totalSeconds={2.0} isUrgent={state.timerRemainingRatio < 0.4} />
@@ -223,24 +229,23 @@ export const Arena: React.FC<ArenaProps> = ({
           )}
 
           {state.phase === 'RESOLVE' && (
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm sm:text-base font-black text-white bg-slate-900/90 px-3 py-1 rounded-lg border border-slate-700">
+            <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+              <span className="text-xs sm:text-base font-black text-white bg-slate-900/90 px-2 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-slate-700 leading-tight">
                 {state.message}
               </span>
-              <div className="text-xs text-slate-400">
-                {state.p1.name} ({state.p1.role === 'ATTACKER' ? '공격' : '수비'}): {getChamEmoji(state.p1.chamDirection)} vs{' '}
-                {state.p2.name} ({state.p2.role === 'ATTACKER' ? '공격' : '수비'}): {getChamEmoji(state.p2.chamDirection)}
+              <div className="hidden sm:block text-xs text-slate-400">
+                {state.p1.name}: {getChamEmoji(state.p1.chamDirection)} vs {state.p2.name}: {getChamEmoji(state.p2.chamDirection)}
               </div>
             </div>
           )}
         </div>
 
         {/* 2P 캐릭터 */}
-        <div className="flex-1 flex flex-col items-center relative">
+        <div className="flex-1 flex flex-col items-center relative min-w-0">
           {/* FEAT-02: 내가 2P일 때 "나" 배지 표시 */}
           {myPlayerId === 'p2' && (
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-40">
-              <span className="text-[10px] font-black bg-rose-500 text-white px-2 py-0.5 rounded-full border border-rose-300 shadow-md">
+            <div className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2 z-40 whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] font-black bg-rose-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full border border-rose-300 shadow-md">
                 👤 나 (2P)
               </span>
             </div>
@@ -256,25 +261,25 @@ export const Arena: React.FC<ArenaProps> = ({
             rpsSprite={p2RpsSprite}
           />
           {/* 선택 말풍선 */}
-          <div className="mt-2 min-h-[30px] flex items-center justify-center">
+          <div className="mt-1 sm:mt-2 min-h-[24px] sm:min-h-[30px] flex items-center justify-center text-center">
             {state.phase === 'RPS_INPUT' && state.p2.rpsChoice && (
-              <span className="text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-2.5 py-0.5 rounded-full animate-pulse">
+              <span className="text-[10px] sm:text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-1.5 sm:px-2.5 py-0.5 rounded-full animate-pulse whitespace-nowrap">
                 선택 완료!
               </span>
             )}
             {state.phase === 'RPS_RESULT' && state.p2.rpsChoice && (
-              <span className="text-sm font-black bg-rose-500/30 text-white border-2 border-rose-400 px-3 py-1 rounded-xl shadow-md animate-bounce">
+              <span className="text-xs sm:text-sm font-black bg-rose-500/30 text-white border sm:border-2 border-rose-400 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl shadow-md animate-bounce whitespace-nowrap">
                 {getRpsEmoji(state.p2.rpsChoice)}
               </span>
             )}
             {state.phase === 'CHAM_INPUT' && state.p2.chamDirection && (
-              <span className="text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-2 py-0.5 rounded-full animate-pulse">
-                ✅ 선택 완료! {/* BUG-01: 방향 숨김 — RESOLVE 전까지 상대방에게 노출 방지 */}
+              <span className="text-[10px] sm:text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500 px-1.5 sm:px-2 py-0.5 rounded-full animate-pulse whitespace-nowrap">
+                ✅ 완료
               </span>
             )}
             {state.phase === 'RESOLVE' && (
-              <span className="text-xs font-bold text-slate-300">
-                {state.p2.role === 'ATTACKER' ? '공격' : '수비'}: {getChamEmoji(state.p2.chamDirection)}
+              <span className="text-[10px] sm:text-xs font-bold text-slate-300 whitespace-nowrap">
+                {getChamEmoji(state.p2.chamDirection)}
               </span>
             )}
           </div>

@@ -26,7 +26,7 @@ export const TimerBar: React.FC<TimerBarProps> = ({
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col items-center gap-1.5 px-3 select-none">
-      <div className="w-full flex justify-between items-center text-xs font-black text-slate-300">
+      <div className="w-full flex justify-between items-center text-xs font-black text-slate-300 font-pixel">
         <span className="flex items-center gap-1 text-amber-300">
           <Timer className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '3s' }} />
           {label}

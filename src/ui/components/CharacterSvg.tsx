@@ -30,7 +30,7 @@ export const CharacterSvg: React.FC<CharacterSvgProps> = ({
 
   return (
     <div
-      className={`relative w-48 h-56 sm:w-60 sm:h-72 flex items-center justify-center transition-transform duration-200 select-none ${
+      className={`relative w-28 h-36 sm:w-60 sm:h-72 flex items-center justify-center transition-transform duration-200 select-none ${
         isHit ? 'animate-bounce scale-95 brightness-125' : ''
       }`}
       style={{ transform: headTransform }}

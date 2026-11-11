@@ -62,7 +62,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         </div>
 
         <div
-          className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-2 ${
+          className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-2 font-pixel ${
             isLocalWinner
               ? 'text-amber-400 bg-amber-950/80 border-amber-600'
               : 'text-rose-400 bg-rose-950/80 border-rose-600'
@@ -75,12 +75,12 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           {winner.name} 완승!
         </h2>
 
-        <p className="text-rose-400 font-bold text-sm mt-1">
+        <p className="text-rose-400 font-bold text-sm mt-1 font-pixel">
           {loser.name} 피격 5회 누적으로 백기 항복!
         </p>
 
         {opponentLeft && (
-          <div className="mt-2 px-3 py-1 bg-rose-950/80 border border-rose-500 rounded-xl text-xs font-black text-rose-300 animate-pulse">
+          <div className="mt-2 px-3 py-1 bg-rose-950/80 border border-rose-500 rounded-xl text-xs font-black text-rose-300 animate-pulse font-pixel">
             ⚠️ 상대방이 퇴장했습니다. 대기 중인 새 도전자와 매칭하세요!
           </div>
         )}
@@ -89,24 +89,24 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         <div className="w-full bg-slate-800/80 rounded-2xl p-4 my-5 border-2 border-slate-700">
           {/* 총 대전 턴 수 */}
           <div className="text-center mb-3 pb-2 border-b border-slate-700">
-            <span className="text-xs text-slate-400 font-bold">⚔️ 총 대전 턴 수</span>
-            <div className="text-2xl font-black text-white">{state.round} 턴</div>
+            <span className="text-xs text-slate-400 font-bold font-pixel">⚔️ 총 대전 턴 수</span>
+            <div className="text-2xl font-black text-white font-pixel">{state.round} 턴</div>
           </div>
           {/* 플레이어별 스탯 */}
           <div className="flex justify-around items-start">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 font-pixel">
               <span className="text-xs font-bold text-sky-400">{state.p1.name}</span>
               <span className="text-2xl font-black text-white">피격 {state.p1.damage}회</span>
-              <span className="text-xs text-emerald-400 font-bold">🛡️ 가드 {state.p1.guardCount ?? 0}회 성공</span>
+              <span className="text-xs text-emerald-400 font-bold">🛡️ 가드 {state.p1.guardCount ?? 0}회</span>
               <span className="text-xs text-slate-400">{isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
             </div>
 
             <div className="h-16 w-0.5 bg-slate-700" />
 
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 font-pixel">
               <span className="text-xs font-bold text-rose-400">{state.p2.name}</span>
               <span className="text-2xl font-black text-white">피격 {state.p2.damage}회</span>
-              <span className="text-xs text-emerald-400 font-bold">🛡️ 가드 {state.p2.guardCount ?? 0}회 성공</span>
+              <span className="text-xs text-emerald-400 font-bold">🛡️ 가드 {state.p2.guardCount ?? 0}회</span>
               <span className="text-xs text-slate-400">{!isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
             </div>
           </div>

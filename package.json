@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "test": "tsx tests/gameEngine.test.ts && tsx tests/matchmaking.test.ts && tsx tests/harness.test.ts",
+    "test": "tsx tests/gameEngine.test.ts && tsx tests/matchmaking.test.ts && tsx tests/harness.test.ts && tsx tests/virtualPlay.test.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },

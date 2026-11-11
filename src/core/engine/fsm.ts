@@ -7,7 +7,7 @@ import type {
   RPSChoice,
   Role,
 } from '../../models/types';
-import { evaluateCham, evaluateRPS, incrementDamage } from './rules';
+import { evaluateCham, evaluateRPS, getCpuChamDirection, incrementDamage } from './rules';
 
 export type GameAction =
   | { type: 'START_GAME'; mode: GameMode }
@@ -66,7 +66,7 @@ export function createInitialPlayer(id: 'p1' | 'p2', isAi: boolean, name: string
   };
 }
 
-export function createInitialState(mode: GameMode = 'ONLINE_MATCH'): GameEngineState {
+export function createInitialState(mode: GameMode = '1P_CPU'): GameEngineState {
   const is1PCpu = mode === '1P_CPU';
   return {
     mode,
@@ -168,8 +168,9 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
     case 'RESOLVE_RPS': {
       if (state.phase !== 'RPS_INPUT') return state;
 
-      const p1Choice: RPSChoice = state.p1.rpsChoice ?? 'ROCK';
-      const p2Choice: RPSChoice = state.p2.rpsChoice ?? 'SCISSORS';
+      // 둘 다 미입력 시 evaluateRPS(null, null)에 의해 공정하게 TIE 처리
+      const p1Choice = state.p1.rpsChoice;
+      const p2Choice = state.p2.rpsChoice;
       const { p1Role, p2Role } = evaluateRPS(p1Choice, p2Choice);
 
       if (p1Role === 'TIE') {
@@ -261,8 +262,8 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
     case 'RESOLVE_CHAM': {
       if (state.phase !== 'CHAM_INPUT') return state;
 
-      const p1Dir = state.p1.chamDirection ?? 'LEFT';
-      const p2Dir = state.p2.chamDirection ?? 'RIGHT';
+      const p1Dir = state.p1.chamDirection ?? getCpuChamDirection();
+      const p2Dir = state.p2.chamDirection ?? getCpuChamDirection();
 
       const attackerId = state.p1.role === 'ATTACKER' ? 'p1' : 'p2';
       const defenderId = attackerId === 'p1' ? 'p2' : 'p1';
@@ -304,11 +305,19 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
     }
 
     case 'SYNC_ONLINE_CHAM_RESULT': {
+      const defenderId = state.p1.role === 'DEFENDER' ? 'p1' : 'p2';
+      const nextGuardP1 = !action.isHit && defenderId === 'p1'
+        ? (state.p1.guardCount ?? 0) + 1
+        : state.p1.guardCount;
+      const nextGuardP2 = !action.isHit && defenderId === 'p2'
+        ? (state.p2.guardCount ?? 0) + 1
+        : state.p2.guardCount;
+
       return {
         ...state,
         phase: 'RESOLVE',
-        p1: { ...state.p1, chamDirection: action.p1Dir, damage: action.p1Damage },
-        p2: { ...state.p2, chamDirection: action.p2Dir, damage: action.p2Damage },
+        p1: { ...state.p1, chamDirection: action.p1Dir, damage: action.p1Damage, guardCount: nextGuardP1 },
+        p2: { ...state.p2, chamDirection: action.p2Dir, damage: action.p2Damage, guardCount: nextGuardP2 },
         lastOutcome: action.isHit ? 'HIT' : 'DODGE',
         hitTarget: action.hitTarget,
         message: action.isHit ? '찰싹! 명중 (POW!)' : '휘익~ 빗맞힘 (MISS!)',

@@ -90,12 +90,12 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative flex items-center justify-center min-w-[200px] min-h-[220px]">
+    <div className="flex flex-col items-center w-full min-w-0">
+      <div className="relative flex items-center justify-center min-w-0 w-full min-h-[140px] sm:min-h-[220px]">
         {/* 캐릭터 본체 레이어 */}
         {displayImageUrl && !imgFailed ? (
           <div
-            className={`w-48 h-56 sm:w-60 sm:h-72 transition-transform duration-200 select-none flex items-center justify-center relative ${
+            className={`w-28 h-36 sm:w-60 sm:h-72 transition-transform duration-200 select-none flex items-center justify-center relative ${
               isHit ? 'animate-bounce scale-95' : ''
             }`}
             style={{ transform: charTransform }}
@@ -113,7 +113,7 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
             damage={damage}
             direction={direction}
             isHit={isHit}
-            role={role}
+            role={null}
           />
         )}
 
@@ -122,9 +122,9 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
           <div
             className={`absolute z-20 pointer-events-none transition-all duration-150 flex items-center justify-center ${
               isAttacker
-                ? 'w-32 h-32 sm:w-40 sm:h-40 -bottom-2 ' +
+                ? 'w-20 h-20 sm:w-40 sm:h-40 -bottom-1 sm:-bottom-2 ' +
                   (playerId === 'p1' ? 'right-0 sm:-right-4' : 'left-0 sm:-left-4')
-                : 'w-32 h-32 sm:w-40 sm:h-40 -bottom-1 ' +
+                : 'w-20 h-20 sm:w-40 sm:h-40 -bottom-1 ' +
                   (playerId === 'p1' ? 'left-0 sm:-left-2' : 'right-0 sm:-right-2')
             } ${toolAnimClass}`}
           >
@@ -139,7 +139,7 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
         {/* 역할 뱃지 */}
         {role && (
           <div
-            className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-black tracking-wider shadow-md uppercase border-2 z-30 ${
+            className={`absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider shadow-md uppercase border sm:border-2 z-30 whitespace-nowrap ${
               role === 'ATTACKER'
                 ? 'bg-amber-400 text-slate-900 border-amber-600 animate-pulse'
                 : role === 'DEFENDER'
@@ -147,13 +147,13 @@ export const CharacterView: React.FC<CharacterViewProps> = ({
                 : 'bg-slate-300 text-slate-800 border-slate-500'
             }`}
           >
-            {role === 'ATTACKER' ? '💥 공격 (뿅망치)' : role === 'DEFENDER' ? '🛡️ 수비 (냄비뚜껑)' : '🤝 비김'}
+            {role === 'ATTACKER' ? '💥 공격' : role === 'DEFENDER' ? '🛡️ 수비' : '🤝 비김'}
           </div>
         )}
       </div>
 
-      <div className="mt-2 text-center">
-        <span className="inline-block px-3 py-1 bg-slate-900 text-white text-sm sm:text-base font-black rounded-lg border-2 border-slate-700 shadow-md">
+      <div className="mt-1 sm:mt-2 text-center">
+        <span className="inline-block px-2 py-0.5 sm:px-3 sm:py-1 bg-slate-900 text-white text-xs sm:text-base font-black rounded-lg border border-slate-700 sm:border-2 shadow-md truncate max-w-[85px] sm:max-w-none">
           {name}
         </span>
       </div>

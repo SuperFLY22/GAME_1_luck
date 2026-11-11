@@ -5,11 +5,6 @@ import {
   createInitialState,
   gameReducer,
 } from '../src/core/engine/fsm.ts';
-import {
-  evaluateCham,
-  evaluateRPS,
-  incrementDamage,
-} from '../src/core/engine/rules.ts';
 
 console.log('=============================================');
 console.log('🚀 [HARNESS TEST SUITE] 참참참 게임 엔진 무결성 검증');
@@ -279,7 +274,7 @@ console.log(`✅ 500회 시뮬레이션 결과: u1~u4 무작위 매칭 균등 �
 console.log('\n[Harness 4] 1인 이탈 후 잔여 플레이어 대기열 복귀 및 새 도전자 즉시 매칭 검증');
 
 // Match 1: Player A & Player B 대전 중
-const clientA: MockUser = { id: 'cA', name: 'A', status: 'PLAYING', joinedAt: 100 };
+const _clientA: MockUser = { id: 'cA', name: 'A', status: 'PLAYING', joinedAt: 100 };
 const clientB: MockUser = { id: 'cB', name: 'B', status: 'PLAYING', joinedAt: 150 };
 
 // Player C 는 대기실에서 대기 중

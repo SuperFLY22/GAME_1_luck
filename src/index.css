@@ -50,6 +50,42 @@
   letter-spacing: 0.05em;
 }
 
+/* 90년대 아케이드 비트맵 도트 폰트 (갈무리9) */
+.font-pixel {
+  font-family: 'Galmuri9', monospace;
+  letter-spacing: 0.04em;
+  image-rendering: pixelated;
+}
+
+/* CRT 모니터 비네팅 (외곽 암전 효과로 몰입감 부여) */
+.crt-vignette {
+  background: radial-gradient(circle at center, transparent 65%, rgba(2, 6, 23, 0.55) 100%);
+  pointer-events: none;
+}
+
+/* 초미세 스캔라인 질감 (가독성 해치지 않는 은은한 4% 불투명도) */
+.crt-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.08) 0px,
+    rgba(0, 0, 0, 0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+}
+
+/* 강렬한 피격 시 화면 순간 암전/백색 플래시 (0.12초) */
+@keyframes hit-flash {
+  0% { opacity: 0.45; }
+  50% { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+
+.animate-hit-flash {
+  animation: hit-flash 0.12s ease-out forwards;
+}
+
 /* 뿅망치 0.08초 강렬한 스윙 애니메이션 (좌 -30deg / 상 0deg 찍기 / 우 +30deg) */
 @keyframes hammer-swing-left {
   0% { transform: rotate(-55deg) translate(-10px, -25px) scale(1.05); }
