@@ -1,12 +1,16 @@
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from './supabaseClient';
+import { getWebSocketUrl } from '../../config/websocket';
 import type {
   ChamDirection,
   DamageLevel,
   RPSChoice,
   Role,
 } from '../../models/types';
-import { evaluateCham, evaluateRPS, incrementDamage, getCpuChamDirection } from '../../core/engine/rules';
+import {
+  evaluateCham,
+  evaluateRPS,
+  incrementDamage,
+  getCpuChamDirection,
+} from '../../core/engine/rules';
 
 export interface RoomCallbacks {
   onStartReady: () => void;
@@ -33,7 +37,7 @@ export interface RoomCallbacks {
 }
 
 class RoomSessionService {
-  private channel: RealtimeChannel | null = null;
+  private ws: WebSocket | null = null;
   private roomId: string | null = null;
   private myRole: 'p1' | 'p2' = 'p1';
   private callbacks: RoomCallbacks | null = null;
@@ -63,64 +67,74 @@ class RoomSessionService {
     this.p2Damage = 0;
     this.resetTurnInputs();
 
-    if (this.channel) {
-      await supabase.removeChannel(this.channel);
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
     }
 
-    // FEAT-NET: broadcast.self = true 활성화로 브로드캐스터(P1) 자신도 동일한 이벤트 버스로 상태 동기화 보장
-    this.channel = supabase.channel(`cham_room_${roomId}`, {
-      config: {
-        broadcast: { self: true },
-      },
-    });
+    const url = getWebSocketUrl(roomId);
+    this.ws = new WebSocket(url);
 
-    // 브로드캐스트 이벤트 리스너 등록
-    this.channel
-      .on('broadcast', { event: 'GAME_READY' }, () => {
-        this.callbacks?.onStartReady();
-      })
-      .on('broadcast', { event: 'RPS_START' }, () => {
-        this.resetTurnInputs();
-        this.callbacks?.onRpsStart();
-      })
-      .on('broadcast', { event: 'RPS_INPUT' }, ({ payload }) => {
-        if (this.myRole === 'p1') {
-          if (payload.role === 'p1') this.p1Rps = payload.choice;
-          if (payload.role === 'p2') this.p2Rps = payload.choice;
-          this.checkRpsResolution();
-        }
-      })
-      .on('broadcast', { event: 'RPS_RESOLVED' }, ({ payload }) => {
-        this.callbacks?.onRpsResult(payload);
-      })
-      .on('broadcast', { event: 'CHAM_START' }, () => {
-        this.resetTurnInputs();
-        this.callbacks?.onChamStart();
-      })
-      .on('broadcast', { event: 'CHAM_INPUT' }, ({ payload }) => {
-        if (this.myRole === 'p1') {
-          if (payload.role === 'p1') this.p1Cham = payload.direction;
-          if (payload.role === 'p2') this.p2Cham = payload.direction;
-          this.checkChamResolution();
-        }
-      })
-      .on('broadcast', { event: 'CHAM_RESOLVED' }, ({ payload }) => {
-        this.callbacks?.onChamResult(payload);
-      })
-      .on('broadcast', { event: 'PLAYER_LEFT' }, () => {
-        this.callbacks?.onOpponentLeft();
-      });
-
-    await this.channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        if (this.myRole === 'p1') {
-          // P1이 1초 후 게임 카운트다운 시작 브로드캐스트
-          setTimeout(() => {
-            this.broadcast('GAME_READY', {});
-          }, 800);
-        }
+    this.ws.onopen = () => {
+      if (this.myRole === 'p1') {
+        // P1이 접속 800ms 후 게임 시작 신호 브로드캐스트
+        setTimeout(() => {
+          this.broadcast('GAME_READY', {});
+        }, 800);
       }
-    });
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const { event: evt, payload } = JSON.parse(event.data);
+
+        switch (evt) {
+          case 'GAME_READY':
+            this.callbacks?.onStartReady();
+            break;
+
+          case 'RPS_START':
+            this.resetTurnInputs();
+            this.callbacks?.onRpsStart();
+            break;
+
+          case 'RPS_INPUT':
+            if (this.myRole === 'p1') {
+              if (payload.role === 'p1') this.p1Rps = payload.choice;
+              if (payload.role === 'p2') this.p2Rps = payload.choice;
+              this.checkRpsResolution();
+            }
+            break;
+
+          case 'RPS_RESOLVED':
+            this.callbacks?.onRpsResult(payload);
+            break;
+
+          case 'CHAM_START':
+            this.resetTurnInputs();
+            this.callbacks?.onChamStart();
+            break;
+
+          case 'CHAM_INPUT':
+            if (this.myRole === 'p1') {
+              if (payload.role === 'p1') this.p1Cham = payload.direction;
+              if (payload.role === 'p2') this.p2Cham = payload.direction;
+              this.checkChamResolution();
+            }
+            break;
+
+          case 'CHAM_RESOLVED':
+            this.callbacks?.onChamResult(payload);
+            break;
+
+          case 'PLAYER_LEFT':
+            this.callbacks?.onOpponentLeft();
+            break;
+        }
+      } catch (err) {
+        console.error('[RoomSession] Message parse error:', err);
+      }
+    };
   }
 
   private resetTurnInputs(): void {
@@ -131,21 +145,13 @@ class RoomSessionService {
   }
 
   public submitRps(choice: RPSChoice): void {
-    if (!this.channel) return;
+    if (!this.ws) return;
     this.broadcast('RPS_INPUT', { role: this.myRole, choice });
-    if (this.myRole === 'p1') {
-      this.p1Rps = choice;
-      this.checkRpsResolution();
-    }
   }
 
   public submitCham(direction: ChamDirection): void {
-    if (!this.channel) return;
+    if (!this.ws) return;
     this.broadcast('CHAM_INPUT', { role: this.myRole, direction });
-    if (this.myRole === 'p1') {
-      this.p1Cham = direction;
-      this.checkChamResolution();
-    }
   }
 
   public startRpsPhase(): void {
@@ -185,16 +191,16 @@ class RoomSessionService {
 
   private checkChamResolution(): void {
     if (this.p1Cham !== null && this.p2Cham !== null) {
-      const attackerDir = this.currentAttacker === 'p1' ? this.p1Cham : this.p2Cham;
-      const defenderDir = this.currentAttacker === 'p1' ? this.p2Cham : this.p1Cham;
+      const attackerDir =
+        this.currentAttacker === 'p1' ? this.p1Cham : this.p2Cham;
+      const defenderDir =
+        this.currentAttacker === 'p1' ? this.p2Cham : this.p1Cham;
       const { isHit } = evaluateCham(attackerDir, defenderDir);
 
       let hitTarget: 'p1' | 'p2' | null = null;
       if (isHit) {
-        // 공격 성공 시 피격자 데미지 부여 및 공격권(currentAttacker) 유지
         hitTarget = this.currentAttacker === 'p1' ? 'p2' : 'p1';
       } else {
-        // 수비 성공 시 데미지 없음 및 공수 전환!
         hitTarget = null;
         this.currentAttacker = this.currentAttacker === 'p1' ? 'p2' : 'p1';
       }
@@ -222,9 +228,9 @@ class RoomSessionService {
 
   public resolveChamOnTimeout(): void {
     if (this.myRole !== 'p1') return;
-    const attackerCham = this.currentAttacker === 'p1' ? this.p1Cham : this.p2Cham;
+    const attackerCham =
+      this.currentAttacker === 'p1' ? this.p1Cham : this.p2Cham;
     if (!attackerCham) {
-      // 공격자가 3초 안에 선택하지 못함 -> 공격 실패 & 공수 전환 패널티!
       this.currentAttacker = this.currentAttacker === 'p1' ? 'p2' : 'p1';
       this.broadcast('CHAM_RESOLVED', {
         p1Dir: this.p1Cham,
@@ -239,27 +245,29 @@ class RoomSessionService {
       this.resetTurnInputs();
       return;
     }
-    // 수비자만 미입력한 경우: 가드 실패 피격
+
     if (this.p1Cham === null) this.p1Cham = getCpuChamDirection();
     if (this.p2Cham === null) this.p2Cham = getCpuChamDirection();
     this.checkChamResolution();
   }
 
   public leaveRoom(): void {
-    if (this.channel) {
+    if (this.ws) {
       this.broadcast('PLAYER_LEFT', { role: this.myRole });
-      supabase.removeChannel(this.channel);
-      this.channel = null;
+      this.ws.close();
+      this.ws = null;
     }
     this.roomId = null;
   }
 
   private broadcast(event: string, payload: Record<string, unknown>): void {
-    this.channel?.send({
-      type: 'broadcast',
-      event,
-      payload,
-    });
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.ws.send(
+      JSON.stringify({
+        event,
+        payload,
+      })
+    );
   }
 }
 

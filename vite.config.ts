@@ -10,7 +10,6 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (id.includes('node_modules')) {
-            if (id.includes('@supabase')) return 'supabase';
             if (id.includes('lucide-react')) return 'icons';
             if (id.includes('canvas-confetti')) return 'confetti';
             return 'vendor';

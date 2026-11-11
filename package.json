@@ -8,10 +8,11 @@
     "build": "tsc -b && vite build",
     "test": "tsx tests/gameEngine.test.ts && tsx tests/matchmaking.test.ts && tsx tests/harness.test.ts && tsx tests/virtualPlay.test.ts",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.5",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.71.0",
@@ -19,6 +20,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261110.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
@@ -30,6 +32,7 @@
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",
-    "vite": "^8.3.6"
+    "vite": "^8.3.6",
+    "wrangler": "^4.160.1"
   }
 }

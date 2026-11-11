@@ -1,0 +1,13 @@
+name = "cham-game-server"
+main = "worker/index.ts"
+compatibility_date = "2024-09-23"
+
+[durable_objects]
+bindings = [
+  { name = "GAME_ROOM", class_name = "GameRoom" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
+

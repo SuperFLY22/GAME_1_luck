@@ -1,14 +1,14 @@
 # 💥 코믹 참참참 아케이드 (Comic Cham-Cham-Cham Arcade)
 
 90년대 복고풍 레트로 아케이드 감성의 1:1 대전 참참참 게임 엔진입니다.  
-절차적 Web Audio 사운드 합성, 외부 에셋 실시간 핫스왑 레지스트리, Supabase Realtime 기반 매치메이킹 및 멀티플레이어 룸 세션을 지원합니다.
+절차적 Web Audio 사운드 합성, 외부 에셋 실시간 핫스왑 레지스트리, Cloudflare Workers(PartyKit) 초저지연 WebSocket 기반 매치메이킹 및 멀티플레이어 룸 세션을 지원합니다.
 
 ---
 
 ## 🎮 게임 모드
 - **1P vs CPU (솔로 모드)**: 무작위 AI를 상대로 펼쳐지는 참참참 배틀 (WASD / 방향키 / 모바일 터치 조작)
 - **1P vs 2P (로컬 2인 대전)**: 한 키보드에서 1P(A/W/D)와 2P(←/↑/→)로 실시간 맞대결
-- **온라인 매칭 대전**: Supabase Realtime 기반 대기열 풀 자동 매칭 및 동기화 룸 배틀
+- **온라인 매칭 대전**: Cloudflare Workers(PartyKit) 기반 엣지 WebSocket 대기열 풀 자동 매칭 및 룸 배틀
 
 ---
 
@@ -26,7 +26,7 @@ GAME_1_luck/
 │       └── sounds/           # 게임 내 사운드 효과음 및 배경음악
 ├── src/                      # [소스 코드] 계층형 게임 아키텍처
 │   ├── core/                 # 순수 게임 엔진 (FSM 상태 머신, 참참참 룰셋)
-│   ├── services/             # Web Audio 사운드 매니저, Supabase 세션/매칭 서비스
+│   ├── services/             # Web Audio 사운드 매니저, WebSocket 세션/매칭 서비스
 │   ├── ui/                   # 화면 뷰(Arena, Lobby) 및 컴포넌트, 입력 루프
 │   ├── models/               # 게임 데이터 모델 및 TypeScript 인터페이스
 │   ├── utils/                # 파티클 및 헬퍼
@@ -52,12 +52,18 @@ GAME_1_luck/
 ## 🛠️ 개발 및 테스트 명령어
 
 ```bash
-# 개발 서버 실행
+# 1. 프론트엔드 개발 서버 실행
 npm run dev
 
-# 빌드
+# 2. 로컬 Cloudflare Worker 소켓 서버 실행 (포트 8787)
+npm run worker:dev
+
+# 3. Cloudflare Workers 전 세계 엣지 배포 (1회 로그인 후 배포)
+npm run worker:deploy
+
+# 4. 빌드
 npm run build
 
-# 무결성 하네스 및 전체 테스트 스위트 실행
+# 5. 무결성 하네스 및 전체 테스트 스위트 실행
 npm test
 ```
