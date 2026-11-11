@@ -86,33 +86,33 @@
   animation: hit-flash 0.12s ease-out forwards;
 }
 
-/* 뿅망치 0.08초 강렬한 스윙 애니메이션 (좌 -30deg / 상 0deg 찍기 / 우 +30deg) */
+/* 뿅망치 0.08초 강렬한 스윙 애니메이션 (좌 / 상 내리찍기 / 우) */
 @keyframes hammer-swing-left {
   0% { transform: rotate(-55deg) translate(-10px, -25px) scale(1.05); }
-  60% { transform: rotate(-25deg) translate(-25px, 20px) scale(1.25); }
-  100% { transform: rotate(-30deg) translate(-20px, 12px) scale(1.15); }
+  60% { transform: rotate(-25deg) translate(-35px, 20px) scale(1.3); }
+  100% { transform: rotate(-30deg) translate(-30px, 15px) scale(1.2); }
 }
 
 @keyframes hammer-swing-up {
-  0% { transform: rotate(0deg) translate(0px, -35px) scale(1.05); }
-  60% { transform: rotate(0deg) translate(0px, 25px) scale(1.25); }
-  100% { transform: rotate(0deg) translate(0px, 15px) scale(1.15); }
+  0% { transform: rotate(0deg) translate(0px, -45px) scale(1.05); }
+  60% { transform: rotate(0deg) translate(0px, 30px) scale(1.35); }
+  100% { transform: rotate(0deg) translate(0px, 20px) scale(1.2); }
 }
 
 @keyframes hammer-swing-right {
   0% { transform: rotate(55deg) translate(10px, -25px) scale(1.05); }
-  60% { transform: rotate(25deg) translate(25px, 20px) scale(1.25); }
-  100% { transform: rotate(30deg) translate(20px, 12px) scale(1.15); }
+  60% { transform: rotate(25deg) translate(35px, 20px) scale(1.3); }
+  100% { transform: rotate(30deg) translate(30px, 15px) scale(1.2); }
 }
 
 .animate-hammer-left {
-  animation: hammer-swing-left 0.08s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  animation: hammer-swing-left 0.12s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 .animate-hammer-up {
-  animation: hammer-swing-up 0.08s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  animation: hammer-swing-up 0.12s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 .animate-hammer-right {
-  animation: hammer-swing-right 0.08s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  animation: hammer-swing-right 0.12s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 }
 
 /* 냄비뚜껑 가드 실패: 튕겨 날아가고(Pop-off/Rotate 탈락) */
@@ -127,16 +127,64 @@
   animation: potlid-pop-off 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
-/* 냄비뚜껑 가드 성공: 망치를 튕겨내며 굳건한 가드 */
-@keyframes guard-block {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.2) translateY(-8px); filter: brightness(1.4); }
-  70% { transform: scale(1.05) translateY(-3px); }
-  100% { transform: scale(1); }
+/* 냄비뚜껑 가드 방향별 모션 (가드 성공 시 해당 방향으로 방패를 힘차게 내밀며 방어) */
+@keyframes guard-block-left {
+  0% { transform: scale(1) translate(0, 0) rotate(0deg); }
+  35% { transform: scale(1.3) translate(-40px, -5px) rotate(-22deg); filter: brightness(1.5); }
+  70% { transform: scale(1.15) translate(-30px, -3px) rotate(-18deg); }
+  100% { transform: scale(1.1) translate(-25px, -2px) rotate(-15deg); }
 }
 
-.animate-guard-block {
-  animation: guard-block 0.25s ease-out forwards;
+@keyframes guard-block-up {
+  0% { transform: scale(1) translate(0, 0); }
+  35% { transform: scale(1.3) translate(0, -45px); filter: brightness(1.5); }
+  70% { transform: scale(1.15) translate(0, -32px); }
+  100% { transform: scale(1.1) translate(0, -25px); }
+}
+
+@keyframes guard-block-right {
+  0% { transform: scale(1) translate(0, 0) rotate(0deg); }
+  35% { transform: scale(1.3) translate(40px, -5px) rotate(22deg); filter: brightness(1.5); }
+  70% { transform: scale(1.15) translate(30px, -3px) rotate(18deg); }
+  100% { transform: scale(1.1) translate(25px, -2px) rotate(15deg); }
+}
+
+.animate-guard-left {
+  animation: guard-block-left 0.28s ease-out forwards;
+}
+.animate-guard-up {
+  animation: guard-block-up 0.28s ease-out forwards;
+}
+.animate-guard-right {
+  animation: guard-block-right 0.28s ease-out forwards;
+}
+
+/* 공격자 화염 아우라 펄스 */
+@keyframes attack-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.7), inset 0 0 10px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), inset 0 0 20px rgba(245, 158, 11, 0.6);
+  }
+}
+
+.aura-attacker {
+  animation: attack-glow 1.2s ease-in-out infinite;
+}
+
+/* 수비자 쉴드 아우라 */
+@keyframes defend-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.5), inset 0 0 8px rgba(56, 189, 248, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(59, 130, 246, 0.8), inset 0 0 15px rgba(56, 189, 248, 0.4);
+  }
+}
+
+.aura-defender {
+  animation: defend-glow 1.5s ease-in-out infinite;
 }
 
 /* 공수 전환 알림 배너: 위에서 슬라이드 등장 후 페이드 아웃 */

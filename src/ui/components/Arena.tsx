@@ -124,13 +124,20 @@ export const Arena: React.FC<ArenaProps> = ({
       <main className="relative w-full max-w-4xl mx-auto my-auto flex items-center justify-between px-0.5 sm:px-8 gap-0.5 sm:gap-4 overflow-hidden">
         <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />
 
-        {/* FEAT-01: 공수 전환 알림 배너 — 가드 성공 직후 CHAM_INPUT 진입 시 1.4초 표시 */}
-        {state.phase === 'CHAM_INPUT' && state.roleReversed && (
-          <div className="absolute top-2 sm:top-20 inset-x-0 flex justify-center z-40 pointer-events-none animate-slideDown">
-            <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-black text-xs sm:text-lg px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl border-2 sm:border-4 border-white/20 shadow-[0_8px_30px_rgba(139,92,246,0.5)]">
-              🔄 공수 전환!
-              <span className="text-[10px] sm:text-xs bg-white/20 px-1.5 sm:px-2 py-0.5 rounded-lg font-mono">
-                {state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} 공격!
+        {/* FEAT-01 & 요청 2-e: 공수 전환 알림 오버레이 (ROLE_SWAP Pause 단계에서 1.5초간 명확한 인지 제공) */}
+        {state.phase === 'ROLE_SWAP' && (
+          <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none animate-scaleUp">
+            <div className="flex flex-col items-center gap-2 sm:gap-3 bg-slate-950/95 text-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-4 border-amber-400 shadow-[0_0_50px_rgba(251,191,36,0.7)] text-center max-w-xs sm:max-w-md mx-3">
+              <span className="text-3xl sm:text-5xl animate-bounce">🔄</span>
+              <span className="text-xl sm:text-3xl font-black text-amber-400 font-comic tracking-wider">
+                공수 교대!
+              </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-amber-500 to-rose-600 text-slate-950 font-black text-xs sm:text-base px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl shadow-md">
+                <span>🔥</span>
+                <span>{state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} 공격 차례!</span>
+              </div>
+              <span className="text-[10px] sm:text-xs text-amber-300/80 font-mono">
+                잠시 후 3초 공격 카운트다운이 시작됩니다!
               </span>
             </div>
           </div>
@@ -221,20 +228,27 @@ export const Arena: React.FC<ArenaProps> = ({
 
           {state.phase === 'CHAM_INPUT' && (
             <div className="flex flex-col items-center gap-1 sm:gap-2 w-full">
-              <span className="text-base sm:text-2xl font-black text-amber-300 bg-rose-950/90 px-2 sm:px-4 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border sm:border-2 border-rose-500 animate-pulse shadow-md leading-tight">
+              <span className="text-xs sm:text-base font-black text-amber-300 bg-amber-950/90 px-2 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-amber-500 shadow-md whitespace-nowrap">
+                🔥 {state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} 공격!
+              </span>
+              <span className="text-base sm:text-2xl font-black text-white bg-rose-950/90 px-2 sm:px-4 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border sm:border-2 border-rose-500 animate-pulse shadow-md leading-tight">
                 참! 참! 참!
               </span>
-              <TimerBar ratio={state.timerRemainingRatio} label="2초 카운트다운!" totalSeconds={2.0} isUrgent={state.timerRemainingRatio < 0.4} />
+              <TimerBar ratio={state.timerRemainingRatio} label="3초 카운트다운!" totalSeconds={3.0} isUrgent={state.timerRemainingRatio < 0.35} />
             </div>
           )}
 
           {state.phase === 'RESOLVE' && (
-            <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-              <span className="text-xs sm:text-base font-black text-white bg-slate-900/90 px-2 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-slate-700 leading-tight">
+            <div className="flex flex-col items-center gap-1 w-full animate-scaleUp">
+              <span className={`text-xs sm:text-base font-black px-2 sm:px-3 py-1 rounded-md sm:rounded-lg border shadow-md leading-tight ${
+                state.lastOutcome === 'HIT'
+                  ? 'bg-rose-950 text-rose-300 border-rose-500'
+                  : 'bg-emerald-950 text-emerald-300 border-emerald-500'
+              }`}>
                 {state.message}
               </span>
-              <div className="hidden sm:block text-xs text-slate-400">
-                {state.p1.name}: {getChamEmoji(state.p1.chamDirection)} vs {state.p2.name}: {getChamEmoji(state.p2.chamDirection)}
+              <div className="text-[10px] sm:text-xs font-bold text-slate-300 bg-slate-900/90 px-2 py-0.5 rounded border border-slate-700 whitespace-nowrap">
+                {state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name} (공격 {getChamEmoji(state.p1.role === 'ATTACKER' ? state.p1.chamDirection : state.p2.chamDirection)}) vs {state.p1.role === 'DEFENDER' ? state.p1.name : state.p2.name} (방어 {getChamEmoji(state.p1.role === 'DEFENDER' ? state.p1.chamDirection : state.p2.chamDirection)})
               </div>
             </div>
           )}

@@ -12,6 +12,7 @@ export type GamePhase =
   | 'RPS_RESULT'
   | 'CHAM_INPUT'
   | 'RESOLVE'
+  | 'ROLE_SWAP' // 공수 교대 시 1.5초간 전환을 확실히 인지할 수 있는 Pause 단계
   | 'CHECK_WINNER'
   | 'GAME_OVER';
 

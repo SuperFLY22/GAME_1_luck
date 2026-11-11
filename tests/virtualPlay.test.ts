@@ -98,18 +98,22 @@ for (const initialAttacker of ['p1', 'p2'] as const) {
 
       // CHECK_ROUND_RESULT 후 다음 턴 상태 전이 검증
       const nextTurnState = gameReducer(chamState, { type: 'CHECK_ROUND_RESULT' });
-      assert.equal(nextTurnState.phase, 'CHAM_INPUT', `Phase must return to CHAM_INPUT for round 2`);
       assert.equal(nextTurnState.round, 2, `Round must increment to 2`);
 
       if (chamState.lastOutcome === 'HIT') {
-        // 공격 성공 시 공격권 유지
+        // 공격 성공 시 공격권 유지 및 CHAM_INPUT 유지
+        assert.equal(nextTurnState.phase, 'CHAM_INPUT', `Phase must return to CHAM_INPUT on HIT`);
         assert.equal(nextTurnState[initialAttacker].role, 'ATTACKER', `Attacker should keep role on HIT`);
         assert.equal(nextTurnState.roleReversed, false, `roleReversed must be false on HIT`);
       } else {
-        // 수비 성공 시 공수 전환
+        // 수비 성공 시 공수 전환 Pause(ROLE_SWAP) 진입
+        assert.equal(nextTurnState.phase, 'ROLE_SWAP', `Phase must enter ROLE_SWAP pause on DODGE`);
         assert.equal(nextTurnState[initialAttacker].role, 'DEFENDER', `Attacker should become DEFENDER on DODGE`);
         assert.equal(nextTurnState[defenderId].role, 'ATTACKER', `Defender should become ATTACKER on DODGE`);
         assert.equal(nextTurnState.roleReversed, true, `roleReversed must be true on DODGE`);
+
+        const nextInputState = gameReducer(nextTurnState, { type: 'START_NEXT_CHAM' });
+        assert.equal(nextInputState.phase, 'CHAM_INPUT', `Phase must become CHAM_INPUT after START_NEXT_CHAM`);
       }
     }
   }
@@ -170,6 +174,9 @@ for (let i = 0; i < MATCH_COUNT; i++) {
     assert(sim.p1.damage <= 5 && sim.p2.damage <= 5);
 
     sim = gameReducer(sim, { type: 'CHECK_ROUND_RESULT' });
+    if (sim.phase === 'ROLE_SWAP') {
+      sim = gameReducer(sim, { type: 'START_NEXT_CHAM' });
+    }
   }
 
   // 게임 종료 검증

@@ -46,7 +46,8 @@ export function incrementDamage(current: DamageLevel): DamageLevel {
 
 /**
  * 참참참 판정 (좌 / 상 / 우 3방향 판정)
- * 공격자의 지목 방향과 수비자의 가드/회피 방향이 일치하면 피격(HIT, 가드 실패)
+ * 공격자의 공격 방향과 수비자의 가드/방어 방향이 같으면: 방어 성공 (BLOCK, isHit = false)
+ * 공격자의 공격 방향과 수비자의 가드/방어 방향이 다르면: 공격 성공 (HIT, isHit = true)
  */
 export function evaluateCham(
   attackerDir: ChamDirection,
@@ -56,6 +57,6 @@ export function evaluateCham(
   const finalDefender = defenderDir ?? getCpuChamDirection();
 
   return {
-    isHit: finalAttacker === finalDefender,
+    isHit: finalAttacker !== finalDefender,
   };
 }

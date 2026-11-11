@@ -177,7 +177,9 @@ class RoomSessionService {
 
   private checkChamResolution(): void {
     if (this.p1Cham !== null && this.p2Cham !== null) {
-      const { isHit } = evaluateCham(this.p1Cham, this.p2Cham);
+      const attackerDir = this.currentAttacker === 'p1' ? this.p1Cham : this.p2Cham;
+      const defenderDir = this.currentAttacker === 'p1' ? this.p2Cham : this.p1Cham;
+      const { isHit } = evaluateCham(attackerDir, defenderDir);
 
       let hitTarget: 'p1' | 'p2' | null = null;
       if (isHit) {
@@ -212,6 +214,24 @@ class RoomSessionService {
 
   public resolveChamOnTimeout(): void {
     if (this.myRole !== 'p1') return;
+    const attackerCham = this.currentAttacker === 'p1' ? this.p1Cham : this.p2Cham;
+    if (!attackerCham) {
+      // 공격자가 3초 안에 선택하지 못함 -> 공격 실패 & 공수 전환 패널티!
+      this.currentAttacker = this.currentAttacker === 'p1' ? 'p2' : 'p1';
+      this.broadcast('CHAM_RESOLVED', {
+        p1Dir: this.p1Cham,
+        p2Dir: this.p2Cham,
+        isHit: false,
+        hitTarget: null,
+        p1Damage: this.p1Damage,
+        p2Damage: this.p2Damage,
+        isGameOver: false,
+        winner: null,
+      });
+      this.resetTurnInputs();
+      return;
+    }
+    // 수비자만 미입력한 경우: 가드 실패 피격
     if (this.p1Cham === null) this.p1Cham = getCpuChamDirection();
     if (this.p2Cham === null) this.p2Cham = getCpuChamDirection();
     this.checkChamResolution();

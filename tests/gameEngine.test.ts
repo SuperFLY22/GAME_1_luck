@@ -23,13 +23,13 @@ assert.deepEqual(evaluateRPS('PAPER', 'PAPER'), { p1Role: 'TIE', p2Role: 'TIE' }
 console.log('✅ RPS 9대 경우의 수 및 무승부 검증 통과');
 
 console.log('--- 2. 참참참 좌/상/우 3방향 좌표계 및 타격/회피 검증 ---');
-// 절대 좌표계: 같은 방향이면 HIT(가드 실패), 다르면 DODGE(가드 성공)
-assert.equal(evaluateCham('LEFT', 'LEFT').isHit, true);
-assert.equal(evaluateCham('UP', 'UP').isHit, true);
-assert.equal(evaluateCham('RIGHT', 'RIGHT').isHit, true);
-assert.equal(evaluateCham('LEFT', 'RIGHT').isHit, false);
-assert.equal(evaluateCham('UP', 'LEFT').isHit, false);
-assert.equal(evaluateCham('RIGHT', 'UP').isHit, false);
+// 규칙: 같은 방향이면 가드 방어 성공 (DODGE, isHit = false), 다른 방향이면 타격 피격 (HIT, isHit = true)
+assert.equal(evaluateCham('LEFT', 'LEFT').isHit, false);
+assert.equal(evaluateCham('UP', 'UP').isHit, false);
+assert.equal(evaluateCham('RIGHT', 'RIGHT').isHit, false);
+assert.equal(evaluateCham('LEFT', 'RIGHT').isHit, true);
+assert.equal(evaluateCham('UP', 'LEFT').isHit, true);
+assert.equal(evaluateCham('RIGHT', 'UP').isHit, true);
 console.log('✅ 참참참 좌/상/우 3방향 타격 및 가드 판정 통과');
 
 console.log('--- 3. 데미지 누적 및 상한선 (5) 검증 ---');
@@ -79,9 +79,9 @@ assert.equal(state.p2.role, 'DEFENDER');
 state = gameReducer(state, { type: 'START_CHAM_PHASE' });
 assert.equal(state.phase, 'CHAM_INPUT');
 
-// 4. 참참참 입력: 공격수 1P=LEFT, 수비수 2P=LEFT -> HIT!
+// 4. 참참참 입력: 공격수 1P=LEFT, 수비수 2P=RIGHT (방향 불일치) -> HIT!
 state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
-state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'LEFT' });
+state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
 state = gameReducer(state, { type: 'RESOLVE_CHAM' });
 assert.equal(state.phase, 'RESOLVE');
 assert.equal(state.lastOutcome, 'HIT');
@@ -95,20 +95,36 @@ assert.equal(state.round, 2);
 assert.equal(state.p1.role, 'ATTACKER'); // 공격 성공자 계속 공격!
 assert.equal(state.p2.role, 'DEFENDER');
 
-// 6. 2턴: 1P(공격) LEFT, 2P(수비) RIGHT -> DODGE! (수비 성공)
+// 6. 2턴: 1P(공격) LEFT, 2P(수비) LEFT (방향 일치) -> DODGE! (가드 방어 성공)
 state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
-state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
+state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'LEFT' });
 state = gameReducer(state, { type: 'RESOLVE_CHAM' });
 assert.equal(state.phase, 'RESOLVE');
 assert.equal(state.lastOutcome, 'DODGE');
 assert.equal(state.p2.damage, 1); // 데미지 증가 없음
 
-// 7. 수비 성공 시 다음 턴: 공수 전환 검증 (P2가 공격수로 전환!)
+// 7. 수비 성공 시 다음 턴: 공수 전환 Pause(ROLE_SWAP) 검증 (P2가 공격수로 전환!)
 state = gameReducer(state, { type: 'CHECK_ROUND_RESULT' });
-assert.equal(state.phase, 'CHAM_INPUT');
+assert.equal(state.phase, 'ROLE_SWAP'); // 공수 전환 pause 단계
 assert.equal(state.round, 3);
 assert.equal(state.p1.role, 'DEFENDER'); // 공수 전환!
 assert.equal(state.p2.role, 'ATTACKER'); // 공수 전환!
+
+// Pause 종료 후 다음 참참참 시작
+state = gameReducer(state, { type: 'START_NEXT_CHAM' });
+assert.equal(state.phase, 'CHAM_INPUT');
+
+// 7-1. 공격자 3초 타임아웃 패널티 검증: 공격수(P2)가 미입력 시 공수 전환 패널티!
+state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'UP' }); // 수비자만 입력
+// P2(공격수) 미입력
+state = gameReducer(state, { type: 'RESOLVE_CHAM' });
+assert.equal(state.phase, 'RESOLVE');
+assert.equal(state.lastOutcome, 'DODGE'); // 공격 실패
+
+state = gameReducer(state, { type: 'CHECK_ROUND_RESULT' });
+assert.equal(state.phase, 'ROLE_SWAP');
+assert.equal(state.p1.role, 'ATTACKER'); // 다시 P1에게 공격권 복귀!
+assert.equal(state.p2.role, 'DEFENDER');
 
 // 8. 5회 피격 KO 체크
 state.p2.damage = 5;

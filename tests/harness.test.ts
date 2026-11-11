@@ -132,9 +132,10 @@ for (let round = 1; round <= 5; round++) {
   assert.equal(state.p1.role, 'ATTACKER'); // 공격 성공자는 계속 공격 유지
 
   const dir = testDirs[round - 1];
-  // 참참참 3방향 입력: 같은 방향이면 HIT! (가드 실패)
+  const defenderDir: ('LEFT' | 'UP' | 'RIGHT') = dir === 'LEFT' ? 'RIGHT' : 'LEFT';
+  // 참참참 3방향 입력: 다른 방향이면 HIT! (가드 실패 피격)
   state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: dir });
-  state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: dir });
+  state = gameReducer(state, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: defenderDir });
   state = gameReducer(state, { type: 'RESOLVE_CHAM' });
   assert.equal(state.phase, 'RESOLVE');
   assert.equal(state.lastOutcome, 'HIT');
@@ -173,28 +174,33 @@ assert.equal(revState.p2.role, 'DEFENDER');
 revState = gameReducer(revState, { type: 'START_CHAM_PHASE' });
 assert.equal(revState.phase, 'CHAM_INPUT');
 
-// 1턴: 1P Left, 2P Right -> 수비 성공 (DODGE)
+// 1턴: 1P Left, 2P Left (방향 일치) -> 수비 성공 (DODGE)
 revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
-revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
+revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'LEFT' });
 revState = gameReducer(revState, { type: 'RESOLVE_CHAM' });
 assert.equal(revState.lastOutcome, 'DODGE');
 assert.equal(revState.p2.damage, 0);
 
-// 결과 검사 -> 수비 성공했으므로 공수 전환! (P1=DEFENDER, P2=ATTACKER)
+// 결과 검사 -> 수비 성공했으므로 공수 전환 Pause(ROLE_SWAP)! (P1=DEFENDER, P2=ATTACKER)
 revState = gameReducer(revState, { type: 'CHECK_ROUND_RESULT' });
-assert.equal(revState.phase, 'CHAM_INPUT');
+assert.equal(revState.phase, 'ROLE_SWAP');
 assert.equal(revState.round, 2);
 assert.equal(revState.p1.role, 'DEFENDER'); // 1P 수비수로 전환
 assert.equal(revState.p2.role, 'ATTACKER'); // 2P 공격수로 전환
 
-// 2턴: 2P(공격) Right, 1P(수비) Left -> 다시 수비 성공 (DODGE)
+// Pause 종료 후 다음 참참참 시작
+revState = gameReducer(revState, { type: 'START_NEXT_CHAM' });
+assert.equal(revState.phase, 'CHAM_INPUT');
+
+// 2턴: 2P(공격) Right, 1P(수비) Right (방향 일치) -> 다시 수비 성공 (DODGE)
 revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p2', direction: 'RIGHT' });
-revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'LEFT' });
+revState = gameReducer(revState, { type: 'SET_CHAM_INPUT', playerId: 'p1', direction: 'RIGHT' });
 revState = gameReducer(revState, { type: 'RESOLVE_CHAM' });
 assert.equal(revState.lastOutcome, 'DODGE');
 
-// 결과 검사 -> 다시 공수 전환! (P1=ATTACKER, P2=DEFENDER)
+// 결과 검사 -> 다시 공수 전환 Pause! (P1=ATTACKER, P2=DEFENDER)
 revState = gameReducer(revState, { type: 'CHECK_ROUND_RESULT' });
+assert.equal(revState.phase, 'ROLE_SWAP');
 assert.equal(revState.p1.role, 'ATTACKER'); // 1P 다시 공격수로 복귀!
 assert.equal(revState.p2.role, 'DEFENDER');
 console.log('✅ 수비 성공 시 실시간 공수 전환 및 공수 핑퐁 턴 무결성 검증 통과');

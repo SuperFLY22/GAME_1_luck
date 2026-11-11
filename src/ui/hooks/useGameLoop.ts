@@ -102,8 +102,8 @@ export function useGameLoop() {
     return () => clearTimeout(timer);
   }, [state.phase, state.countdown, state.mode, state.online?.myRoleInRoom]);
 
-  // 3. 참참참 타이머 루프 (CHAM_INPUT 전용: 2초 카운트다운)
-  // * 가위바위보(RPS_INPUT)는 시간제한 없이 자유롭게 고민 후 선택!
+  // 3. 참참참 타이머 루프 (CHAM_INPUT 전용: 3초 카운트다운)
+  // * 패널티: 공격자가 3초 안에 선택하지 않으면 공격 실패 및 공수 전환!
   useEffect(() => {
     if (state.phase !== 'CHAM_INPUT') {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -114,10 +114,10 @@ export function useGameLoop() {
     timerStartRef.current = performance.now();
     timerDurationRef.current = duration;
 
-    // AI 자동 입력 (1P vs CPU 전용: 0.5~1.3초 사이에 참참참 방향 결정)
+    // AI 자동 입력 (1P vs CPU 전용: 0.6~1.6초 사이에 참참참 방향 결정)
     let aiTimer: ReturnType<typeof setTimeout> | null = null;
     if (state.p2.isAi) {
-      const aiDelay = 500 + Math.random() * 800;
+      const aiDelay = 600 + Math.random() * 1000;
       aiTimer = setTimeout(() => {
         if (stateRef.current.phase === 'CHAM_INPUT') {
           const cpuDir = getCpuChamDirection();
@@ -133,15 +133,10 @@ export function useGameLoop() {
 
       dispatch({ type: 'UPDATE_TIMER', ratio: remainingRatio });
 
-      // 참참참 2초 카운트다운 종료 시 결과 판정
+      // 참참참 3초 카운트다운 종료 시 결과 판정
       if (remainingRatio <= 0) {
         if (stateRef.current.mode !== 'ONLINE_MATCH') {
-          if (!stateRef.current.p1.chamDirection) {
-            dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: getCpuChamDirection() });
-          }
-          if (!stateRef.current.p2.chamDirection) {
-            dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: getCpuChamDirection() });
-          }
+          // 공격자가 3초 안에 안 골랐으면 그대로 null 상태로 판정 -> 공격자 타임아웃 패널티(공수 전환) 발동
           dispatch({ type: 'RESOLVE_CHAM' });
         } else {
           roomSessionService.resolveChamOnTimeout();
@@ -160,7 +155,7 @@ export function useGameLoop() {
     };
   }, [state.phase, state.round, state.mode, state.p2.isAi]);
 
-  // 4. 결과 연출 및 사운드 (RESOLVE & RPS_RESULT)
+  // 4. 결과 연출 및 사운드 (RESOLVE, ROLE_SWAP & RPS_RESULT)
   useEffect(() => {
     if (state.phase === 'RESOLVE') {
       if (state.lastOutcome === 'HIT') {
@@ -172,6 +167,19 @@ export function useGameLoop() {
       const timer = setTimeout(() => {
         dispatch({ type: 'CHECK_ROUND_RESULT' });
       }, GAME_CONFIG.RESOLVE_DISPLAY_MS);
+
+      return () => clearTimeout(timer);
+    }
+
+    // 공수 전환 인지 Pause 단계 (1.5초간 공수 전환을 확실히 인지 후 다음 라운드 시작)
+    if (state.phase === 'ROLE_SWAP') {
+      soundManager.playRPSChant();
+      const timer = setTimeout(() => {
+        dispatch({ type: 'START_NEXT_CHAM' });
+        if (state.mode === 'ONLINE_MATCH' && state.online?.myRoleInRoom === 'p1') {
+          roomSessionService.startChamPhase();
+        }
+      }, GAME_CONFIG.ROLE_SWAP_PAUSE_MS);
 
       return () => clearTimeout(timer);
     }
