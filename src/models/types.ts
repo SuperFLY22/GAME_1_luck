@@ -61,3 +61,17 @@ export interface GameEngineState {
   roleReversed: boolean; // 직전 턴에서 수비 성공 → 공수 전환 여부 (배너 표시용)
   online?: OnlineMatchContext;
 }
+
+/**
+ * 1인칭 아케이드 애니메이션 가변 프레임 타임라인 계약
+ */
+export interface ActionFrame {
+  spriteUrl: string;
+  durationMs: number;          // 프레임 유지 시간 (밀리초)
+  hitStop?: boolean;           // 타격 순간 시간 정지 (임팩트 멈춤)
+  triggerSfx?: 'hit' | 'guard' | 'swing' | 'dodge';
+  screenShake?: boolean;
+}
+
+export type ActionSequence = ActionFrame[];
+

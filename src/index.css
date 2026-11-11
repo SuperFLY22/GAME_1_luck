@@ -198,3 +198,158 @@
 .animate-slideDown {
   animation: slideDown 1.4s ease-in-out forwards;
 }
+
+/* ========================================================
+ * 1인칭 오버더숄더 (Punch-Out Style) 3D Depth 배틀 키프레임
+ * ======================================================== */
+
+.perspective-stage {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* 1. 내 캐릭터 (하단 전경 뒷모습) 뿅망치 1인칭 3D 스윙 (화면 하단 -> 전방 원경으로 깊이 돌진) */
+@keyframes fp-hammer-swing-left {
+  0% {
+    transform: translate3d(20px, 30px, 0) rotate(10deg) scale(1);
+    opacity: 0.9;
+  }
+  30% {
+    transform: translate3d(40px, -10px, 40px) rotate(25deg) scale(1.15);
+  }
+  70% {
+    transform: translate3d(-110px, -150px, 120px) rotate(-35deg) scale(1.45);
+    filter: drop-shadow(0 15px 30px rgba(245, 158, 11, 0.8));
+  }
+  100% {
+    transform: translate3d(-95px, -130px, 90px) rotate(-25deg) scale(1.3);
+  }
+}
+
+@keyframes fp-hammer-swing-up {
+  0% {
+    transform: translate3d(0, 40px, 0) scale(1);
+    opacity: 0.9;
+  }
+  30% {
+    transform: translate3d(0, 0px, 40px) scale(1.2);
+  }
+  70% {
+    transform: translate3d(0, -180px, 150px) scale(1.55);
+    filter: drop-shadow(0 20px 35px rgba(239, 68, 68, 0.9));
+  }
+  100% {
+    transform: translate3d(0, -150px, 110px) scale(1.35);
+  }
+}
+
+@keyframes fp-hammer-swing-right {
+  0% {
+    transform: translate3d(-20px, 30px, 0) rotate(-10deg) scale(1);
+    opacity: 0.9;
+  }
+  30% {
+    transform: translate3d(-40px, -10px, 40px) rotate(-25deg) scale(1.15);
+  }
+  70% {
+    transform: translate3d(110px, -150px, 120px) rotate(35deg) scale(1.45);
+    filter: drop-shadow(0 15px 30px rgba(245, 158, 11, 0.8));
+  }
+  100% {
+    transform: translate3d(95px, -130px, 90px) rotate(25deg) scale(1.3);
+  }
+}
+
+.animate-fp-hammer-left {
+  animation: fp-hammer-swing-left 0.16s cubic-bezier(0.12, 0.95, 0.2, 1) forwards;
+}
+.animate-fp-hammer-up {
+  animation: fp-hammer-swing-up 0.16s cubic-bezier(0.12, 0.95, 0.2, 1) forwards;
+}
+.animate-fp-hammer-right {
+  animation: fp-hammer-swing-right 0.16s cubic-bezier(0.12, 0.95, 0.2, 1) forwards;
+}
+
+/* 2. 내 캐릭터 1인칭 냄비뚜껑 가드 (화면 전면 방패화) */
+@keyframes fp-self-guard-left {
+  0% { transform: translate3d(0, 60px, 0) scale(0.9); }
+  60% { transform: translate3d(-50px, -40px, 80px) rotate(-12deg) scale(1.3); filter: brightness(1.4); }
+  100% { transform: translate3d(-40px, -30px, 60px) rotate(-8deg) scale(1.2); }
+}
+
+@keyframes fp-self-guard-up {
+  0% { transform: translate3d(0, 60px, 0) scale(0.9); }
+  60% { transform: translate3d(0, -50px, 90px) scale(1.35); filter: brightness(1.4); }
+  100% { transform: translate3d(0, -35px, 70px) scale(1.25); }
+}
+
+@keyframes fp-self-guard-right {
+  0% { transform: translate3d(0, 60px, 0) scale(0.9); }
+  60% { transform: translate3d(50px, -40px, 80px) rotate(12deg) scale(1.3); filter: brightness(1.4); }
+  100% { transform: translate3d(40px, -30px, 60px) rotate(8deg) scale(1.2); }
+}
+
+.animate-fp-guard-left {
+  animation: fp-self-guard-left 0.22s ease-out forwards;
+}
+.animate-fp-guard-up {
+  animation: fp-self-guard-up 0.22s ease-out forwards;
+}
+.animate-fp-guard-right {
+  animation: fp-self-guard-right 0.22s ease-out forwards;
+}
+
+/* 3. 상대방 (정면 원경) 1인칭 회피 틸트 (좌 / 상 / 우 고개 돌리기) */
+@keyframes fp-opp-dodge-left {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  40% { transform: translate(-45px, 8px) rotate(-16deg) scale(0.94); }
+  100% { transform: translate(-38px, 6px) rotate(-14deg) scale(0.95); }
+}
+
+@keyframes fp-opp-dodge-up {
+  0% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(0, -28px) scale(0.92); }
+  100% { transform: translate(0, -22px) scale(0.93); }
+}
+
+@keyframes fp-opp-dodge-right {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  40% { transform: translate(45px, 8px) rotate(16deg) scale(0.94); }
+  100% { transform: translate(38px, 6px) rotate(14deg) scale(0.95); }
+}
+
+.animate-fp-opp-dodge-left {
+  animation: fp-opp-dodge-left 0.24s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+.animate-fp-opp-dodge-up {
+  animation: fp-opp-dodge-up 0.24s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+.animate-fp-opp-dodge-right {
+  animation: fp-opp-dodge-right 0.24s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+/* 4. 상대방 피격(Hit) 반동 애니메이션 (머리 뒤로 튕겨나감 + 깜빡임) */
+@keyframes fp-opp-hit-recoil {
+  0% { transform: translate(0, 0) scale(1); filter: brightness(1); }
+  25% { transform: translate(0, -15px) scale(1.1) rotate(6deg); filter: brightness(2) contrast(1.5); }
+  55% { transform: translate(0, 20px) scale(0.9) rotate(-4deg); }
+  80% { transform: translate(0, -6px) scale(0.96) rotate(2deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+.animate-fp-opp-hit {
+  animation: fp-opp-hit-recoil 0.45s ease-out forwards;
+}
+
+/* 5. 상대방이 나를 공격할 때 (상대방의 뿅망치가 카메라/화면 정면으로 쏟아지는 모션) */
+@keyframes fp-opp-attack-towards-camera {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  40% { transform: translate3d(0, -25px, 0) scale(0.95); }
+  75% { transform: translate3d(0, 80px, 120px) scale(1.6); filter: drop-shadow(0 25px 40px rgba(239, 68, 68, 0.95)); }
+  100% { transform: translate3d(0, 60px, 80px) scale(1.35); }
+}
+
+.animate-fp-opp-attack {
+  animation: fp-opp-attack-towards-camera 0.24s cubic-bezier(0.12, 0.9, 0.2, 1) forwards;
+}
+

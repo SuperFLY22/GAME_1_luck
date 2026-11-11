@@ -114,15 +114,25 @@ export function useGameLoop() {
     timerStartRef.current = performance.now();
     timerDurationRef.current = duration;
 
-    // AI 자동 입력 (1P vs CPU 전용: 0.6~1.6초 사이에 참참참 방향 결정)
+    // AI 자동 입력 (1P vs CPU 전용: 0.5~1.3초 사이에 참참참 방향 결정)
     let aiTimer: ReturnType<typeof setTimeout> | null = null;
+    let resolveTimer: ReturnType<typeof setTimeout> | null = null;
     if (state.p2.isAi) {
-      const aiDelay = 600 + Math.random() * 1000;
+      const aiDelay = 500 + Math.random() * 800;
       aiTimer = setTimeout(() => {
         if (stateRef.current.phase === 'CHAM_INPUT') {
           const cpuDir = getCpuChamDirection();
-          dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: cpuDir });
           p2SubmittedRef.current = true;
+          dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: cpuDir });
+
+          // 1P 플레이어가 이미 참참참 방향을 선택했다면 3초를 기다리지 않고 즉시 판정!
+          if (p1SubmittedRef.current || Boolean(stateRef.current.p1.chamDirection)) {
+            resolveTimer = setTimeout(() => {
+              if (stateRef.current.phase === 'CHAM_INPUT') {
+                dispatch({ type: 'RESOLVE_CHAM' });
+              }
+            }, 100);
+          }
         }
       }, aiDelay);
     }
@@ -152,6 +162,7 @@ export function useGameLoop() {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (aiTimer) clearTimeout(aiTimer);
+      if (resolveTimer) clearTimeout(resolveTimer);
     };
   }, [state.phase, state.round, state.mode, state.p2.isAi]);
 
@@ -244,9 +255,21 @@ export function useGameLoop() {
           }
         }
       } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
+        if (p1SubmittedRef.current) return;
         p1SubmittedRef.current = true;
         dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p1', direction: value as ChamDirection });
-        if (isOnline) roomSessionService.submitCham(value as ChamDirection);
+        if (isOnline) {
+          roomSessionService.submitCham(value as ChamDirection);
+        } else {
+          // 1P vs CPU 또는 로컬 모드: 상대방(P2/AI)이 이미 선택했다면 3초를 기다리지 않고 즉시 판정!
+          if (p2SubmittedRef.current || Boolean(cur.p2.chamDirection)) {
+            setTimeout(() => {
+              if (stateRef.current.phase === 'CHAM_INPUT') {
+                dispatch({ type: 'RESOLVE_CHAM' });
+              }
+            }, 100);
+          }
+        }
       }
     },
     []
@@ -273,9 +296,21 @@ export function useGameLoop() {
           }
         }
       } else if (type === 'cham' && cur.phase === 'CHAM_INPUT') {
+        if (p2SubmittedRef.current) return;
         p2SubmittedRef.current = true;
         dispatch({ type: 'SET_CHAM_INPUT', playerId: 'p2', direction: value as ChamDirection });
-        if (isOnline) roomSessionService.submitCham(value as ChamDirection);
+        if (isOnline) {
+          roomSessionService.submitCham(value as ChamDirection);
+        } else {
+          // 상대방(P1)이 이미 선택했다면 3초를 기다리지 않고 즉시 판정!
+          if (p1SubmittedRef.current || Boolean(cur.p1.chamDirection)) {
+            setTimeout(() => {
+              if (stateRef.current.phase === 'CHAM_INPUT') {
+                dispatch({ type: 'RESOLVE_CHAM' });
+              }
+            }, 100);
+          }
+        }
       }
     },
     []
