@@ -55,9 +55,88 @@ export class GameRoom extends DurableObject {
     const url = new URL(request.url);
     this.roomId = url.searchParams.get('roomId') || 'lobby';
 
+    // CORS 공통 헤더
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    // HTTP REST 엔드포인트: 방명록 조회 / 등록 / 삭제
+    if (url.pathname.endsWith('/guestbook')) {
+      if (request.method === 'GET') {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            entries: this.guestbookEntries,
+          }),
+          {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      if (request.method === 'POST') {
+        try {
+          const body = (await request.json()) as { nickname?: string; content?: string };
+          const entry = this.handleAddGuestbook(body.nickname, body.content);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              entry,
+            }),
+            {
+              status: 200,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        } catch {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Invalid JSON body' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      if (request.method === 'DELETE') {
+        try {
+          const body = (await request.json()) as { id?: string; adminKey?: string };
+          const deleted = this.handleDeleteGuestbook(body.id, body.adminKey);
+          return new Response(
+            JSON.stringify({
+              success: deleted,
+            }),
+            {
+              status: deleted ? 200 : 403,
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+        } catch {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Invalid JSON body' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     const upgradeHeader = request.headers.get('Upgrade');
     if (!upgradeHeader || upgradeHeader.toLowerCase() !== 'websocket') {
-      return new Response('Expected Upgrade: websocket', { status: 426 });
+      return new Response('Expected Upgrade: websocket', { status: 426, headers: corsHeaders });
     }
 
     const pair = new WebSocketPair();
@@ -135,6 +214,15 @@ export class GameRoom extends DurableObject {
       adminKey?: string;
     }
   ) {
+    if (data.type === 'PING') {
+      try {
+        ws.send(JSON.stringify({ type: 'PONG' }));
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
     if (data.type === 'JOIN_QUEUE' && data.id && data.name) {
       this.lobbyPlayers.set(ws, {
         id: data.id,
@@ -153,10 +241,10 @@ export class GameRoom extends DurableObject {
     }
   }
 
-  private handleDeleteGuestbook(id?: string, adminKey?: string) {
+  private handleDeleteGuestbook(id?: string, adminKey?: string): boolean {
     // 기본 관리자 마스터 키: admin777!
     const validKey = 'admin777!';
-    if (!id || adminKey !== validKey) return;
+    if (!id || adminKey !== validKey) return false;
 
     this.guestbookEntries = this.guestbookEntries.filter((e) => e.id !== id);
     this.ctx.storage.put('guestbook', this.guestbookEntries).catch((err) => {
@@ -175,11 +263,12 @@ export class GameRoom extends DurableObject {
         // ignore
       }
     }
+    return true;
   }
 
-  private handleAddGuestbook(rawNickname?: string, rawContent?: string) {
+  private handleAddGuestbook(rawNickname?: string, rawContent?: string): GuestbookEntry | null {
     const content = (rawContent || '').trim();
-    if (!content) return;
+    if (!content) return null;
 
     const nickname = (rawNickname || '').trim().slice(0, 12) || '익명 도전자';
     const entry: GuestbookEntry = {
@@ -210,6 +299,7 @@ export class GameRoom extends DurableObject {
         // ignore closed socket
       }
     }
+    return entry;
   }
 
   private sendGuestbookInitTo(ws: WebSocket) {
@@ -303,6 +393,26 @@ export class GameRoom extends DurableObject {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      });
+    }
+
+    // /api/guestbook 경로는 항상 lobby 인스턴스로 라우팅
+    if (url.pathname.startsWith('/api/guestbook') || url.pathname === '/guestbook') {
+      url.searchParams.set('roomId', 'lobby');
+      const id = env.GAME_ROOM.idFromName('lobby');
+      const stub = env.GAME_ROOM.get(id);
+      return stub.fetch(new Request(url.toString(), request));
+    }
 
     // /room/:roomId 패턴 파싱
     const match = url.pathname.match(/^\/room\/([^/]+)/);

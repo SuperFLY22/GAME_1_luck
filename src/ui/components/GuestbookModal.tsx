@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Send, MessageSquare, Clock, Sparkles, Shield, Trash2, KeyRound } from 'lucide-react';
 import type { GuestbookEntry } from '../../models/types';
 import { matchmakingService } from '../../services/network/matchmakingService';
@@ -26,6 +26,12 @@ export const GuestbookModal: React.FC<GuestbookModalProps> = ({
   const [adminInput, setAdminInput] = useState('');
   const [adminError, setAdminError] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      matchmakingService.fetchGuestbookHttp();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,7 +39,12 @@ export const GuestbookModal: React.FC<GuestbookModalProps> = ({
     const trimmed = content.trim();
     if (!trimmed) return;
 
-    matchmakingService.sendGuestbookEntry(nickname, trimmed);
+    const trimmedNick = nickname.trim();
+    if (trimmedNick) {
+      matchmakingService.setMyName(trimmedNick);
+    }
+
+    matchmakingService.sendGuestbookEntry(trimmedNick, trimmed);
     setContent('');
     setIsSuccess(true);
     setTimeout(() => setIsSuccess(false), 2500);

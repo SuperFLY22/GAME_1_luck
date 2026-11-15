@@ -1,4 +1,4 @@
-import { getWebSocketUrl } from '../../config/websocket';
+import { getWebSocketUrl, getHttpApiUrl } from '../../config/websocket';
 import type { GuestbookEntry } from '../../models/types';
 
 export interface MatchFoundData {
@@ -13,6 +13,8 @@ type MatchListener = (data: MatchFoundData) => void;
 type StatsListener = (waitingCount: number) => void;
 type GuestbookListener = (entries: GuestbookEntry[]) => void;
 
+const GUESTBOOK_CACHE_KEY = 'cham_guestbook_cache';
+
 class MatchmakingService {
   private ws: WebSocket | null = null;
   private myId: string;
@@ -24,6 +26,8 @@ class MatchmakingService {
   private guestbookListeners: Set<GuestbookListener> = new Set();
   private guestbookEntries: GuestbookEntry[] = [];
   private currentQueueCount: number = 0;
+  private pingInterval: ReturnType<typeof setInterval> | null = null;
+  private isFetchingHttp: boolean = false;
 
   constructor() {
     // 탭별 고유 ID 부여 (한 브라우저에서 2개 탭으로 대전 테스트 가능)
@@ -41,6 +45,22 @@ class MatchmakingService {
       localStorage.setItem('cham_player_name', storedName);
     }
     this.myName = storedName;
+
+    // 로컬 스토리지에 캐시된 방명록 즉시 로드 (0ms 초기 렌더링 지원)
+    try {
+      const cached = localStorage.getItem(GUESTBOOK_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          this.guestbookEntries = parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 초기 백그라운드 HTTP 동기화
+    this.fetchGuestbookHttp();
   }
 
   public getMyId(): string {
@@ -67,6 +87,45 @@ class MatchmakingService {
     return this.guestbookEntries;
   }
 
+  private notifyGuestbookListeners(): void {
+    try {
+      localStorage.setItem(GUESTBOOK_CACHE_KEY, JSON.stringify(this.guestbookEntries.slice(0, 50)));
+    } catch {
+      // ignore storage quota error
+    }
+    for (const listener of this.guestbookListeners) {
+      try {
+        listener(this.guestbookEntries);
+      } catch (err) {
+        console.error('[Matchmaking] guestbook listener error:', err);
+      }
+    }
+  }
+
+  /**
+   * HTTP REST 엔드포인트(/api/guestbook)로부터 최신 방명록 목록 비동기 조회
+   */
+  public async fetchGuestbookHttp(): Promise<GuestbookEntry[]> {
+    if (this.isFetchingHttp) return this.guestbookEntries;
+    this.isFetchingHttp = true;
+    try {
+      const url = getHttpApiUrl('/api/guestbook');
+      const res = await fetch(url, { method: 'GET' });
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; entries?: GuestbookEntry[] };
+        if (data.success && Array.isArray(data.entries) && data.entries.length > 0) {
+          this.guestbookEntries = data.entries;
+          this.notifyGuestbookListeners();
+        }
+      }
+    } catch (err) {
+      console.warn('[Matchmaking] Failed to fetch guestbook via HTTP:', err);
+    } finally {
+      this.isFetchingHttp = false;
+    }
+    return this.guestbookEntries;
+  }
+
   /**
    * 타이틀 화면 등에서 실시간 로비 대기자 수를 구독 (큐 진입 없이 관전 모드)
    */
@@ -82,6 +141,7 @@ class MatchmakingService {
       this.statsListeners.delete(listener);
       // 만약 구독자도 없고 실제 매칭 큐에도 참여하지 않았으면 소켓 정리
       if (this.statsListeners.size === 0 && this.guestbookListeners.size === 0 && !this.isQueued && this.ws) {
+        this.stopHeartbeat();
         this.ws.close();
         this.ws = null;
       }
@@ -97,11 +157,14 @@ class MatchmakingService {
       listener(this.guestbookEntries);
     }
 
+    // HTTP 최신 데이터 동기화 및 웹소켓 연결
+    this.fetchGuestbookHttp();
     this.ensureSocket();
 
     return () => {
       this.guestbookListeners.delete(listener);
       if (this.statsListeners.size === 0 && this.guestbookListeners.size === 0 && !this.isQueued && this.ws) {
+        this.stopHeartbeat();
         this.ws.close();
         this.ws = null;
       }
@@ -109,50 +172,107 @@ class MatchmakingService {
   }
 
   /**
-   * 실시간 방명록/후기 등록
+   * 실시간 방명록/후기 등록 (낙관적 UI + WebSocket 실시간 전송 + HTTP POST 폴백 이중화)
    */
   public sendGuestbookEntry(nickname: string, content: string): void {
     const cleanNick = (nickname || this.myName).trim() || '익명 도전자';
     const cleanContent = content.trim();
     if (!cleanContent) return;
 
-    this.ensureSocket();
+    // 1. 낙관적 업데이트 (Optimistic UI): 유저 체감 0초 반영
+    const tempId = `gb_opt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const optimisticEntry: GuestbookEntry = {
+      id: tempId,
+      nickname: cleanNick,
+      content: cleanContent,
+      createdAt: Date.now(),
+    };
+    this.guestbookEntries = [optimisticEntry, ...this.guestbookEntries].slice(0, 50);
+    this.notifyGuestbookListeners();
 
+    // 2. WebSocket 전송 시도
+    this.ensureSocket();
     const payload = JSON.stringify({
       type: 'ADD_GUESTBOOK',
       nickname: cleanNick,
       content: cleanContent,
     });
 
+    let sentViaWs = false;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(payload);
-    } else {
-      // 소켓 열릴 때까지 잠시 대기 후 발송
-      const pendingInterval = setInterval(() => {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-          this.ws.send(payload);
-          clearInterval(pendingInterval);
-        }
-      }, 200);
-      setTimeout(() => clearInterval(pendingInterval), 3000);
+      try {
+        this.ws.send(payload);
+        sentViaWs = true;
+      } catch {
+        sentViaWs = false;
+      }
+    }
+
+    // 3. HTTP POST 폴백 (WebSocket 미연결이거나 전송 실패 시 확실한 데이터 영구 보존)
+    if (!sentViaWs) {
+      const httpPayload = { nickname: cleanNick, content: cleanContent };
+      const apiUrl = getHttpApiUrl('/api/guestbook');
+      fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(httpPayload),
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            const data = (await res.json()) as { success?: boolean; entry?: GuestbookEntry };
+            if (data.success && data.entry) {
+              // 임시 엔트리를 서버가 반환한 영구 ID 엔트리로 교체
+              this.guestbookEntries = this.guestbookEntries.map((e) =>
+                e.id === tempId ? data.entry! : e
+              );
+              this.notifyGuestbookListeners();
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('[Matchmaking] HTTP POST guestbook fallback error:', err);
+        });
     }
   }
 
   /**
-   * 관리자 권한으로 방명록 항목 삭제
+   * 관리자 권한으로 방명록 항목 삭제 (낙관적 UI + WebSocket + HTTP DELETE 폴백)
    */
   public deleteGuestbookEntry(id: string, adminKey: string): void {
     if (!id || !adminKey) return;
-    this.ensureSocket();
 
+    // 1. 낙관적 삭제
+    this.guestbookEntries = this.guestbookEntries.filter((e) => e.id !== id);
+    this.notifyGuestbookListeners();
+
+    // 2. WebSocket 전송
+    this.ensureSocket();
     const payload = JSON.stringify({
       type: 'DELETE_GUESTBOOK',
       id,
       adminKey,
     });
 
+    let sentViaWs = false;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(payload);
+      try {
+        this.ws.send(payload);
+        sentViaWs = true;
+      } catch {
+        sentViaWs = false;
+      }
+    }
+
+    // 3. HTTP DELETE 폴백
+    if (!sentViaWs) {
+      const apiUrl = getHttpApiUrl('/api/guestbook');
+      fetch(apiUrl, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, adminKey }),
+      }).catch((err) => {
+        console.warn('[Matchmaking] HTTP DELETE guestbook fallback error:', err);
+      });
     }
   }
 
@@ -174,6 +294,26 @@ class MatchmakingService {
     }
   }
 
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.pingInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({ type: 'PING' }));
+        } catch {
+          // ignore
+        }
+      }
+    }, 15000); // 15초 주기 Cloudflare Edge 소켓 유지 Heartbeat
+  }
+
+  private stopHeartbeat(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+  }
+
   private ensureSocket(): void {
     if (
       this.ws &&
@@ -187,6 +327,7 @@ class MatchmakingService {
       this.ws = new WebSocket(url);
 
       this.ws.onopen = () => {
+        this.startHeartbeat();
         if (this.isQueued) {
           this.sendJoinQueue();
         }
@@ -195,6 +336,10 @@ class MatchmakingService {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.type === 'PONG') {
+            return; // Heartbeat 수신
+          }
+
           if (data.type === 'QUEUE_UPDATE') {
             const count = typeof data.count === 'number' ? data.count : 0;
             const names = Array.isArray(data.names) ? data.names : [];
@@ -212,24 +357,26 @@ class MatchmakingService {
             });
           } else if (data.type === 'GUESTBOOK_INIT') {
             if (Array.isArray(data.entries)) {
-              this.guestbookEntries = data.entries;
-              for (const listener of this.guestbookListeners) {
-                listener(this.guestbookEntries);
-              }
+              // 임시 엔트리가 있다면 보존하고 병합
+              const tempEntries = this.guestbookEntries.filter((e) => e.id.startsWith('gb_opt_'));
+              const combined = [...tempEntries, ...data.entries.filter((d: GuestbookEntry) => !tempEntries.some((t) => t.content === d.content && t.nickname === d.nickname))];
+              this.guestbookEntries = combined.slice(0, 50);
+              this.notifyGuestbookListeners();
             }
           } else if (data.type === 'GUESTBOOK_NEW' && data.entry) {
-            const exists = this.guestbookEntries.some((e) => e.id === data.entry.id);
-            if (!exists) {
+            // 중복 방지 및 낙관적 엔트리 교체
+            const optIndex = this.guestbookEntries.findIndex(
+              (e) => e.id.startsWith('gb_opt_') && e.content === data.entry.content && e.nickname === data.entry.nickname
+            );
+            if (optIndex !== -1) {
+              this.guestbookEntries[optIndex] = data.entry;
+            } else if (!this.guestbookEntries.some((e) => e.id === data.entry.id)) {
               this.guestbookEntries = [data.entry, ...this.guestbookEntries].slice(0, 50);
-              for (const listener of this.guestbookListeners) {
-                listener(this.guestbookEntries);
-              }
             }
+            this.notifyGuestbookListeners();
           } else if (data.type === 'GUESTBOOK_DELETED' && data.id) {
             this.guestbookEntries = this.guestbookEntries.filter((e) => e.id !== data.id);
-            for (const listener of this.guestbookListeners) {
-              listener(this.guestbookEntries);
-            }
+            this.notifyGuestbookListeners();
           }
         } catch (err) {
           console.error('[Matchmaking] Message parse error:', err);
@@ -237,6 +384,9 @@ class MatchmakingService {
       };
 
       this.ws.onclose = () => {
+        this.stopHeartbeat();
+        this.ws = null;
+
         // 재연결 필요 시 (대기열 또는 구독자가 있을 때)
         if (this.isQueued || this.statsListeners.size > 0 || this.guestbookListeners.size > 0) {
           setTimeout(() => {
@@ -295,6 +445,7 @@ class MatchmakingService {
 
     // 만약 타이틀 화면 통계/방명록 구독자도 없다면 소켓 종료
     if (this.statsListeners.size === 0 && this.guestbookListeners.size === 0 && this.ws) {
+      this.stopHeartbeat();
       this.ws.close();
       this.ws = null;
     }

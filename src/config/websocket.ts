@@ -14,3 +14,13 @@ export function getWebSocketUrl(roomId: string): string {
   return `${protocol}//${cleanHost}/room/${encodeURIComponent(roomId)}`;
 }
 
+export function getHttpApiUrl(path: string): string {
+  const isSecure =
+    window.location.protocol === 'https:' || !WS_HOST.includes('localhost');
+  const protocol = isSecure ? 'https:' : 'http:';
+  const cleanHost = WS_HOST.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${protocol}//${cleanHost}${cleanPath}`;
+}
+
+
