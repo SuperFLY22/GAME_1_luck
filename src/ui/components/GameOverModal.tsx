@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
-import { RotateCcw, Trophy, Home, Users, Skull } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { RotateCcw, Trophy, Home, Users, Skull, MessageSquare, Send } from 'lucide-react';
 import type { GameEngineState } from '../../models/types';
 import { fireVictoryConfetti } from '../../utils/confetti';
 import { soundManager } from '../../services/sound/soundManager';
+import { matchmakingService } from '../../services/network/matchmakingService';
 import { useLanguage } from '../context/LanguageContext';
 
 interface GameOverModalProps {
@@ -29,6 +30,23 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   const isLocalWinner = isOnline
     ? state.winner === state.online?.myRoleInRoom
     : state.winner === 'p1';
+
+  const [reviewText, setReviewText] = useState('');
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  const handleSendReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = reviewText.trim();
+    if (!trimmed) return;
+
+    const myName = isOnline
+      ? (state.online?.myRoleInRoom === 'p1' ? state.p1.name : state.p2.name)
+      : state.p1.name;
+
+    matchmakingService.sendGuestbookEntry(myName, trimmed);
+    setReviewText('');
+    setReviewSubmitted(true);
+  };
 
   useEffect(() => {
     if (isLocalWinner) {
@@ -139,6 +157,35 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               <span className="text-xs text-slate-400">{!isP1Win ? '👑 WINNER' : '🏳️ LOSE'}</span>
             </div>
           </div>
+        </div>
+
+        {/* 실시간 한줄 후기 작성 바 */}
+        <div className="w-full bg-slate-900/90 border border-amber-500/50 rounded-2xl p-2.5 mb-4 shadow-sm">
+          {reviewSubmitted ? (
+            <div className="text-center text-xs font-black text-emerald-400 py-1 font-pixel animate-fadeIn flex items-center justify-center gap-1">
+              ✨ <span>실시간 전광판에 등록되었습니다!</span>
+            </div>
+          ) : (
+            <form onSubmit={handleSendReview} className="flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4 text-amber-400 shrink-0 ml-1" />
+              <input
+                type="text"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                maxLength={60}
+                placeholder="승리 소감 또는 한줄 후기! (최대 60자)"
+                className="flex-1 bg-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 focus:border-amber-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!reviewText.trim()}
+                className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-black text-xs rounded-lg active:scale-95 transition-all font-pixel shrink-0 flex items-center gap-1"
+              >
+                <Send className="w-3 h-3" />
+                <span>등록</span>
+              </button>
+            </form>
+          )}
         </div>
 
         {/* 버튼 영역 */}

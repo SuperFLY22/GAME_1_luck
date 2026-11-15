@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Loader2, Users, Edit2, Check, Zap } from 'lucide-react';
 import { matchmakingService } from '../../services/network/matchmakingService';
 import { useLanguage } from '../context/LanguageContext';
+import { GuestbookTicker } from './GuestbookTicker';
 
 interface LobbyScreenProps {
   waitingCount: number;
@@ -123,6 +124,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
             </span>
           ))}
         </div>
+      </div>
+
+      {/* 실시간 방명록 전광판 */}
+      <div className="w-full max-w-sm mt-4">
+        <GuestbookTicker />
       </div>
     </div>
   );

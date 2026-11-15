@@ -1,4 +1,5 @@
 import { getWebSocketUrl } from '../../config/websocket';
+import type { GuestbookEntry } from '../../models/types';
 
 export interface MatchFoundData {
   roomId: string;
@@ -10,6 +11,7 @@ export interface MatchFoundData {
 type QueueListener = (waitingCount: number, waitingNames: string[]) => void;
 type MatchListener = (data: MatchFoundData) => void;
 type StatsListener = (waitingCount: number) => void;
+type GuestbookListener = (entries: GuestbookEntry[]) => void;
 
 class MatchmakingService {
   private ws: WebSocket | null = null;
@@ -19,6 +21,8 @@ class MatchmakingService {
   private onMatchFound: MatchListener | null = null;
   private isQueued: boolean = false;
   private statsListeners: Set<StatsListener> = new Set();
+  private guestbookListeners: Set<GuestbookListener> = new Set();
+  private guestbookEntries: GuestbookEntry[] = [];
   private currentQueueCount: number = 0;
 
   constructor() {
@@ -59,6 +63,10 @@ class MatchmakingService {
     return this.currentQueueCount;
   }
 
+  public getGuestbookEntries(): GuestbookEntry[] {
+    return this.guestbookEntries;
+  }
+
   /**
    * 타이틀 화면 등에서 실시간 로비 대기자 수를 구독 (큐 진입 없이 관전 모드)
    */
@@ -73,11 +81,61 @@ class MatchmakingService {
     return () => {
       this.statsListeners.delete(listener);
       // 만약 구독자도 없고 실제 매칭 큐에도 참여하지 않았으면 소켓 정리
-      if (this.statsListeners.size === 0 && !this.isQueued && this.ws) {
+      if (this.statsListeners.size === 0 && this.guestbookListeners.size === 0 && !this.isQueued && this.ws) {
         this.ws.close();
         this.ws = null;
       }
     };
+  }
+
+  /**
+   * 실시간 방명록 목록 구독
+   */
+  public subscribeGuestbook(listener: GuestbookListener): () => void {
+    this.guestbookListeners.add(listener);
+    if (this.guestbookEntries.length > 0) {
+      listener(this.guestbookEntries);
+    }
+
+    this.ensureSocket();
+
+    return () => {
+      this.guestbookListeners.delete(listener);
+      if (this.statsListeners.size === 0 && this.guestbookListeners.size === 0 && !this.isQueued && this.ws) {
+        this.ws.close();
+        this.ws = null;
+      }
+    };
+  }
+
+  /**
+   * 실시간 방명록/후기 등록
+   */
+  public sendGuestbookEntry(nickname: string, content: string): void {
+    const cleanNick = (nickname || this.myName).trim() || '익명 도전자';
+    const cleanContent = content.trim();
+    if (!cleanContent) return;
+
+    this.ensureSocket();
+
+    const payload = JSON.stringify({
+      type: 'ADD_GUESTBOOK',
+      nickname: cleanNick,
+      content: cleanContent,
+    });
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(payload);
+    } else {
+      // 소켓 열릴 때까지 잠시 대기 후 발송
+      const pendingInterval = setInterval(() => {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(payload);
+          clearInterval(pendingInterval);
+        }
+      }, 200);
+      setTimeout(() => clearInterval(pendingInterval), 3000);
+    }
   }
 
   /**
@@ -134,6 +192,21 @@ class MatchmakingService {
               opponentId: data.opponentId,
               opponentName: data.opponentName,
             });
+          } else if (data.type === 'GUESTBOOK_INIT') {
+            if (Array.isArray(data.entries)) {
+              this.guestbookEntries = data.entries;
+              for (const listener of this.guestbookListeners) {
+                listener(this.guestbookEntries);
+              }
+            }
+          } else if (data.type === 'GUESTBOOK_NEW' && data.entry) {
+            const exists = this.guestbookEntries.some((e) => e.id === data.entry.id);
+            if (!exists) {
+              this.guestbookEntries = [data.entry, ...this.guestbookEntries].slice(0, 50);
+              for (const listener of this.guestbookListeners) {
+                listener(this.guestbookEntries);
+              }
+            }
           }
         } catch (err) {
           console.error('[Matchmaking] Message parse error:', err);
@@ -142,9 +215,9 @@ class MatchmakingService {
 
       this.ws.onclose = () => {
         // 재연결 필요 시 (대기열 또는 구독자가 있을 때)
-        if (this.isQueued || this.statsListeners.size > 0) {
+        if (this.isQueued || this.statsListeners.size > 0 || this.guestbookListeners.size > 0) {
           setTimeout(() => {
-            if (this.isQueued || this.statsListeners.size > 0) {
+            if (this.isQueued || this.statsListeners.size > 0 || this.guestbookListeners.size > 0) {
               this.ensureSocket();
             }
           }, 2000);
@@ -197,8 +270,8 @@ class MatchmakingService {
       }
     }
 
-    // 만약 타이틀 화면 통계 구독자도 없다면 소켓 종료
-    if (this.statsListeners.size === 0 && this.ws) {
+    // 만약 타이틀 화면 통계/방명록 구독자도 없다면 소켓 종료
+    if (this.statsListeners.size === 0 && this.guestbookListeners.size === 0 && this.ws) {
       this.ws.close();
       this.ws = null;
     }

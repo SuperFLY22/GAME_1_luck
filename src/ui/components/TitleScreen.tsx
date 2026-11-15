@@ -3,6 +3,7 @@ import { Bot, Globe, Volume2, VolumeX, Sparkles, Languages, Users } from 'lucide
 import type { GameMode } from '../../models/types';
 import { soundManager } from '../../services/sound/soundManager';
 import { useLanguage } from '../context/LanguageContext';
+import { GuestbookTicker } from './GuestbookTicker';
 
 interface TitleScreenProps {
   onStartGame: (mode: GameMode) => void;
@@ -95,6 +96,9 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </div>
         ))}
       </div>
+
+      {/* 실시간 방명록 전광판 티커 */}
+      <GuestbookTicker />
 
       {/* 모드 선택 카드 영역: 온라인 매칭(메인) & AI 연습(테스트) */}
       <div className="w-full max-w-md flex flex-col gap-3 mt-4">

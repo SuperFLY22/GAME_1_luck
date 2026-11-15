@@ -4,6 +4,13 @@ export interface Env {
   GAME_ROOM: DurableObjectNamespace;
 }
 
+export interface GuestbookEntry {
+  id: string;
+  nickname: string;
+  content: string;
+  createdAt: number;
+}
+
 interface LobbyPlayer {
   id: string;
   name: string;
@@ -13,9 +20,35 @@ interface LobbyPlayer {
 export class GameRoom extends DurableObject {
   private roomId: string = '';
   private lobbyPlayers: Map<WebSocket, LobbyPlayer> = new Map();
+  private guestbookEntries: GuestbookEntry[] = [];
+  private isStorageLoaded: boolean = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.ctx.blockConcurrencyWhile(async () => {
+      const stored = await this.ctx.storage.get<GuestbookEntry[]>('guestbook');
+      if (stored && Array.isArray(stored)) {
+        this.guestbookEntries = stored;
+      } else {
+        // 최초 기본 환영 메시지
+        this.guestbookEntries = [
+          {
+            id: 'gb_welcome_1',
+            nickname: '딱대개발자',
+            content: '울트라 레트로 코믹 참참참에 오신 것을 환영합니다! 한 판 딱 대!',
+            createdAt: Date.now() - 60000 * 60,
+          },
+          {
+            id: 'gb_welcome_2',
+            nickname: '골목대장',
+            content: '타격감 찰지네요 ㅋㅋㅋ 냄비뚜껑 가드 실화냐',
+            createdAt: Date.now() - 60000 * 30,
+          },
+        ];
+        await this.ctx.storage.put('guestbook', this.guestbookEntries);
+      }
+      this.isStorageLoaded = true;
+    });
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -34,6 +67,7 @@ export class GameRoom extends DurableObject {
 
     if (this.roomId === 'lobby') {
       this.sendQueueUpdateTo(server);
+      this.sendGuestbookInitTo(server);
     }
 
     return new Response(null, {
@@ -90,7 +124,16 @@ export class GameRoom extends DurableObject {
   }
 
   // --- 로비 로직 ---
-  private handleLobbyMessage(ws: WebSocket, data: { type: string; id?: string; name?: string }) {
+  private handleLobbyMessage(
+    ws: WebSocket,
+    data: {
+      type: string;
+      id?: string;
+      name?: string;
+      nickname?: string;
+      content?: string;
+    }
+  ) {
     if (data.type === 'JOIN_QUEUE' && data.id && data.name) {
       this.lobbyPlayers.set(ws, {
         id: data.id,
@@ -102,6 +145,55 @@ export class GameRoom extends DurableObject {
     } else if (data.type === 'LEAVE_QUEUE') {
       this.lobbyPlayers.delete(ws);
       this.broadcastQueueUpdate();
+    } else if (data.type === 'ADD_GUESTBOOK') {
+      this.handleAddGuestbook(data.nickname, data.content);
+    }
+  }
+
+  private handleAddGuestbook(rawNickname?: string, rawContent?: string) {
+    const content = (rawContent || '').trim();
+    if (!content) return;
+
+    const nickname = (rawNickname || '').trim().slice(0, 12) || '익명 도전자';
+    const entry: GuestbookEntry = {
+      id: `gb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      nickname,
+      content: content.slice(0, 80),
+      createdAt: Date.now(),
+    };
+
+    // 최대 50개 유지
+    this.guestbookEntries = [entry, ...this.guestbookEntries].slice(0, 50);
+
+    // 영구 스토리지 비동기 저장
+    this.ctx.storage.put('guestbook', this.guestbookEntries).catch((err) => {
+      console.error('[GameRoom] Failed to persist guestbook:', err);
+    });
+
+    // 로비 내 모든 접속자에게 실시간 브로드캐스트
+    const payload = JSON.stringify({
+      type: 'GUESTBOOK_NEW',
+      entry,
+    });
+    const sockets = this.ctx.getWebSockets();
+    for (const socket of sockets) {
+      try {
+        socket.send(payload);
+      } catch {
+        // ignore closed socket
+      }
+    }
+  }
+
+  private sendGuestbookInitTo(ws: WebSocket) {
+    const payload = JSON.stringify({
+      type: 'GUESTBOOK_INIT',
+      entries: this.guestbookEntries,
+    });
+    try {
+      ws.send(payload);
+    } catch {
+      // ignore
     }
   }
 

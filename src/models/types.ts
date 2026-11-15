@@ -2,6 +2,13 @@
  * 게임 도메인 모델 및 상태 인터페이스 정의
  */
 
+export interface GuestbookEntry {
+  id: string;
+  nickname: string;
+  content: string;
+  createdAt: number;
+}
+
 export type GameMode = 'ONLINE_MATCH' | '1P_CPU';
 
 export type GamePhase =

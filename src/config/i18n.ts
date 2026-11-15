@@ -112,6 +112,17 @@ export const DICTIONARY = {
     game_over_btn_online: '대기 중인 새 상대와 랜덤 매칭!',
     game_over_btn_restart: '한 판 더!',
     game_over_btn_title: '메인 메뉴로 이동',
+
+    // Guestbook
+    guestbook_title: '실시간 딱대 방명록',
+    guestbook_ticker_prefix: '⚡ LIVE 한줄평',
+    guestbook_btn_open: '방명록 열기',
+    guestbook_input_nick: '닉네임',
+    guestbook_input_content: '응원이나 한줄평을 남겨주세요! (최대 60자)',
+    guestbook_btn_submit: '딱 대! 등록',
+    guestbook_submitted: '전광판 등록 완료!',
+    guestbook_empty: '아직 등록된 후기가 없습니다. 첫 번째 후기를 남겨보세요!',
+    guestbook_gameover_banner: '💥 복수의 칼날 or 승리 소감 한줄 남기기',
   },
   en: {
     // Title
@@ -224,6 +235,17 @@ export const DICTIONARY = {
     game_over_btn_online: 'Find New Challenger Online!',
     game_over_btn_restart: 'Play Again!',
     game_over_btn_title: 'Back to Main Menu',
+
+    // Guestbook
+    guestbook_title: 'Live Guestbook & Reviews',
+    guestbook_ticker_prefix: '⚡ LIVE Reviews',
+    guestbook_btn_open: 'Open Guestbook',
+    guestbook_input_nick: 'Nickname',
+    guestbook_input_content: 'Leave a cheer or review! (Max 60 chars)',
+    guestbook_btn_submit: 'Post!',
+    guestbook_submitted: 'Posted to Live Board!',
+    guestbook_empty: 'No reviews yet. Be the first to leave one!',
+    guestbook_gameover_banner: '💥 Leave a victory speech or review',
   },
 } as const;
 
