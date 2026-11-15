@@ -37,11 +37,14 @@ class SoundManager {
   }
 
   public playBgm(isClimax: boolean = false): void {
-    const targetSrc = isClimax ? '/assets/sounds/climax_bgm.mp3' : '/assets/sounds/bgm.mp3';
+    const targetSrc = '/assets/sounds/climax_bgm.mp3';
 
     if (this.bgmAudio) {
       if (this.bgmAudio.src.endsWith(targetSrc)) {
-        if (!this.isMuted) this.bgmAudio.play().catch(() => {});
+        this.bgmAudio.volume = isClimax ? 0.35 : 0.25;
+        if (!this.isMuted && this.bgmAudio.paused) {
+          this.bgmAudio.play().catch(() => {});
+        }
         return;
       }
       this.bgmAudio.pause();

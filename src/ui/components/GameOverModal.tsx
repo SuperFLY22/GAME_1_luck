@@ -75,6 +75,21 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           {winner.name} 완승!
         </h2>
 
+        {/* 내가 패배했을 때(DEFEAT) 웹제미나이 KO 패배 컷씬 비디오 연출 */}
+        {!isLocalWinner && (
+          <div className="w-full max-w-[200px] aspect-[9/16] max-h-[160px] my-2 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.5)]">
+            <video
+              src="/assets/videos/cutscenes/ko_defeat.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster="/assets/images/first_person/opp_state_5.png"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         <p className="text-rose-400 font-bold text-sm mt-1 font-pixel">
           {loser.name} 피격 5회 누적으로 백기 항복!
         </p>

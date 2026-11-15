@@ -39,13 +39,15 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  // 1. 1인칭 공격(뿅망치 스윙) 및 방어(냄비뚜껑) 오버레이 스프라이트
+  // 1. 1인칭 공격(뿅망치 스윙) 및 방어(냄비뚜껑) 오버레이 스프라이트 & 비디오 매핑
   let actionSpriteUrl: string | null = null;
+  let actionVideoUrl: string | null = null;
   let actionAnimClass = '';
 
   if (isResolve && direction) {
     if (isAttacker) {
       actionSpriteUrl = `/assets/images/first_person/self_attack_${dirKey}.png`;
+      actionVideoUrl = '/assets/videos/self_attack.mp4';
       if (direction === 'LEFT') actionAnimClass = 'animate-fp-hammer-left';
       else if (direction === 'RIGHT') actionAnimClass = 'animate-fp-hammer-right';
       else actionAnimClass = 'animate-fp-hammer-up';
@@ -54,6 +56,8 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
       if (isHit) {
         actionAnimClass = 'animate-potlid-pop-off';
       } else {
+        // 수비 성공(가드): 1인칭 냄비뚜껑 가드 비디오 적용
+        actionVideoUrl = '/assets/videos/self_guard.mp4';
         if (direction === 'LEFT') actionAnimClass = 'animate-fp-guard-left';
         else if (direction === 'RIGHT') actionAnimClass = 'animate-fp-guard-right';
         else actionAnimClass = 'animate-fp-guard-up';
@@ -67,17 +71,29 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   return (
     <div className="relative flex flex-col items-center select-none z-20 pointer-events-none mt-auto">
       {/* 1. 1인칭 플레이어 액션 (뿅망치 스윙 / 냄비 가드) - 공격/방어 순간에만 전방으로 뻗어나감 */}
-      {actionSpriteUrl && (
+      {(actionVideoUrl || actionSpriteUrl) && (
         <div
-          className={`absolute -top-24 sm:-top-36 z-30 transition-all duration-150 flex items-center justify-center w-48 h-48 sm:w-72 sm:h-72 ${
+          className={`absolute -top-24 sm:-top-36 z-30 transition-all duration-150 flex items-center justify-center w-52 h-52 sm:w-80 sm:h-80 ${
             isAttacker ? 'right-0 sm:right-6' : 'left-0 sm:left-8'
           } ${actionAnimClass}`}
         >
-          <img
-            src={actionSpriteUrl}
-            alt={isAttacker ? 'Self Attack Hammer' : 'Self Guard Lid'}
-            className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]"
-          />
+          {actionVideoUrl ? (
+            <video
+              key={actionVideoUrl}
+              src={actionVideoUrl}
+              autoPlay
+              muted
+              playsInline
+              poster={actionSpriteUrl || undefined}
+              className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]"
+            />
+          ) : (
+            <img
+              src={actionSpriteUrl!}
+              alt={isAttacker ? 'Self Attack Hammer' : 'Self Guard Lid'}
+              className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]"
+            />
+          )}
         </div>
       )}
 

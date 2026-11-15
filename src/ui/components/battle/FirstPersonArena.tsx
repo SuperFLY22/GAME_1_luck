@@ -2,6 +2,7 @@ import React from 'react';
 import type { ChamDirection, GameEngineState } from '../../../models/types';
 import { ComicImpact } from '../ComicImpact';
 import { TimerBar } from '../TimerBar';
+import { CutsceneOverlay } from './CutsceneOverlay';
 import { OpponentStage } from './OpponentStage';
 import { PlayerSelfStage } from './PlayerSelfStage';
 
@@ -51,6 +52,13 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
 
   return (
     <div className="relative w-full max-w-4xl mx-auto flex-1 flex flex-col justify-between items-center perspective-stage min-h-[380px] sm:min-h-[480px] py-1">
+      {/* 0. 비디오 컷씬 오버레이 (피격/결정타 모바일 컷씬) */}
+      <CutsceneOverlay
+        outcome={state.lastOutcome}
+        target={state.hitTarget}
+        myPlayerId={myPlayerId}
+      />
+
       {/* 1. 코믹 임팩트 (HIT / DODGE 이펙트) */}
       <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />
 

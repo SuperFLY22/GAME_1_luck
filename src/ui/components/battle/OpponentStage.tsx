@@ -41,19 +41,25 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  // 1. 단일 최우선 액션 스프라이트 리졸브 (중첩 방지)
+  // 1. 단일 최우선 액션 스프라이트 리졸브 (중첩 방지) 및 동영상 리소스 매핑
   let activeSpriteUrl: string;
+  let activeVideoUrl: string | null = null;
+  let isVideoLoop = false;
 
   if (isResolve && direction) {
     if (isAttacker) {
-      // 상대가 공격자일 때: 상대방 공격 스프라이트 (상반신 + 뿅망치 일체형)
+      // 상대가 공격자일 때: 웹제미나이 공격 비디오 우선 적용 + 스프라이트 포스터 Fallback
       activeSpriteUrl = `/assets/images/first_person/opp_attack_${dirKey}.png`;
+      activeVideoUrl = '/assets/videos/opp_attack.mp4';
+      isVideoLoop = false;
     } else if (isDefender) {
       if (lastOutcome === 'DODGE') {
-        // 상대가 수비 성공(회피): 회피 스프라이트
+        // 상대가 수비 성공(회피): 웹제미나이 회피 잔상 비디오 + 스프라이트 포스터 Fallback
         activeSpriteUrl = `/assets/images/first_person/opp_dodge_${dirKey}.png`;
+        activeVideoUrl = '/assets/videos/opp_dodge.mp4';
+        isVideoLoop = false;
       } else {
-        // 상대가 피격 또는 가드: 가드 스프라이트 (피격 시는 아래 hit 애니메이션과 함께 데미지 표정)
+        // 상대가 피격 또는 가드: 가드 스프라이트 (피격 시는 컷씬 오버레이가 최상단에 재생됨)
         activeSpriteUrl = isHit
           ? `/assets/images/first_person/opp_state_${damage}.png`
           : `/assets/images/first_person/opp_guard_${dirKey}.png`;
@@ -62,8 +68,13 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
       activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
     }
   } else {
-    // 선공 결정(가위바위보) 및 기본 대기 / 카운트다운: 항상 데미지 단계별 정면 얼굴 (0~5)
+    // 선공 결정(가위바위보) 및 기본 대기 / 카운트다운:
+    // 데미지 0(정상 상태)에서는 웹제미나이 호흡 루핑 비디오 재생, 피격 누적 시 단계별 손상 표정 스프라이트
     activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
+    if (damage === 0) {
+      activeVideoUrl = '/assets/videos/opp_idle.mp4';
+      isVideoLoop = true;
+    }
   }
 
   // 2. 피격(HIT) 리액션 애니메이션 클래스
@@ -110,13 +121,26 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
             : ''
         }`}
       >
-        {/* 오직 first_person 정식 스프라이트만 단독 렌더링 (SVG/구버전 완전 배제) */}
+        {/* 상대방 캐릭터 렌더링: 비디오 지원 시 네이티브 비디오, 미지원/대체 시 스프라이트 Fallback */}
         <div className={`w-full h-full flex items-center justify-center ${bodyAnimClass}`}>
-          <img
-            src={activeSpriteUrl}
-            alt={`${name} sprite`}
-            className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
-          />
+          {activeVideoUrl ? (
+            <video
+              key={activeVideoUrl}
+              src={activeVideoUrl}
+              autoPlay
+              loop={isVideoLoop}
+              muted
+              playsInline
+              poster={activeSpriteUrl}
+              className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
+            />
+          ) : (
+            <img
+              src={activeSpriteUrl}
+              alt={`${name} sprite`}
+              className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
+            />
+          )}
         </div>
 
         {/* 가위바위보 결과 (캐릭터 본체 우측 배치) */}
