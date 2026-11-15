@@ -32,6 +32,7 @@ export interface RoomCallbacks {
     p2Damage: DamageLevel;
     isGameOver: boolean;
     winner: 'p1' | 'p2' | null;
+    isTimeout?: boolean;
   }) => void;
   onOpponentLeft: () => void;
 }
@@ -55,11 +56,11 @@ class RoomSessionService {
     return this.roomId;
   }
 
-  public async joinRoom(
+  public joinRoom(
     roomId: string,
     myRole: 'p1' | 'p2',
     callbacks: RoomCallbacks
-  ): Promise<void> {
+  ): void {
     this.roomId = roomId;
     this.myRole = myRole;
     this.callbacks = callbacks;
@@ -241,6 +242,7 @@ class RoomSessionService {
         p2Damage: this.p2Damage,
         isGameOver: false,
         winner: null,
+        isTimeout: true,
       });
       this.resetTurnInputs();
       return;

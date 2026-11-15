@@ -37,10 +37,14 @@ export const ASSET_PATHS = {
   },
   SOUNDS: {
     RPS_CHANT: '/assets/sounds/rps_chant.mp3',
-    HIT: '/assets/sounds/hit.mp3',
+    HIT: '/assets/sounds/hit1.mp3',
+    HIT_VARIANTS: [
+      '/assets/sounds/hit1.mp3',
+      '/assets/sounds/hit2.mp3',
+      '/assets/sounds/hit3.mp3',
+    ] as const,
     DODGE: '/assets/sounds/dodge.mp3',
     VICTORY: '/assets/sounds/victory.mp3',
     SURRENDER: '/assets/sounds/surrender.mp3',
-    COUNTDOWN: '/assets/sounds/countdown.mp3',
   },
 } as const;

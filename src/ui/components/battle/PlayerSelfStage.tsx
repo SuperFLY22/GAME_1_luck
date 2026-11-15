@@ -2,6 +2,7 @@ import React from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
 import { useLanguage } from '../../context/LanguageContext';
 import { ActionVideo } from './ActionVideo';
+import { clampDamage, getPotlidFlyClass, getPotlidImgUrl, getRpsLabel } from './stageVisualUtils';
 
 interface PlayerSelfStageProps {
   id: 'p1' | 'p2';
@@ -31,8 +32,6 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
-
-  const dirKey = direction ? direction.toLowerCase() : 'up';
 
   // 6번 규칙: 10시(LEFT), 12시(UP), 2시(RIGHT) 각도 클래스
   let angleClass = 'action-angle-12';
@@ -72,24 +71,15 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
         };
       } else if (isHit) {
         // 5. 수비 실패: 선택했던 방향의 냄비뚜껑 이미지가 뱅글뱅글 날아가는 효과
-        potlidFlyAwayImg = `/assets/images/first_person/self_guard_${dirKey}.png`;
-        if (direction === 'LEFT') potlidFlyAnimClass = 'animate-potlid-fly-left';
-        else if (direction === 'RIGHT') potlidFlyAnimClass = 'animate-potlid-fly-right';
-        else potlidFlyAnimClass = 'animate-potlid-fly-up';
+        potlidFlyAwayImg = getPotlidImgUrl(direction);
+        potlidFlyAnimClass = getPotlidFlyClass(direction, 'self');
       }
     }
   }
 
   // 내 상태 이미지 (본체 0~5단계)
-  const safeDamage = Math.min(Math.max(damage, 0), 5);
+  const safeDamage = clampDamage(damage);
   const selfBackSpriteUrl = `/assets/images/first_person/self_state_${safeDamage}.png`;
-
-  const getRpsLabel = (choice: RPSChoice) => {
-    if (choice === 'ROCK') return t('battle_hand_rock');
-    if (choice === 'SCISSORS') return t('battle_hand_scissors');
-    if (choice === 'PAPER') return t('battle_hand_paper');
-    return '';
-  };
 
   return (
     <div className="relative flex flex-col items-center justify-center select-none z-20 pointer-events-none mt-auto w-full">
@@ -165,7 +155,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
               </span>
             )}
             <span className="text-white font-black text-[10px] sm:text-xs whitespace-nowrap bg-sky-600/90 border border-sky-400 px-1.5 py-0.5 rounded-md shadow-sm">
-              {getRpsLabel(rpsChoice)}
+              {getRpsLabel(rpsChoice, t)}
             </span>
           </aside>
         )}

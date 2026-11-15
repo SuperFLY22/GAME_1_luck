@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, Flame } from 'lucide-react';
 import type { GuestbookEntry } from '../../models/types';
-import { matchmakingService } from '../../services/network/matchmakingService';
+import { guestbookService } from '../../services/network/guestbookService';
 import { useLanguage } from '../context/LanguageContext';
 import { GuestbookModal } from './GuestbookModal';
 
 export const GuestbookTicker: React.FC = () => {
   const { t } = useLanguage();
-  const [entries, setEntries] = useState<GuestbookEntry[]>(matchmakingService.getGuestbookEntries());
+  const [entries, setEntries] = useState<GuestbookEntry[]>(guestbookService.getGuestbookEntries());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = matchmakingService.subscribeGuestbook((newEntries) => {
+    const unsubscribe = guestbookService.subscribeGuestbook((newEntries) => {
       setEntries(newEntries);
       if (newEntries.length > 0) {
         setCurrentIndex(0);

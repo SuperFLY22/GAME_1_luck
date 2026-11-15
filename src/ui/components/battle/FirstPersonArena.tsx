@@ -6,6 +6,7 @@ import { TimerBar } from '../TimerBar';
 import { CutsceneOverlay } from './CutsceneOverlay';
 import { OpponentStage } from './OpponentStage';
 import { PlayerSelfStage } from './PlayerSelfStage';
+import { getRpsSpriteUrl } from './stageVisualUtils';
 
 interface FirstPersonArenaProps {
   state: GameEngineState;
@@ -20,12 +21,6 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
   const isMeP1 = myPlayerId === 'p1';
   const selfPlayer = isMeP1 ? state.p1 : state.p2;
   const oppPlayer = isMeP1 ? state.p2 : state.p1;
-
-  const getRpsSpriteUrl = (id: 'p1' | 'p2', choice: string | null) => {
-    if (!choice) return null;
-    const prefix = id === 'p1' ? '1p' : '2p';
-    return `/assets/images/rps/rps_${prefix}_${choice.toLowerCase()}.png`;
-  };
 
   const oppRpsSprite =
     state.phase === 'RPS_RESULT' && oppPlayer.rpsChoice

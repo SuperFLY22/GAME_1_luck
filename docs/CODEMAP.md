@@ -34,21 +34,25 @@ GAME_1_luck/
 │   │   └── types.ts              (84L)  # GameEngineState, PlayerState, GamePhase, ActionFrame 계약
 │   ├── services/                 # [Application Services & Adapters]
 │   │   ├── network/
-│   │   │   ├── matchmakingService.ts (455L) # WS 로비 큐, 매칭 통계, 방명록 REST/WS 폴백, 캐시
-│   │   │   └── roomSessionService.ts (274L) # WS 1:1 게임룸 세션 동기화 (RPS/참/리매치/하트비트)
+│   │   │   ├── guestbookService.ts   (259L) # 방명록 CRUD, 낙관적 UI, HTTP/WS 폴백, 캐시
+│   │   │   ├── matchmakingService.ts (289L) # WS 로비 큐, 매칭 통계, heartbeat, 소켓 관리
+│   │   │   └── roomSessionService.ts (276L) # WS 1:1 게임룸 세션 동기화 (RPS/참/리매치/하트비트)
 │   │   └── sound/
 │   │       └── soundManager.ts   (362L) # BGM 루프/전환, Web Audio 뿅망치/냄비 합성음 및 외부 mp3 캐시
 │   ├── ui/                       # [Presentation Layer] 화면 렌더링 및 입력 캡처
 │   │   ├── context/
 │   │   │   └── LanguageContext.tsx (68L)  # 다국어(ko/en) 컨텍스트 프로바이더
 │   │   ├── hooks/
-│   │   │   ├── useGameLoop.ts    (405L) # 메인 게임 루프 오케스트레이터, 타이머, CPU 스케줄러
+│   │   │   ├── useGameLoop.ts    (211L) # 메인 게임 루프 오케스트레이터 (리듀서 조립 및 입력 라우팅)
+│   │   │   ├── useGameTimer.ts   (205L) # READY/CHAM/RESOLVE 카운트다운, AI 스케줄러, BGM
+│   │   │   ├── useOnlineGameSync.ts (73L) # 온라인 룸 세션 이벤트 동기화 및 브로드캐스트
 │   │   │   └── useKeyboardControls.ts (54L) # A/W/D 및 방향키 입력 라우팅 리스너
 │   │   ├── components/
 │   │   │   ├── battle/           # [1인칭 배틀 무대 컴포넌트군]
-│   │   │   │   ├── FirstPersonArena.tsx (203L) # 3D 투시 배틀 스테이지 (무대/HUD/오버레이 통합)
-│   │   │   │   ├── OpponentStage.tsx   (226L) # 2P/상대 뷰 (비디오/스프라이트/대칭 공격 쇄도/가드)
-│   │   │   │   ├── PlayerSelfStage.tsx (175L) # 1P 본인 뷰 (10/12/2시 방향 타격, 냄비 가드, 피격)
+│   │   │   │   ├── FirstPersonArena.tsx (198L) # 3D 투시 배틀 스테이지 (무대/HUD/오버레이 통합)
+│   │   │   │   ├── OpponentStage.tsx   (217L) # 2P/상대 뷰 (비디오/스프라이트/대칭 공격 쇄도/가드)
+│   │   │   │   ├── PlayerSelfStage.tsx (165L) # 1P 본인 뷰 (10/12/2시 방향 타격, 냄비 가드, 피격)
+│   │   │   │   ├── stageVisualUtils.ts  (46L)  # 냄비 가드/RPS 스프라이트/각도 공통 계산 유틸
 │   │   │   │   ├── ActionVideo.tsx      (90L)  # HTML5 Video 정밀 구간(startTime~endTime) 재생기
 │   │   │   │   └── CutsceneOverlay.tsx  (96L)  # KO 결정타(damage>=5) 시 1.8초 풀스크린 컷씬 오버레이
 │   │   │   ├── Arena.tsx         (137L) # 대전 메인 컨테이너 (CRT 스캔라인, HealthBar, 조작부 결합)

@@ -2,6 +2,7 @@ import React from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
 import { useLanguage } from '../../context/LanguageContext';
 import { ActionVideo } from './ActionVideo';
+import { clampDamage, getDirKey, getPotlidFlyClass, getPotlidImgUrl, getRpsLabel } from './stageVisualUtils';
 
 interface OpponentStageProps {
   id: 'p1' | 'p2';
@@ -31,8 +32,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
-
-  const dirKey = direction ? direction.toLowerCase() : 'up';
+  const dirKey = getDirKey(direction);
 
   // 7번 규칙: 상대방 공격 대칭 각도 및 확실한 좌/우 위치 클래스
   // 상대방 LEFT  -> 내 시점 우측 대각 쇄도 (4시 방향, +68px~+105px)
@@ -78,16 +78,14 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
       } else if (isHit && direction) {
         // 상대방 수비 실패 (내가 공격 성공):
         // 상대방이 수비했던 방향의 냄비뚜껑 이미지가 뱅글뱅글 날아가는 효과
-        oppFlyingPotlidImg = `/assets/images/first_person/self_guard_${dirKey}.png`;
-        if (direction === 'LEFT') oppFlyingPotlidClass = 'animate-potlid-fly-right';
-        else if (direction === 'RIGHT') oppFlyingPotlidClass = 'animate-potlid-fly-left';
-        else oppFlyingPotlidClass = 'animate-potlid-fly-up';
+        oppFlyingPotlidImg = getPotlidImgUrl(direction);
+        oppFlyingPotlidClass = getPotlidFlyClass(direction, 'opponent');
       }
     }
   }
 
   // 상대방 상태 5단계 표현 반영 본체 이미지
-  const safeDamage = Math.min(Math.max(damage, 0), 5);
+  const safeDamage = clampDamage(damage);
   const oppStateImg = `/assets/images/first_person/opp_state_${safeDamage}.png`;
 
   // 기본 대기 시 (RESOLVE가 아닐 때) 0 데미지면 idle 비디오
@@ -95,13 +93,6 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
 
   // 피격 시 몸체 흔들림 애니메이션
   const bodyHitAnimClass = isResolve && isHit ? 'animate-fp-opp-hit' : '';
-
-  const getRpsLabel = (choice: RPSChoice) => {
-    if (choice === 'ROCK') return t('battle_hand_rock');
-    if (choice === 'SCISSORS') return t('battle_hand_scissors');
-    if (choice === 'PAPER') return t('battle_hand_paper');
-    return '';
-  };
 
   return (
     <div className="relative flex flex-col items-center justify-center select-none z-10 w-full">
@@ -216,7 +207,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
               </span>
             )}
             <span className="text-white font-black text-[10px] sm:text-xs whitespace-nowrap bg-rose-600/90 border border-rose-400 px-1.5 py-0.5 rounded-md shadow-sm">
-              {getRpsLabel(rpsChoice)}
+              {getRpsLabel(rpsChoice, t)}
             </span>
           </aside>
         )}

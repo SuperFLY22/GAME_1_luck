@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Send, MessageSquare, Clock, Sparkles, Shield, Trash2, KeyRound } from 'lucide-react';
 import type { GuestbookEntry } from '../../models/types';
+import { guestbookService } from '../../services/network/guestbookService';
 import { matchmakingService } from '../../services/network/matchmakingService';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -28,7 +29,7 @@ export const GuestbookModal: React.FC<GuestbookModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      matchmakingService.fetchGuestbookHttp();
+      guestbookService.fetchGuestbookHttp();
     }
   }, [isOpen]);
 
@@ -44,7 +45,7 @@ export const GuestbookModal: React.FC<GuestbookModalProps> = ({
       matchmakingService.setMyName(trimmedNick);
     }
 
-    matchmakingService.sendGuestbookEntry(trimmedNick, trimmed);
+    guestbookService.sendGuestbookEntry(trimmedNick, trimmed);
     setContent('');
     setIsSuccess(true);
     setTimeout(() => setIsSuccess(false), 2500);
@@ -63,7 +64,7 @@ export const GuestbookModal: React.FC<GuestbookModalProps> = ({
   };
 
   const handleDelete = (id: string) => {
-    matchmakingService.deleteGuestbookEntry(id, 'admin777!');
+    guestbookService.deleteGuestbookEntry(id, 'admin777!');
   };
 
   const formatTime = (ts: number) => {

@@ -3,7 +3,7 @@ import { RotateCcw, Trophy, Home, Users, Skull, MessageSquare, Send } from 'luci
 import type { GameEngineState } from '../../models/types';
 import { fireVictoryConfetti } from '../../utils/confetti';
 import { soundManager } from '../../services/sound/soundManager';
-import { matchmakingService } from '../../services/network/matchmakingService';
+import { guestbookService } from '../../services/network/guestbookService';
 import { useLanguage } from '../context/LanguageContext';
 
 interface GameOverModalProps {
@@ -43,7 +43,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
       ? (state.online?.myRoleInRoom === 'p1' ? state.p1.name : state.p2.name)
       : state.p1.name;
 
-    matchmakingService.sendGuestbookEntry(myName, trimmed);
+    guestbookService.sendGuestbookEntry(myName, trimmed);
     setReviewText('');
     setReviewSubmitted(true);
   };

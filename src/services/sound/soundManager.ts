@@ -152,8 +152,8 @@ class SoundManager {
       squeakOsc.stop(now + 0.1);
     } catch {}
 
-    const hitIndex = Math.floor(Math.random() * 3) + 1;
-    const hitUrl = `/assets/sounds/hit${hitIndex}.mp3`;
+    const hitIndex = Math.floor(Math.random() * ASSET_PATHS.SOUNDS.HIT_VARIANTS.length);
+    const hitUrl = ASSET_PATHS.SOUNDS.HIT_VARIANTS[hitIndex];
 
     this.tryPlayExternalOrSynthesize(hitUrl, () => {
       const ctx = this.getContext();

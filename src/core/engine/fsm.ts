@@ -46,6 +46,7 @@ export type GameAction =
       p2Damage: DamageLevel;
       isGameOver: boolean;
       winner: 'p1' | 'p2' | null;
+      isTimeout?: boolean;
     }
   | { type: 'SET_OPPONENT_LEFT' }
   | { type: 'CHECK_ROUND_RESULT' }
@@ -279,9 +280,9 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
 
         // 수비자의 guardCount +1
         if (defenderId === 'p1') {
-          nextP1.guardCount = (nextP1.guardCount ?? 0) + 1;
+          nextP1.guardCount = nextP1.guardCount + 1;
         } else {
-          nextP2.guardCount = (nextP2.guardCount ?? 0) + 1;
+          nextP2.guardCount = nextP2.guardCount + 1;
         }
 
         return {
@@ -327,9 +328,9 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
       } else {
         // 가드 성공: 수비자의 guardCount +1 누적
         if (defenderId === 'p1') {
-          nextP1.guardCount = (nextP1.guardCount ?? 0) + 1;
+          nextP1.guardCount = nextP1.guardCount + 1;
         } else {
-          nextP2.guardCount = (nextP2.guardCount ?? 0) + 1;
+          nextP2.guardCount = nextP2.guardCount + 1;
         }
       }
 
@@ -347,11 +348,17 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
     case 'SYNC_ONLINE_CHAM_RESULT': {
       const defenderId = state.p1.role === 'DEFENDER' ? 'p1' : 'p2';
       const nextGuardP1 = !action.isHit && defenderId === 'p1'
-        ? (state.p1.guardCount ?? 0) + 1
+        ? state.p1.guardCount + 1
         : state.p1.guardCount;
       const nextGuardP2 = !action.isHit && defenderId === 'p2'
-        ? (state.p2.guardCount ?? 0) + 1
+        ? state.p2.guardCount + 1
         : state.p2.guardCount;
+
+      let resolveMessage = action.isHit ? '찰싹! 빈틈 타격 명중 (POW!)' : '챙-! 가드 방어 성공 (BLOCK!)';
+      if (!action.isHit && action.isTimeout) {
+        const attackerId = state.p1.role === 'ATTACKER' ? 'p1' : 'p2';
+        resolveMessage = `⏰ ${state[attackerId].name} 공격 시간(3초) 초과! ➔ ${state[defenderId].name} 공수 교대!`;
+      }
 
       return {
         ...state,
@@ -360,7 +367,7 @@ export function gameReducer(state: GameEngineState, action: GameAction): GameEng
         p2: { ...state.p2, chamDirection: action.p2Dir, damage: action.p2Damage, guardCount: nextGuardP2 },
         lastOutcome: action.isHit ? 'HIT' : 'DODGE',
         hitTarget: action.hitTarget,
-        message: action.isHit ? '찰싹! 빈틈 타격 명중 (POW!)' : '챙-! 가드 방어 성공 (BLOCK!)',
+        message: resolveMessage,
       };
     }
 

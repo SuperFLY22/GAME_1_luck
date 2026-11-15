@@ -2,6 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 
 export interface Env {
   GAME_ROOM: DurableObjectNamespace;
+  ADMIN_KEY?: string;
 }
 
 export interface GuestbookEntry {
@@ -22,9 +23,11 @@ export class GameRoom extends DurableObject {
   private lobbyPlayers: Map<WebSocket, LobbyPlayer> = new Map();
   private guestbookEntries: GuestbookEntry[] = [];
   private isStorageLoaded: boolean = false;
+  private adminKey: string = 'admin777!';
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.adminKey = env.ADMIN_KEY || 'admin777!';
     this.ctx.blockConcurrencyWhile(async () => {
       const stored = await this.ctx.storage.get<GuestbookEntry[]>('guestbook');
       if (stored && Array.isArray(stored)) {
@@ -214,37 +217,44 @@ export class GameRoom extends DurableObject {
       adminKey?: string;
     }
   ) {
-    if (data.type === 'PING') {
-      try {
-        ws.send(JSON.stringify({ type: 'PONG' }));
-      } catch {
-        // ignore
-      }
-      return;
-    }
+    switch (data.type) {
+      case 'PING':
+        try {
+          ws.send(JSON.stringify({ type: 'PONG' }));
+        } catch {
+          // ignore
+        }
+        break;
 
-    if (data.type === 'JOIN_QUEUE' && data.id && data.name) {
-      this.lobbyPlayers.set(ws, {
-        id: data.id,
-        name: data.name,
-        joinedAt: Date.now(),
-      });
-      this.broadcastQueueUpdate();
-      this.tryMatchmaking();
-    } else if (data.type === 'LEAVE_QUEUE') {
-      this.lobbyPlayers.delete(ws);
-      this.broadcastQueueUpdate();
-    } else if (data.type === 'ADD_GUESTBOOK') {
-      this.handleAddGuestbook(data.nickname, data.content);
-    } else if (data.type === 'DELETE_GUESTBOOK') {
-      this.handleDeleteGuestbook(data.id, data.adminKey);
+      case 'JOIN_QUEUE':
+        if (data.id && data.name) {
+          this.lobbyPlayers.set(ws, {
+            id: data.id,
+            name: data.name,
+            joinedAt: Date.now(),
+          });
+          this.broadcastQueueUpdate();
+          this.tryMatchmaking();
+        }
+        break;
+
+      case 'LEAVE_QUEUE':
+        this.lobbyPlayers.delete(ws);
+        this.broadcastQueueUpdate();
+        break;
+
+      case 'ADD_GUESTBOOK':
+        this.handleAddGuestbook(data.nickname, data.content);
+        break;
+
+      case 'DELETE_GUESTBOOK':
+        this.handleDeleteGuestbook(data.id, data.adminKey);
+        break;
     }
   }
 
   private handleDeleteGuestbook(id?: string, adminKey?: string): boolean {
-    // 기본 관리자 마스터 키: admin777!
-    const validKey = 'admin777!';
-    if (!id || adminKey !== validKey) return false;
+    if (!id || adminKey !== this.adminKey) return false;
 
     this.guestbookEntries = this.guestbookEntries.filter((e) => e.id !== id);
     this.ctx.storage.put('guestbook', this.guestbookEntries).catch((err) => {
