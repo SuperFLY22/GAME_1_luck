@@ -64,26 +64,32 @@ export const CutsceneOverlay: React.FC<CutsceneOverlayProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn pointer-events-none overflow-hidden">
-      {/* 아케이드 컷씬 컨테이너 */}
-      <div className="relative w-full max-w-[340px] sm:max-w-md aspect-[9/16] max-h-[85vh] rounded-3xl overflow-hidden border-4 border-amber-400 shadow-[0_0_60px_rgba(251,191,36,0.85)] animate-scaleUp">
-        <video
-          ref={videoRef}
-          src="/assets/videos/cutscenes/hit_impact.mp4"
-          muted
-          playsInline
-          autoPlay
-          className="w-full h-full object-cover"
-        />
+      {/* 아케이드 컷씬 컨테이너 (30% 축소: max-w 238px/314px, max-h 60vh) */}
+      <div className="relative w-full max-w-[238px] sm:max-w-[314px] aspect-[9/16] max-h-[60vh] rounded-3xl overflow-hidden border-4 border-amber-400 shadow-[0_0_50px_rgba(251,191,36,0.85)] animate-scaleUp">
+        {/* 비디오 래퍼: 하단 Gemini 워터마크 영역 마스킹 (112% 높이 + object-top 배치) */}
+        <div className="relative w-full h-full overflow-hidden">
+          <video
+            ref={videoRef}
+            src="/assets/videos/cutscenes/hit_impact.mp4"
+            muted
+            playsInline
+            autoPlay
+            className="w-full h-[114%] -mb-[14%] object-cover object-top"
+          />
+        </div>
 
         {/* 상단 다이내믹 KO 텍스트 배너 */}
-        <div className="absolute top-4 inset-x-0 flex justify-center">
-          <span className="bg-gradient-to-r from-red-600 via-amber-500 to-rose-600 text-white font-black text-xl sm:text-2xl px-5 py-1.5 rounded-full border-2 border-yellow-300 shadow-[0_4px_20px_rgba(0,0,0,0.8)] tracking-widest animate-bounce">
+        <div className="absolute top-3 inset-x-0 flex justify-center">
+          <span className="bg-gradient-to-r from-red-600 via-amber-500 to-rose-600 text-white font-black text-sm sm:text-base px-3.5 py-1 rounded-full border-2 border-yellow-300 shadow-[0_4px_16px_rgba(0,0,0,0.8)] tracking-wider animate-bounce">
             💥 FINAL KNOCKOUT! 💥
           </span>
         </div>
 
+        {/* 하단 제미나이 마크 차단용 그라디언트 섀도우 바 */}
+        <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
+
         {/* 집중선 비네트 오버레이 */}
-        <div className="absolute inset-0 border-8 border-amber-400/30 rounded-3xl pointer-events-none" />
+        <div className="absolute inset-0 border-6 border-amber-400/30 rounded-3xl pointer-events-none" />
       </div>
     </div>
   );

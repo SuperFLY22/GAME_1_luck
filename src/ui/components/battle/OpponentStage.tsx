@@ -43,7 +43,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
   else if (direction === 'RIGHT') oppSymmetricClass = 'opp-action-symmetric-right';
 
   // 연출 상태 분기
-  let oppVideoConfig: { src: string; startTime: number; endTime: number } | null = null;
+  let oppVideoConfig: { src: string; startTime: number; endTime: number; playbackRate?: number } | null = null;
   let oppStaticAttackImg: string | null = null;
   let oppFlyingPotlidImg: string | null = null;
   let oppFlyingPotlidClass = '';
@@ -52,11 +52,12 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
   if (isResolve) {
     if (isAttacker && direction) {
       if (lastOutcome === 'HIT') {
-        // 상대방 공격 성공: opp_attack.mp4 0~2초 구간, 대칭 각도 적용
+        // 상대방 공격 성공: opp_attack.mp4 0~2초 구간, 1.5배속 재생 및 대칭 각도 적용
         oppVideoConfig = {
           src: '/assets/videos/opp_attack.mp4',
           startTime: 0,
           endTime: 2,
+          playbackRate: 1.5,
         };
         oppActionClass = oppSymmetricClass;
       } else if (lastOutcome === 'DODGE') {
@@ -153,15 +154,18 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
           )}
         </div>
 
-        {/* 비디오 액션 (공격 성공 시 opp_attack 0~2초 또는 가드 성공 시 opp_dodge 0.5~2.5초) */}
+        {/* 비디오 액션 (공격 성공 시 opp_attack 0~2초 (1.5배속, 20% 축소) 또는 가드 성공 시 opp_dodge 0.5~2.5초) */}
         {oppVideoConfig && (
           <div
-            className={`absolute -inset-10 sm:-inset-16 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppActionClass}`}
+            className={`absolute -inset-10 sm:-inset-16 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppActionClass} ${
+              isAttacker && lastOutcome === 'HIT' ? 'scale-[0.80]' : ''
+            }`}
           >
             <ActionVideo
               src={oppVideoConfig.src}
               startTime={oppVideoConfig.startTime}
               endTime={oppVideoConfig.endTime}
+              playbackRate={oppVideoConfig.playbackRate}
               className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(239,68,68,0.9)]"
             />
           </div>

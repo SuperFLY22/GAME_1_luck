@@ -6,6 +6,7 @@ interface ActionVideoProps {
   endTime: number;
   className?: string;
   poster?: string;
+  playbackRate?: number;
   onEnded?: () => void;
 }
 
@@ -20,6 +21,7 @@ export const ActionVideo: React.FC<ActionVideoProps> = ({
   endTime,
   className = '',
   poster,
+  playbackRate = 1,
   onEnded,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,10 +35,13 @@ export const ActionVideo: React.FC<ActionVideoProps> = ({
     const setupAndPlay = () => {
       if (isCancelled || !video) return;
       video.currentTime = startTime;
+      video.playbackRate = playbackRate > 0 ? playbackRate : 1;
       video.play().catch(() => {
         // 브라우저 정책 등에 의한 자동재생 제한 시 무시
       });
     };
+
+    video.playbackRate = playbackRate > 0 ? playbackRate : 1;
 
     if (video.readyState >= 1) {
       setupAndPlay();
@@ -53,8 +58,9 @@ export const ActionVideo: React.FC<ActionVideoProps> = ({
 
     video.addEventListener('timeupdate', handleTimeUpdate);
 
-    // 백업 타이머: timeupdate 지연 대비 안전 정지
-    const durationMs = Math.max(0, (endTime - startTime) * 1000) + 250;
+    // 백업 타이머: timeupdate 지연 대비 안전 정지 (재생속도 반영)
+    const rate = playbackRate > 0 ? playbackRate : 1;
+    const durationMs = Math.max(0, ((endTime - startTime) / rate) * 1000) + 250;
     const safetyTimer = setTimeout(() => {
       if (!isCancelled && video) {
         video.pause();
@@ -67,7 +73,7 @@ export const ActionVideo: React.FC<ActionVideoProps> = ({
       video.removeEventListener('timeupdate', handleTimeUpdate);
       clearTimeout(safetyTimer);
     };
-  }, [src, startTime, endTime, onEnded]);
+  }, [src, startTime, endTime, playbackRate, onEnded]);
 
   return (
     <video
