@@ -1,6 +1,7 @@
 import React from 'react';
 import { Heart, HeartCrack } from 'lucide-react';
 import type { DamageLevel } from '../../models/types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HealthBarProps {
   damage: DamageLevel;
@@ -15,6 +16,7 @@ export const HealthBar: React.FC<HealthBarProps> = ({
   align = 'left',
   playerName,
 }) => {
+  const { t } = useLanguage();
   const remainingHp = Math.max(0, maxDamage - damage);
 
   return (
@@ -25,7 +27,7 @@ export const HealthBar: React.FC<HealthBarProps> = ({
     >
       <div className="flex items-center gap-2">
         <span className="text-xs font-bold text-amber-300 uppercase tracking-wider font-pixel">
-          {playerName} HP
+          {playerName} {t('arena_hp')}
         </span>
         <span className="text-xs font-black text-rose-400 bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800 font-pixel">
           {remainingHp} / {maxDamage}
@@ -34,8 +36,6 @@ export const HealthBar: React.FC<HealthBarProps> = ({
 
       <div className="flex items-center gap-1 sm:gap-1.5 mt-0.5">
         {Array.from({ length: maxDamage }).map((_, index) => {
-          // index 0, 1, 2, 3, 4
-          // If damage is 2, index 0 and 1 are broken, index 2, 3, 4 are intact (or vice-versa depending on orientation)
           const isBroken = index < damage;
 
           return (

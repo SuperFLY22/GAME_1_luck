@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Loader2, Users, Edit2, Check, Zap } from 'lucide-react';
 import { matchmakingService } from '../../services/network/matchmakingService';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LobbyScreenProps {
   waitingCount: number;
@@ -13,6 +14,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   waitingNames,
   onCancel,
 }) => {
+  const { t } = useLanguage();
   const [name, setName] = useState(matchmakingService.getMyName());
   const [isEditing, setIsEditing] = useState(false);
 
@@ -28,29 +30,29 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border-2 border-slate-700 hover:border-slate-500 rounded-xl text-slate-300 hover:text-white transition-colors shadow-lg"
+          className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border-2 border-slate-700 hover:border-slate-500 rounded-xl text-slate-300 hover:text-white transition-colors shadow-lg active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="text-xs font-bold">나가기</span>
+          <span className="text-xs font-bold">{t('lobby_leave')}</span>
         </button>
       </div>
 
       {/* 헤더 배지 */}
       <div className="text-amber-400 text-xs font-black tracking-widest uppercase mb-3 bg-amber-950/80 px-3.5 py-1 rounded-full border border-amber-600 inline-flex items-center gap-1.5 shadow-md">
         <Zap className="w-3.5 h-3.5 animate-bounce" />
-        실시간 온라인 대기실
+        {t('lobby_badge')}
       </div>
 
       <h2 className="text-3xl sm:text-5xl font-black text-white font-comic drop-shadow-lg tracking-tight mb-2">
-        상대 찾는 중...
+        {t('lobby_searching')}
       </h2>
       <p className="text-slate-400 text-sm font-medium max-w-sm mb-6">
-        대기 인원이 2명 이상 모이면 즉시 무작위 1:1 참참참 대전이 시작됩니다!
+        {t('lobby_desc')}
       </p>
 
       {/* 닉네임 수정 박스 */}
       <div className="flex items-center gap-2 bg-slate-900/90 border-2 border-slate-700 px-4 py-2 rounded-2xl mb-8 shadow-inner">
-        <span className="text-xs text-slate-400 font-bold">내 닉네임:</span>
+        <span className="text-xs text-slate-400 font-bold">{t('lobby_my_nick')}</span>
         {isEditing ? (
           <div className="flex items-center gap-1.5">
             <input
@@ -89,8 +91,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         <div className="absolute inset-8 rounded-full border border-slate-700" />
         <div className="w-24 h-24 rounded-full bg-slate-900 border-4 border-amber-400 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.4)] z-10">
           <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-          <span className="text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wider">
-            매칭 중
+          <span className="text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wider font-pixel">
+            {t('lobby_matching')}
           </span>
         </div>
       </div>
@@ -100,10 +102,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-2">
           <span className="flex items-center gap-1.5 text-sky-400">
             <Users className="w-4 h-4" />
-            대기실 참여자
+            {t('lobby_participants')}
           </span>
-          <span className="px-2 py-0.5 bg-sky-950 text-sky-300 rounded border border-sky-800 font-extrabold">
-            {waitingCount}명 대기 중
+          <span className="px-2 py-0.5 bg-sky-950 text-sky-300 rounded border border-sky-800 font-extrabold font-pixel">
+            {t('lobby_waiting_count', { count: waitingCount })}
           </span>
         </div>
 
@@ -117,7 +119,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   : 'bg-slate-800 text-slate-300 border-slate-700'
               }`}
             >
-              {nick === name ? `⭐ ${nick} (나)` : nick}
+              {nick === name ? `⭐ ${nick}${t('lobby_me')}` : nick}
             </span>
           ))}
         </div>
@@ -125,4 +127,3 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     </div>
   );
 };
-

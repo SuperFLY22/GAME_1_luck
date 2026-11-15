@@ -23,6 +23,18 @@ export function useGameLoop() {
   // 대기실 통계 상태
   const [waitingCount, setWaitingCount] = useState(1);
   const [waitingNames, setWaitingNames] = useState<string[]>([]);
+  // 첫 화면(TITLE)용 실시간 로비 대기 인원 수
+  const [titleWaitingCount, setTitleWaitingCount] = useState<number>(0);
+
+  useEffect(() => {
+    // 실시간 대기 인원 통계 구독
+    const unsubscribe = matchmakingService.subscribeQueueStats((count) => {
+      setTitleWaitingCount(count);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // 현재 상태 최신 레퍼런스 유지
   const stateRef = useRef(state);
@@ -377,6 +389,7 @@ export function useGameLoop() {
     state,
     waitingCount,
     waitingNames,
+    titleWaitingCount,
     startGame,
     restartGame: () => dispatch({ type: 'START_GAME', mode: state.mode }),
     findNewOnlineMatch,

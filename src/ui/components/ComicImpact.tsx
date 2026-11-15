@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ComicImpactProps {
   outcome: 'HIT' | 'DODGE' | 'TIE' | null;
@@ -6,6 +7,7 @@ interface ComicImpactProps {
 }
 
 export const ComicImpact: React.FC<ComicImpactProps> = ({ outcome, target }) => {
+  const { t } = useLanguage();
   const [imgFailed, setImgFailed] = useState(false);
 
   if (!outcome) return null;
@@ -15,7 +17,7 @@ export const ComicImpact: React.FC<ComicImpactProps> = ({ outcome, target }) => 
   const isTie = outcome === 'TIE';
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30">
+    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30 select-none">
       {isHit && (
         <div
           className={`transform scale-110 sm:scale-135 animate-bounce duration-200 ${
@@ -55,10 +57,10 @@ export const ComicImpact: React.FC<ComicImpactProps> = ({ outcome, target }) => 
           <div className="relative flex items-center justify-center">
             {/* 황금빛 금속 충돌 스파크 이펙트 */}
             <div className="absolute -inset-6 bg-amber-400/30 rounded-full blur-xl animate-ping" />
-            <div className="relative bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black text-2xl sm:text-3xl px-6 py-2.5 rounded-2xl border-4 border-slate-900 shadow-[0_8px_0_#0f172a] rotate-3 flex items-center gap-2">
+            <div className="relative bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black text-2xl sm:text-3xl px-6 py-2.5 rounded-2xl border-4 border-slate-900 shadow-[0_8px_0_#0f172a] rotate-3 flex items-center gap-2 font-pixel">
               <span>🛡️ GUARD!</span>
-              <span className="text-xs bg-slate-950 text-amber-300 px-2 py-0.5 rounded-lg border border-amber-500 font-mono tracking-widest">
-                챙-!
+              <span className="text-xs bg-slate-950 text-amber-300 px-2 py-0.5 rounded-lg border border-amber-500 tracking-widest font-mono">
+                {t('impact_guard')}
               </span>
             </div>
           </div>
@@ -67,8 +69,8 @@ export const ComicImpact: React.FC<ComicImpactProps> = ({ outcome, target }) => 
 
       {isTie && (
         <div className="animate-pulse">
-          <div className="bg-amber-400 text-slate-900 font-black text-2xl sm:text-3xl px-6 py-2 rounded-2xl border-4 border-slate-900 shadow-[0_8px_0_#0f172a] -rotate-3">
-            비김! 다시! 🤝
+          <div className="bg-amber-400 text-slate-900 font-black text-2xl sm:text-3xl px-6 py-2 rounded-2xl border-4 border-slate-900 shadow-[0_8px_0_#0f172a] -rotate-3 font-pixel">
+            {t('impact_tie')}
           </div>
         </div>
       )}

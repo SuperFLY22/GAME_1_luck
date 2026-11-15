@@ -4,13 +4,15 @@ import { Arena } from './ui/components/Arena';
 import { GameOverModal } from './ui/components/GameOverModal';
 import { LobbyScreen } from './ui/components/LobbyScreen';
 import { TitleScreen } from './ui/components/TitleScreen';
+import { LanguageProvider } from './ui/context/LanguageContext';
 import { useGameLoop } from './ui/hooks/useGameLoop';
 
-export const App: React.FC = () => {
+const GameContainer: React.FC = () => {
   const {
     state,
     waitingCount,
     waitingNames,
+    titleWaitingCount,
     startGame,
     restartGame,
     findNewOnlineMatch,
@@ -45,6 +47,7 @@ export const App: React.FC = () => {
           onStartGame={handleStartGame}
           isMuted={isMuted}
           onToggleMute={handleToggleMute}
+          waitingCount={titleWaitingCount}
         />
       )}
 
@@ -66,7 +69,6 @@ export const App: React.FC = () => {
             onP1Input={handleP1Input}
             onP2Input={handleP2Input}
             myPlayerId={
-              // 온라인은 서버 지정 역할(p1 또는 p2), 솔로(1P_CPU)는 항상 p1
               state.mode === 'ONLINE_MATCH'
                 ? state.online?.myRoleInRoom
                 : 'p1'
@@ -83,6 +85,14 @@ export const App: React.FC = () => {
         </>
       )}
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <LanguageProvider>
+      <GameContainer />
+    </LanguageProvider>
   );
 };
 

@@ -1,10 +1,11 @@
 import React from 'react';
-import { Home, Volume2, VolumeX } from 'lucide-react';
+import { Home, Languages, Volume2, VolumeX } from 'lucide-react';
 import type {
   ChamDirection,
   GameEngineState,
   RPSChoice,
 } from '../../models/types';
+import { useLanguage } from '../context/LanguageContext';
 import { HealthBar } from './HealthBar';
 import { KeyGuide } from './KeyGuide';
 import { TouchControls } from './TouchControls';
@@ -17,7 +18,7 @@ interface ArenaProps {
   onGoTitle: () => void;
   onP1Input: (type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => void;
   onP2Input: (type: 'rps' | 'cham', value: RPSChoice | ChamDirection) => void;
-  myPlayerId?: 'p1' | 'p2'; // FEAT-02: 온라인/솔로 모드에서 "내가 누구인지" 전달
+  myPlayerId?: 'p1' | 'p2';
 }
 
 export const Arena: React.FC<ArenaProps> = ({
@@ -29,6 +30,7 @@ export const Arena: React.FC<ArenaProps> = ({
   onP2Input,
   myPlayerId = 'p1',
 }) => {
+  const { language, toggleLanguage, t } = useLanguage();
   const isHit = state.lastOutcome === 'HIT';
   const isScreenShake = isHit && state.phase === 'RESOLVE';
 
@@ -54,28 +56,44 @@ export const Arena: React.FC<ArenaProps> = ({
           className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-slate-700 transition-colors"
         >
           <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span>메뉴</span>
+          <span>{t('arena_menu')}</span>
         </button>
 
         <div className="flex flex-col items-center">
           <span className="text-[11px] sm:text-xs font-extrabold text-amber-400 font-pixel tracking-wider">
-            {state.phase === 'RPS_INPUT' || state.phase === 'RPS_RESULT' ? '선공 결정전' : `TURN ${state.round}`}
+            {state.phase === 'RPS_INPUT' || state.phase === 'RPS_RESULT'
+              ? t('arena_round_rps')
+              : t('arena_round_turn', { round: state.round })}
           </span>
           <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold font-pixel">
             {state.mode === 'ONLINE_MATCH'
-              ? '🌐 온라인 대전'
-              : '1P vs CPU (AI)'}
+              ? t('arena_mode_online')
+              : t('arena_mode_cpu')}
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleMute}
-          className="p-1.5 sm:p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
-          title={isMuted ? '소리 켜기' : '음소거'}
-        >
-          {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {/* 배틀 중 언어 토글 버튼 */}
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 text-[10px] font-black rounded-lg border border-amber-600/60 transition-colors font-pixel flex items-center gap-1"
+            title="Switch Language"
+          >
+            <Languages className="w-3 h-3 text-amber-400" />
+            <span>{language === 'ko' ? 'EN' : 'KO'}</span>
+          </button>
+
+          {/* 사운드 토글 */}
+          <button
+            type="button"
+            onClick={onToggleMute}
+            className="p-1.5 sm:p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
+            title={isMuted ? t('mute_sound_on') : t('mute_sound_off')}
+          >
+            {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />}
+          </button>
+        </div>
       </header>
 
       {/* 2. 체력 게이지 영역 */}
@@ -98,11 +116,11 @@ export const Arena: React.FC<ArenaProps> = ({
       </main>
 
       {/* 4. 컨트롤러 및 키 가이드 영역 */}
-      <footer className="w-full max-w-4xl mx-auto flex flex-col gap-2 mt-2">
+      <footer className="w-full max-w-4xl mx-auto flex flex-col gap-1 sm:gap-2 z-10 pb-1 sm:pb-2">
         <TouchControls
           mode={state.mode}
           phase={state.phase}
-          myRoleInRoom={state.online?.myRoleInRoom}
+          myRoleInRoom={myPlayerId}
           p1Role={state.p1.role}
           p2Role={state.p2.role}
           p1ChosenRps={state.p1.rpsChoice}

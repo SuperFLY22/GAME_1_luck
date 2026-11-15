@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ChamDirection, GameMode, GamePhase, RPSChoice, Role } from '../../models/types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TouchControlsProps {
   mode: GameMode;
@@ -28,6 +29,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   onP1Input,
   onP2Input,
 }) => {
+  const { t } = useLanguage();
   const isRps = phase === 'RPS_INPUT';
   const isCham = phase === 'CHAM_INPUT';
   const isOnlineP2 = mode === 'ONLINE_MATCH' && myRoleInRoom === 'p2';
@@ -43,8 +45,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
   return (
     <div className="w-full max-w-sm mx-auto px-2 sm:px-4 py-1 sm:py-2 flex flex-col gap-1.5 sm:gap-2.5 select-none">
-      <div className="text-center sm:hidden text-[10px] font-black text-amber-300">
-        👆 화면 터치 컨트롤러
+      <div className="text-center sm:hidden text-[10px] font-black text-amber-300 font-pixel">
+        {t('controls_touch_label')}
       </div>
 
       <div
@@ -56,9 +58,9 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             : 'border-slate-700'
         }`}
       >
-        <div className={`text-xs font-black flex items-center justify-between w-full px-1 ${isOnlineP2 ? 'text-rose-400' : 'text-sky-400'}`}>
+        <div className={`text-xs font-black flex items-center justify-between w-full px-1 font-pixel ${isOnlineP2 ? 'text-rose-400' : 'text-sky-400'}`}>
           <div className="flex items-center gap-1.5">
-            <span>{isOnlineP2 ? '👤 나 (2P)' : '👤 나 (1P)'}</span>
+            <span>{isOnlineP2 ? t('controls_me_2p') : t('controls_me_1p')}</span>
             {mode === 'ONLINE_MATCH' && (
               <span className="text-[10px] text-slate-400 font-mono">({myRoleInRoom.toUpperCase()})</span>
             )}
@@ -71,13 +73,13 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-blue-600 text-white border-blue-400'
               }`}
             >
-              {currentRole === 'ATTACKER' ? '🔥 내 공격 차례 (3초)' : '🛡️ 내 방어 차례 (가드)'}
+              {currentRole === 'ATTACKER' ? t('battle_badge_my_attack') : t('battle_badge_my_guard')}
             </span>
           )}
         </div>
 
         {isRps && (
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full font-pixel">
             <button
               type="button"
               onClick={() => submitHandler('rps', 'SCISSORS')}
@@ -87,7 +89,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
               }`}
             >
-              ✌️ 가위
+              {t('battle_hand_scissors')}
             </button>
             <button
               type="button"
@@ -98,7 +100,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
               }`}
             >
-              ✊ 바위
+              {t('battle_hand_rock')}
             </button>
             <button
               type="button"
@@ -109,13 +111,13 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
               }`}
             >
-              🖐️ 보
+              {t('battle_hand_paper')}
             </button>
           </div>
         )}
 
         {isCham && (
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full font-pixel">
             <button
               type="button"
               onClick={() => submitHandler('cham', 'LEFT')}
@@ -127,7 +129,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
               }`}
             >
-              👈 좌
+              {t('controls_btn_left')}
             </button>
             <button
               type="button"
@@ -140,7 +142,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
               }`}
             >
-              👆 상
+              {t('controls_btn_up')}
             </button>
             <button
               type="button"
@@ -153,7 +155,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
               }`}
             >
-              우 👉
+              {t('controls_btn_right')}
             </button>
           </div>
         )}

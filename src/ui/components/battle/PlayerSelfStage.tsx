@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface PlayerSelfStageProps {
   id: 'p1' | 'p2';
@@ -14,15 +15,6 @@ interface PlayerSelfStageProps {
   rpsSprite?: string | null;
 }
 
-/**
- * 1인칭 내 캐릭터 뒷모습 스테이지 (PlayerSelfStage)
- * 
- * 구버전 벡터 SVG를 100% 배제하고,
- * public/assets/images/first_person/ 디렉터리의 정식 스프라이트만 렌더링:
- * 1. 내 뒷모습 상반신: self_state_0 ~ 5.png (6단계 데미지 훼손)
- * 2. 1인칭 공격 스윙: self_attack_left / up / right.png (1인칭 뿅망치 스윙)
- * 3. 1인칭 냄비 방어: self_guard_left / up / right.png (1인칭 냄비뚜껑 가드)
- */
 export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   name,
   damage,
@@ -33,13 +25,13 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   rpsChoice,
   rpsSprite,
 }) => {
+  const { t } = useLanguage();
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  // 1. 1인칭 공격(뿅망치 스윙) 및 방어(냄비뚜껑) 오버레이 스프라이트 & 비디오 매핑
   let actionSpriteUrl: string | null = null;
   let actionVideoUrl: string | null = null;
   let actionAnimClass = '';
@@ -56,7 +48,6 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
       if (isHit) {
         actionAnimClass = 'animate-potlid-pop-off';
       } else {
-        // 수비 성공(가드): 1인칭 냄비뚜껑 가드 비디오 적용
         actionVideoUrl = '/assets/videos/self_guard.mp4';
         if (direction === 'LEFT') actionAnimClass = 'animate-fp-guard-left';
         else if (direction === 'RIGHT') actionAnimClass = 'animate-fp-guard-right';
@@ -65,12 +56,18 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
     }
   }
 
-  // 2. 내 캐릭터 뒷모습 데미지 스프라이트 (0~5단계)
   const selfBackSpriteUrl = `/assets/images/first_person/self_state_${damage}.png`;
+
+  const getRpsLabel = (choice: RPSChoice) => {
+    if (choice === 'ROCK') return t('battle_hand_rock');
+    if (choice === 'SCISSORS') return t('battle_hand_scissors');
+    if (choice === 'PAPER') return t('battle_hand_paper');
+    return '';
+  };
 
   return (
     <div className="relative flex flex-col items-center select-none z-20 pointer-events-none mt-auto">
-      {/* 1. 1인칭 플레이어 액션 (뿅망치 스윙 / 냄비 가드) - 공격/방어 순간에만 전방으로 뻗어나감 */}
+      {/* 1. 1인칭 플레이어 액션 (뿅망치 스윙 / 냄비 가드) */}
       {(actionVideoUrl || actionSpriteUrl) && (
         <div
           className={`absolute -top-24 sm:-top-36 z-30 transition-all duration-150 flex items-center justify-center w-52 h-52 sm:w-80 sm:h-80 ${
@@ -97,12 +94,12 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
         </div>
       )}
 
-      {/* 2. 내 캐릭터 뒷모습 본체 (6단계 데미지 스프라이트 단독 렌더링) */}
+      {/* 2. 내 캐릭터 뒷모습 본체 */}
       <div className="relative flex flex-col items-center justify-end w-52 h-36 sm:w-88 sm:h-60 overflow-visible">
-        {/* '나 (YOU)' 배지 및 공격/수비 태그: 중앙 타이머와 겹치지 않도록 머리 위 대신 좌측 하단 코너에 배치 */}
-        <div className="absolute bottom-1 -left-4 sm:-left-8 z-40 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-1.5 whitespace-nowrap bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-md pointer-events-none">
+        {/* '나 (YOU)' 배지 및 공격/수비 태그 */}
+        <div className="absolute bottom-1 -left-4 sm:-left-8 z-40 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-1.5 whitespace-nowrap bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-md pointer-events-none font-pixel">
           <span className="text-[10px] sm:text-xs font-black bg-sky-500 text-white px-2.5 py-0.5 rounded-full border border-sky-300 shadow-md">
-            👤 나 ({name})
+            {t('battle_self_prefix', { name })}
           </span>
           {role && role !== 'TIE' && (
             <span
@@ -112,25 +109,24 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
                   : 'bg-emerald-600 text-white border-emerald-300'
               }`}
             >
-              {isAttacker ? '🔥 공격' : '🛡️ 방어'}
+              {isAttacker ? t('battle_badge_attack') : t('battle_badge_guard')}
             </span>
           )}
         </div>
 
-        {/* 오직 first_person 정식 뒷모습 스프라이트만 단독 렌더링 */}
         <img
           src={selfBackSpriteUrl}
           alt={`${name} back view`}
           className="w-full h-full object-contain drop-shadow-[0_-8px_20px_rgba(0,0,0,0.7)]"
         />
 
-        {/* 내 RPS 선택 결과 (캐릭터 본체 우측 배치) */}
+        {/* 내 RPS 선택 결과 */}
         {phase === 'RPS_RESULT' && rpsChoice && (
           <aside
             aria-label="내 가위바위보 결과"
-            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-40 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-sky-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(56,189,248,0.5)] animate-scaleUp pointer-events-none"
+            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-40 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-sky-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(56,189,248,0.5)] animate-scaleUp pointer-events-none font-pixel"
           >
-            <div className="text-[10px] sm:text-xs font-black text-sky-300">내 선택</div>
+            <div className="text-[10px] sm:text-xs font-black text-sky-300">{t('battle_self_choice_label')}</div>
             {rpsSprite ? (
               <img
                 src={rpsSprite}
@@ -143,7 +139,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
               </span>
             )}
             <span className="text-white font-black text-[11px] sm:text-xs whitespace-nowrap bg-sky-600/90 border border-sky-400 px-2 py-0.5 rounded-md shadow-sm">
-              {rpsChoice === 'ROCK' ? '✊ 바위' : rpsChoice === 'SCISSORS' ? '✌️ 가위' : '🖐️ 보'}
+              {getRpsLabel(rpsChoice)}
             </span>
           </aside>
         )}

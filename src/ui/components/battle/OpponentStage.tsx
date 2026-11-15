@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface OpponentStageProps {
   id: 'p1' | 'p2';
@@ -14,16 +15,6 @@ interface OpponentStageProps {
   rpsSprite?: string | null;
 }
 
-/**
- * 1인칭 상대방 스테이지 (OpponentStage)
- * 
- * 구버전 SVG 및 도구 중첩을 100% 배제하고,
- * public/assets/images/first_person/ 디렉터리의 정식 스프라이트만 단독 렌더링:
- * 1. 공격 판정 순간: opp_attack_left / up / right.png (망치를 든 상대 전신 액션)
- * 2. 회피 판정 순간: opp_dodge_left / up / right.png (고개 돌린 상대 회피 액션)
- * 3. 방어 판정 순간: opp_guard_left / up / right.png (냄비뚜껑 든 가드 액션)
- * 4. 평상시 / 대기 / 피격: opp_state_0 ~ 5.png (6단계 정면 얼굴 데미지 상태)
- */
 export const OpponentStage: React.FC<OpponentStageProps> = ({
   name,
   damage,
@@ -35,31 +26,28 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
   rpsChoice,
   rpsSprite,
 }) => {
+  const { t } = useLanguage();
   const isAttacker = role === 'ATTACKER';
   const isDefender = role === 'DEFENDER';
   const isResolve = phase === 'RESOLVE';
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  // 1. 단일 최우선 액션 스프라이트 리졸브 (중첩 방지) 및 동영상 리소스 매핑
   let activeSpriteUrl: string;
   let activeVideoUrl: string | null = null;
   let isVideoLoop = false;
 
   if (isResolve && direction) {
     if (isAttacker) {
-      // 상대가 공격자일 때: 웹제미나이 공격 비디오 우선 적용 + 스프라이트 포스터 Fallback
       activeSpriteUrl = `/assets/images/first_person/opp_attack_${dirKey}.png`;
       activeVideoUrl = '/assets/videos/opp_attack.mp4';
       isVideoLoop = false;
     } else if (isDefender) {
       if (lastOutcome === 'DODGE') {
-        // 상대가 수비 성공(회피): 웹제미나이 회피 잔상 비디오 + 스프라이트 포스터 Fallback
         activeSpriteUrl = `/assets/images/first_person/opp_dodge_${dirKey}.png`;
         activeVideoUrl = '/assets/videos/opp_dodge.mp4';
         isVideoLoop = false;
       } else {
-        // 상대가 피격 또는 가드: 가드 스프라이트 (피격 시는 컷씬 오버레이가 최상단에 재생됨)
         activeSpriteUrl = isHit
           ? `/assets/images/first_person/opp_state_${damage}.png`
           : `/assets/images/first_person/opp_guard_${dirKey}.png`;
@@ -68,8 +56,6 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
       activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
     }
   } else {
-    // 선공 결정(가위바위보) 및 기본 대기 / 카운트다운:
-    // 데미지 0(정상 상태)에서는 웹제미나이 호흡 루핑 비디오 재생, 피격 누적 시 단계별 손상 표정 스프라이트
     activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
     if (damage === 0) {
       activeVideoUrl = '/assets/videos/opp_idle.mp4';
@@ -77,7 +63,6 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
     }
   }
 
-  // 2. 피격(HIT) 리액션 애니메이션 클래스
   let bodyAnimClass = '';
   if (isResolve) {
     if (isHit) {
@@ -91,12 +76,19 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
     }
   }
 
+  const getRpsLabel = (choice: RPSChoice) => {
+    if (choice === 'ROCK') return t('battle_hand_rock');
+    if (choice === 'SCISSORS') return t('battle_hand_scissors');
+    if (choice === 'PAPER') return t('battle_hand_paper');
+    return '';
+  };
+
   return (
     <div className="relative flex flex-col items-center select-none z-10">
       {/* 상대방 이름 및 역할 뱃지 */}
-      <div className="flex items-center gap-2 mb-1 z-20">
+      <div className="flex items-center gap-2 mb-1 z-20 font-pixel">
         <span className="text-xs sm:text-sm font-black bg-slate-900/90 text-rose-300 border border-rose-500/60 px-2.5 py-0.5 rounded-full shadow-md">
-          👾 상대방: {name}
+          {t('battle_opp_prefix', { name })}
         </span>
         {role && role !== 'TIE' && (
           <span
@@ -106,7 +98,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
                 : 'bg-sky-600 text-white border-sky-300'
             }`}
           >
-            {isAttacker ? '🔥 공격 (ATTACK)' : '🛡️ 수비 (GUARD)'}
+            {isAttacker ? t('battle_badge_attack') : t('battle_badge_guard')}
           </span>
         )}
       </div>
@@ -121,7 +113,6 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
             : ''
         }`}
       >
-        {/* 상대방 캐릭터 렌더링: 비디오 지원 시 네이티브 비디오, 미지원/대체 시 스프라이트 Fallback */}
         <div className={`w-full h-full flex items-center justify-center ${bodyAnimClass}`}>
           {activeVideoUrl ? (
             <video
@@ -147,9 +138,9 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
         {phase === 'RPS_RESULT' && rpsChoice && (
           <aside
             aria-label="상대방 가위바위보 결과"
-            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-30 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-rose-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-scaleUp pointer-events-none"
+            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-30 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-rose-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-scaleUp pointer-events-none font-pixel"
           >
-            <div className="text-[10px] sm:text-xs font-black text-rose-300">선택</div>
+            <div className="text-[10px] sm:text-xs font-black text-rose-300">{t('battle_opp_choice_label')}</div>
             {rpsSprite ? (
               <img
                 src={rpsSprite}
@@ -162,7 +153,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
               </span>
             )}
             <span className="text-white font-black text-[11px] sm:text-xs whitespace-nowrap bg-rose-600/90 border border-rose-400 px-2 py-0.5 rounded-md shadow-sm">
-              {rpsChoice === 'ROCK' ? '✊ 바위' : rpsChoice === 'SCISSORS' ? '✌️ 가위' : '🖐️ 보'}
+              {getRpsLabel(rpsChoice)}
             </span>
           </aside>
         )}
