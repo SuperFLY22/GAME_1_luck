@@ -5,15 +5,46 @@
     box-sizing: border-box;
   }
 
-  body {
+  html, body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    min-height: 100%;
+    height: 100dvh;
     background-color: #020617;
     color: #f8fafc;
     overflow-x: hidden;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
   }
+
+  #root {
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
+  }
+}
+
+/* Safe Area Inset 유틸리티 */
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+.pl-safe {
+  padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+}
+.pr-safe {
+  padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+}
+.p-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
 }
 
 /* 만화풍 화면 흔들림(Screen Shake) 효과 */
@@ -377,7 +408,7 @@
    - 상대방 가드 성공(opp_dodge): 각도 변화 없이 그냥 12시 정면(0deg, translate 없음)
 */
 .opp-action-symmetric-left {
-  transform: translate(68px, 24px) rotate(-28deg) scale(1.18);
+  transform: translate(50px, 20px) rotate(-24deg) scale(1.12);
   transform-origin: center center;
 }
 @media (min-width: 640px) {
@@ -387,7 +418,7 @@
 }
 
 .opp-action-symmetric-up {
-  transform: translate(0px, 22px) rotate(0deg) scale(1.15);
+  transform: translate(0px, 18px) rotate(0deg) scale(1.12);
   transform-origin: center center;
 }
 @media (min-width: 640px) {
@@ -397,7 +428,7 @@
 }
 
 .opp-action-symmetric-right {
-  transform: translate(-68px, 24px) rotate(28deg) scale(1.18);
+  transform: translate(-50px, 20px) rotate(24deg) scale(1.12);
   transform-origin: center center;
 }
 @media (min-width: 640px) {

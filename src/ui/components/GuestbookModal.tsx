@@ -78,8 +78,8 @@ export const GuestbookModal: React.FC<GuestbookModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn select-none font-sans">
-      <div className="w-full max-w-lg bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-4 border-amber-500/80 rounded-3xl p-5 sm:p-6 shadow-[0_0_50px_rgba(245,158,11,0.25)] flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn select-none font-sans pt-safe pb-safe pl-safe pr-safe">
+      <div className="w-full max-w-lg bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-4 border-amber-500/80 rounded-3xl p-4 sm:p-6 shadow-[0_0_50px_rgba(245,158,11,0.25)] flex flex-col max-h-[92dvh]">
         {/* 모달 헤더 */}
         <div className="flex items-center justify-between pb-3 border-b-2 border-slate-800">
           <div className="flex items-center gap-2">

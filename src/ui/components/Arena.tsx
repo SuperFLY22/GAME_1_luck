@@ -36,7 +36,7 @@ export const Arena: React.FC<ArenaProps> = ({
 
   return (
     <div
-      className={`min-h-[100svh] flex flex-col justify-between py-2 sm:py-3 px-1 sm:px-6 transition-all duration-100 select-none relative ${
+      className={`h-[100dvh] max-h-[100dvh] w-full flex flex-col justify-between pt-safe pb-safe pl-safe pr-safe px-2 sm:px-6 transition-all duration-100 select-none relative overflow-hidden ${
         isScreenShake ? 'animate-shake' : ''
       }`}
     >
@@ -49,11 +49,11 @@ export const Arena: React.FC<ArenaProps> = ({
       )}
 
       {/* 1. 상단 바: 라운드 정보 및 시스템 버튼 */}
-      <header className="w-full flex items-center justify-between max-w-4xl mx-auto bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border-2 border-slate-800 shadow-md relative z-10">
+      <header className="w-full flex items-center justify-between max-w-4xl mx-auto bg-slate-900/80 backdrop-blur-sm px-2.5 py-1 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border-2 border-slate-800 shadow-md relative z-10 shrink-0">
         <button
           type="button"
           onClick={onGoTitle}
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-slate-700 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-slate-700 transition-colors"
         >
           <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>{t('arena_menu')}</span>
@@ -97,7 +97,7 @@ export const Arena: React.FC<ArenaProps> = ({
       </header>
 
       {/* 2. 체력 게이지 영역 */}
-      <section className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-2 sm:gap-6 mt-1 sm:mt-2">
+      <section className="w-full max-w-4xl mx-auto grid grid-cols-2 gap-1.5 sm:gap-6 mt-1 shrink-0">
         <HealthBar
           damage={state.p1.damage}
           playerName={state.p1.name}
@@ -111,12 +111,12 @@ export const Arena: React.FC<ArenaProps> = ({
       </section>
 
       {/* 3. 메인 배틀 아레나 (1인칭 오버더숄더 Punch-Out 스테이지) */}
-      <main className="relative w-full max-w-4xl mx-auto my-auto flex flex-col items-center justify-between overflow-visible flex-1">
+      <main className="relative w-full max-w-4xl mx-auto my-auto flex flex-col items-center justify-between overflow-visible flex-1 min-h-0">
         <FirstPersonArena state={state} myPlayerId={myPlayerId} />
       </main>
 
       {/* 4. 컨트롤러 및 키 가이드 영역 */}
-      <footer className="w-full max-w-4xl mx-auto flex flex-col gap-1 sm:gap-2 z-10 pb-1 sm:pb-2">
+      <footer className="w-full max-w-4xl mx-auto flex flex-col gap-1 sm:gap-2 z-10 pb-0.5 sm:pb-2 shrink-0">
         <TouchControls
           mode={state.mode}
           phase={state.phase}

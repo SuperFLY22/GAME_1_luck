@@ -67,7 +67,7 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
   const isFinalHit = state.lastOutcome === 'HIT' && targetDamage >= 5;
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto flex-1 flex flex-col justify-between items-center perspective-stage min-h-[380px] sm:min-h-[480px] py-1 select-none">
+    <div className="relative w-full max-w-4xl mx-auto flex-1 min-h-0 h-full flex flex-col justify-between items-center perspective-stage py-0.5 select-none overflow-visible">
       {/* 0. 비디오 컷씬 오버레이 (2-e: 마지막 5번째 일격 성공 시 발동) */}
       <CutsceneOverlay
         outcome={state.lastOutcome}
@@ -112,7 +112,7 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
       </div>
 
       {/* 4. 중앙: 상태/카운트다운/타이머/방향 알림 바 */}
-      <div className="w-full max-w-sm flex flex-col items-center justify-center text-center my-auto z-30 px-2 min-h-[96px]">
+      <div className="w-full max-w-sm flex flex-col items-center justify-center text-center my-auto z-30 px-2 min-h-[64px] sm:min-h-[80px]">
         {state.phase === 'READY' && (
           <div className="animate-scaleUp">
             <span className="text-5xl sm:text-7xl font-black text-amber-400 font-comic drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">

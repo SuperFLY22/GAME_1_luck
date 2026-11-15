@@ -44,13 +44,13 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   const isAttackerMe = currentRole === 'ATTACKER';
 
   return (
-    <div className="w-full max-w-sm mx-auto px-2 sm:px-4 py-1 sm:py-2 flex flex-col gap-1.5 sm:gap-2.5 select-none">
-      <div className="text-center sm:hidden text-[10px] font-black text-amber-300 font-pixel">
+    <div className="w-full max-w-sm mx-auto px-2 sm:px-4 py-0.5 sm:py-2 flex flex-col gap-1 sm:gap-2 select-none">
+      <div className="text-center sm:hidden text-[9px] font-black text-amber-300 font-pixel">
         {t('controls_touch_label')}
       </div>
 
       <div
-        className={`flex flex-col items-center gap-1.5 sm:gap-2 bg-slate-900/90 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border-2 shadow-lg transition-colors ${
+        className={`flex flex-col items-center gap-1 sm:gap-2 bg-slate-900/90 p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl border-2 shadow-lg transition-colors ${
           isCham && isAttackerMe
             ? 'border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]'
             : isCham && !isAttackerMe && currentRole
@@ -83,7 +83,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <button
               type="button"
               onClick={() => submitHandler('rps', 'SCISSORS')}
-              className={`py-2.5 sm:py-3 px-1 sm:px-2 text-xs sm:text-base font-black rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+              className={`py-2 sm:py-3 px-1 sm:px-2 text-xs sm:text-base font-black rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                 currentRps === 'SCISSORS'
                   ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105'
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
@@ -94,7 +94,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <button
               type="button"
               onClick={() => submitHandler('rps', 'ROCK')}
-              className={`py-2.5 sm:py-3 px-1 sm:px-2 text-xs sm:text-base font-black rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+              className={`py-2 sm:py-3 px-1 sm:px-2 text-xs sm:text-base font-black rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                 currentRps === 'ROCK'
                   ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105'
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
@@ -105,7 +105,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <button
               type="button"
               onClick={() => submitHandler('rps', 'PAPER')}
-              className={`py-2.5 sm:py-3 px-1 sm:px-2 text-xs sm:text-base font-black rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+              className={`py-2 sm:py-3 px-1 sm:px-2 text-xs sm:text-base font-black rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                 currentRps === 'PAPER'
                   ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105'
                   : 'bg-slate-800 border-slate-950 text-white hover:bg-slate-700'
@@ -121,7 +121,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <button
               type="button"
               onClick={() => submitHandler('cham', 'LEFT')}
-              className={`py-2.5 sm:py-3 px-1 sm:px-1.5 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+              className={`py-2 sm:py-3 px-1 sm:px-1.5 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                 currentCham === 'LEFT'
                   ? isAttackerMe
                     ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105 shadow-md'
@@ -134,7 +134,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <button
               type="button"
               onClick={() => submitHandler('cham', 'UP')}
-              className={`py-2.5 sm:py-3 px-1 sm:px-1.5 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+              className={`py-2 sm:py-3 px-1 sm:px-1.5 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                 currentCham === 'UP'
                   ? isAttackerMe
                     ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105 shadow-md'
@@ -147,7 +147,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             <button
               type="button"
               onClick={() => submitHandler('cham', 'RIGHT')}
-              className={`py-2.5 sm:py-3 px-1 sm:px-1.5 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
+              className={`py-2 sm:py-3 px-1 sm:px-1.5 font-black text-xs sm:text-sm rounded-lg sm:rounded-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all ${
                 currentCham === 'RIGHT'
                   ? isAttackerMe
                     ? 'bg-amber-400 border-amber-600 text-slate-950 scale-105 shadow-md'

@@ -1,119 +1,121 @@
-# 🗺️ 참참참 아케이드 (Comic Cham-Cham-Cham) 전체 코드맵 (CODEMAP)
+# 🗺️ 딱대! 코믹 참참참 아케이드 (Cham-Cham-Cham) 전체 코드맵 (CODEMAP)
 
-> **리팩토링 에이전트/모델 필독 가이드**  
-> 본 문서는 프로젝트 아키텍처, 모듈별 역할, 데이터 흐름, 핵심 심볼 계약(Contract), FSM 상태 전이 규칙 및 회귀 방지 검증 명령어를 집대성한 공식 코드맵입니다.  
-> 코드 수정 전 본 문서의 **의존성 단방향 규칙**과 **골든 마스터 테스트** 통과 기준을 반드시 준수하십시오.
-
----
-
-## 1. 프로젝트 요약 및 기술 스택
-
-- **프로젝트명**: 코믹 참참참 아케이드 (`GAME_1_luck`)
-- **장르**: 90년대 복고풍 코믹 액션 1:1 대전 참참참 웹 게임
-- **코어 스택**:
-  - **Runtime & UI**: React 19, TypeScript (ES2023, Bundler mode), Tailwind CSS, Lucide React, Canvas-Confetti
-  - **Build & Dev Tooling**: Vite 8, Rolldown Runtime Chunking, Oxlint
-  - **Backend / Realtime**: Supabase Client (Realtime Broadcast & Presence Channels)
-  - **Audio Engine**: Web Audio API (합성 신시사이저 + 2D 핫스왑 오디오 버퍼)
-  - **Test Suite**: Node.js Native Runner + `tsx` (`gameEngine.test.ts`, `matchmaking.test.ts`, `harness.test.ts`)
+> **LLM 리팩토링 & 코드 점검용 압축 가이드**  
+> 본 문서는 다른 LLM/에이전트가 최소한의 토큰으로 전체 프로젝트 아키텍처, 모듈별 입출력 계약, FSM 상태 머신, 의존성 제약 및 검증 명령어를 파악할 수 있도록 고안된 공식 코드맵입니다.
 
 ---
 
-## 2. 모듈별 파일 맵 및 역할 명세 (File & Symbol Registry)
+## 1. 프로젝트 요약 & 핵심 스택
+
+- **프로젝트명**: 이리와 딱 대! 코믹 참참참 (`GAME_1_luck`)
+- **타입**: 90년대 복고풍 코믹 1인칭 1:1 대전 참참참 웹 게임
+- **런타임 & UI**: React 19, TypeScript (ES2023, Bundler), Tailwind CSS, Lucide React, Canvas-Confetti
+- **빌드 & 툴링**: Vite 8, Rolldown Runtime Chunking, Oxlint
+- **서버 & 실시간 네트워크**: Cloudflare Workers + Durable Objects (`worker/index.ts`), WebSocket (Lobby/Room), REST Fallback
+- **오디오 엔진**: Web Audio API 절차적 사운드 신시사이저 + 2D 오디오 버퍼 핫스왑 (`soundManager.ts`)
+- **검증 환경**: Node.js Native Runner + `tsx` (`npm test`, 전수 5,000판 E2E 가상 시뮬레이션 포함)
+
+---
+
+## 2. 파일 레지스트리 및 심볼 맵 (File Registry)
 
 ```text
 GAME_1_luck/
 ├── src/
 │   ├── config/
-│   │   └── constants.ts                # (47 lines) 게임 타이머, 1P/2P 키 바인딩, 에셋 경로 상수
-│   ├── core/                           # [Pure Domain Engine] 외부 I/O 종속성 0%
+│   │   ├── constants.ts          (46L)  # 타이머(RPS 5s, Cham 2s), 데미지(0~5), 조작키, 에셋 경로 상수
+│   │   ├── i18n.ts               (281L) # ko / en 번역 사전 및 문자열 보간 유틸
+│   │   └── websocket.ts          (26L)  # Cloudflare Worker WS/HTTP URL 동적 산출 (VITE_WS_URL)
+│   ├── core/                     # [Pure Domain Engine] 외부 I/O, UI, Web API 종속성 0%
 │   │   └── engine/
-│   │       ├── fsm.ts                  # (365 lines) 게임 FSM Reducer, 상태 전이, 라운드/턴 수명주기
-│   │       └── rules.ts                # (61 lines) 가위바위보 판정, 참참참 피격/가드 판정, 데미지 누적
+│   │       ├── fsm.ts            (469L) # GameAction, createInitialState, gameReducer (핵심 상태머신)
+│   │       └── rules.ts          (62L)  # evaluateRPS, evaluateCham, getCpuChoice, incrementDamage
 │   ├── models/
-│   │   └── types.ts                    # (59 lines) GameState, GamePhase, ChamDirection, DTO 명세
-│   ├── services/                       # [Application Services & Adapters]
-│   │   ├── assets/
-│   │   │   └── assetRegistry.ts        # (61 lines) 런타임 이미지 핫스왑 프로브 및 리스너
+│   │   └── types.ts              (84L)  # GameEngineState, PlayerState, GamePhase, ActionFrame 계약
+│   ├── services/                 # [Application Services & Adapters]
 │   │   ├── network/
-│   │   │   ├── matchmakingService.ts   # (239 lines) Supabase Presence 기반 무작위 큐 매칭
-│   │   │   ├── roomSessionService.ts   # (238 lines) 실시간 1:1 게임 룸 브로드캐스트 동기화
-│   │   │   └── supabaseClient.ts       # (16 lines) Supabase 환경변수 로더 및 클라이언트 싱글톤
+│   │   │   ├── matchmakingService.ts (455L) # WS 로비 큐, 매칭 통계, 방명록 REST/WS 폴백, 캐시
+│   │   │   └── roomSessionService.ts (274L) # WS 1:1 게임룸 세션 동기화 (RPS/참/리매치/하트비트)
 │   │   └── sound/
-│   │       └── soundManager.ts         # (359 lines) Web Audio 합성음(뿅망치 삑, 냄비 챙) + 외부 오디오
-│   ├── ui/                             # [Presentation Layer] 화면 렌더링 및 입력 캡처
-│   │   ├── components/
-│   │   │   ├── Arena.tsx               # (234 lines) 메인 대전 무대 (1P/2P 대치, 스프라이트, HUD)
-│   │   │   ├── CharacterView.tsx       # (165 lines) 표정/데미지/도구 애니메이션 캐릭터 뷰
-│   │   │   ├── CharacterSvg.tsx        # (237 lines) 에셋 부재 시 폴백 벡터 SVG 렌더러
-│   │   │   ├── ComicImpact.tsx         # (77 lines) HIT 💥 / GUARD 🛡️ / MISS 💨 코믹 이펙트
-│   │   │   ├── GameOverModal.tsx       # (142 lines) 승패 결과 판정 및 독립 사운드/재대결 모달
-│   │   │   ├── HealthBar.tsx           # (61 lines) 5단계 체력 게이지 및 피격 셰이크
-│   │   │   ├── KeyGuide.tsx            # (60 lines) 1P/2P 키보드 입력 가이드 오버레이
-│   │   │   ├── LobbyScreen.tsx         # (128 lines) 대기실, 실시간 매칭 큐 UI 및 봇 대전 전환
-│   │   │   ├── TimerBar.tsx            # (47 lines) 2초 카운트다운 타이머 프로그레스 바
-│   │   │   ├── TitleScreen.tsx         # (128 lines) 메인 타이틀, 모드 선택 (1P vs CPU / 로컬 / 온라인)
-│   │   │   └── TouchControls.tsx       # (297 lines) 모바일 가상 D-Pad 및 가위바위보 터치 패드
+│   │       └── soundManager.ts   (362L) # BGM 루프/전환, Web Audio 뿅망치/냄비 합성음 및 외부 mp3 캐시
+│   ├── ui/                       # [Presentation Layer] 화면 렌더링 및 입력 캡처
+│   │   ├── context/
+│   │   │   └── LanguageContext.tsx (68L)  # 다국어(ko/en) 컨텍스트 프로바이더
 │   │   ├── hooks/
-│   │   │   └── useGameLoop.ts          # (364 lines) 메인 루프, 타이머 틱, 입력 리스너, AI CPU 제어
-│   │   ├── App.tsx                     # (89 lines) 최상위 화면 라우팅 (TITLE, LOBBY, ARENA)
-│   │   ├── main.tsx                    # (10 lines) React DOM 진입점
-│   │   └── index.css                   # Tailwind 스타일 및 뿅망치/냄비뚜껑 키프레임 애니메이션
+│   │   │   ├── useGameLoop.ts    (405L) # 메인 게임 루프 오케스트레이터, 타이머, CPU 스케줄러
+│   │   │   └── useKeyboardControls.ts (54L) # A/W/D 및 방향키 입력 라우팅 리스너
+│   │   ├── components/
+│   │   │   ├── battle/           # [1인칭 배틀 무대 컴포넌트군]
+│   │   │   │   ├── FirstPersonArena.tsx (203L) # 3D 투시 배틀 스테이지 (무대/HUD/오버레이 통합)
+│   │   │   │   ├── OpponentStage.tsx   (226L) # 2P/상대 뷰 (비디오/스프라이트/대칭 공격 쇄도/가드)
+│   │   │   │   ├── PlayerSelfStage.tsx (175L) # 1P 본인 뷰 (10/12/2시 방향 타격, 냄비 가드, 피격)
+│   │   │   │   ├── ActionVideo.tsx      (90L)  # HTML5 Video 정밀 구간(startTime~endTime) 재생기
+│   │   │   │   └── CutsceneOverlay.tsx  (96L)  # KO 결정타(damage>=5) 시 1.8초 풀스크린 컷씬 오버레이
+│   │   │   ├── Arena.tsx         (137L) # 대전 메인 컨테이너 (CRT 스캔라인, HealthBar, 조작부 결합)
+│   │   │   ├── ComicImpact.tsx    (79L)  # HIT💥, GUARD🛡️, MISS💨 코믹 플래시 팝업
+│   │   │   ├── GameOverModal.tsx (225L) # 경기 결과(KO), 리매치 신청/대기, 개별 승패 사운드
+│   │   │   ├── GuestbookModal.tsx(248L) # 실시간 방명록 모달 + 관리자 삭제 PIN 모드
+│   │   │   ├── GuestbookTicker.tsx(87L) # 하단 롤링 전광판 티커
+│   │   │   ├── HealthBar.tsx      (61L)  # 5칸 게이지 바 (피격 셰이크 및 하트/해골)
+│   │   │   ├── KeyGuide.tsx       (45L)  # PC 키보드 핫키 HUD
+│   │   │   ├── LobbyScreen.tsx   (135L) # 매칭 대기열 화면, 봇 전환 트리거
+│   │   │   ├── TimerBar.tsx       (47L)  # 2초 참참참 턴 게이지 프로그레스 바
+│   │   │   ├── TitleScreen.tsx   (168L) # 타이틀, 모드선택, 실시간 대기자 수 뱃지, 방명록 버튼
+│   │   │   └── TouchControls.tsx (165L) # 모바일 가상 RPS/참참참 D-Pad 패드
+│   │   ├── App.tsx                (99L)  # 최상위 화면 라우팅 (TITLE/LOBBY/ARENA)
+│   │   ├── main.tsx               (10L)  # React 19 진입점
+│   │   └── index.css                     # Tailwind, CRT 비네팅, 코믹 키프레임 애니메이션
 │   └── utils/
-│       └── confetti.ts                 # (31 lines) 승리 축하 파티클 유틸리티
-├── tests/                              # [Verification Suites]
-│   ├── gameEngine.test.ts              # (99 lines) RPS/참참참/FSM 단위 상태 전이 테스트
-│   ├── matchmaking.test.ts             # (75 lines) 대기열 풀 무작위 셔플 및 이탈 복구 테스트
-│   └── harness.test.ts                 # (297 lines) 41개 물리 에셋 실존 검사 + E2E 매치 시뮬레이션
-├── raw_assets/                         # [Master Assets] 원본 디자인/오디오 소스 보관소
-│   ├── art/                            # background, character, actions, impact, rps, tools 원본
-│   ├── audio/                          # bgm1, hit1~3, miss, loose, you_win 마스터 오디오
-│   └── README.md                       # 슬라이싱 파이프라인 가이드
-├── public/assets/                      # [Runtime Assets] 브라우저에 서빙되는 최적화 에셋
-│   ├── images/                         # actions/, rps/, tools/, p1_state_*, bg_arcade.png
-│   └── sounds/                         # bgm.mp3, climax_bgm.mp3, hit1~3.mp3, dodge.mp3 등
-└── docs/
-    ├── architecture.md                 # 아키텍처 다이어그램 및 계층 가이드
-    └── CODEMAP.md                      # [본 문서]
+│       └── confetti.ts            (31L)  # 승리 축하 파티클 유틸리티
+├── worker/
+│   └── index.ts                  (429L) # Cloudflare Workers Durable Object (GameRoom 실시간 WS + 방명록 REST)
+└── tests/
+    ├── gameEngine.test.ts         (99L)  # RPS 경우의 수, 참참참 판정, FSM 라이프사이클 단위 테스트
+    ├── matchmaking.test.ts        (75L)  # 대기열 무작위 매칭 및 재진입 알고리즘
+    ├── harness.test.ts           (299L) # 41개 물리 에셋 실존 검사 + E2E 완승 시뮬레이션
+    └── virtualPlay.test.ts       (265L) # 16대 RPS, 32대 참참참 전수 검증 + 5,000판 E2E 가상 대전
 ```
 
 ---
 
-## 3. 계층 격리 및 단방향 의존성 규칙 (Unidirectional Architecture)
+## 3. 계층 분리 및 단방향 의존성 규칙
 
-```
-[ui/ (Views & Hooks)]
+```text
+[ui/ (Views, Hooks, Components)]
        │
        ▼ (Calls)
-[services/ (Sound, Network, Asset)]
+[services/ (Sound, Network WS)] ──▶ [worker/ (Cloudflare DO)]
        │
        ▼ (Reads & Computes)
-[core/ (FSM, Game Rules)]
+[core/engine/ (FSM Reducer, Game Rules)]
        │
-       ▼ (Inherits)
-[models/ (types.ts)  &  config/ (constants.ts)  &  utils/]
+       ▼ (Types & Constants)
+[models/ (types.ts)] & [config/ (constants, i18n, ws)]
 ```
 
-### ⚠️ 엄격한 레이어 경계 규칙
-1. **`core/` 순수성 유지**: `core/engine/` 내부 코드는 `React`, `window`, `document`, `AudioContext`, `Supabase`를 **절대 import하거나 참조할 수 없음**.
-2. **단방향 참조 강제**: 하위 계층(`core`, `models`, `config`)이 상위 계층(`services`, `ui`)을 역참조하는 순환 참조(Circular Dependency) 원천 금지.
-3. **Contract First**: 모듈 간 파라미터는 raw `any`나 loosely-typed `object`가 아닌 `src/models/types.ts`의 인터페이스/타입 유니온을 엄격히 사용.
+### ⚠️ 리팩토링 시 절대 금지 사항 (Invariants)
+1. **`core/engine/` 순수성 절대 보장**: `fsm.ts`, `rules.ts`는 UI(`React`), Web API(`window`, `AudioContext`, `WebSocket`), DOM에 의존하지 않는 순수 함수여야 함.
+2. **역방향 참조 금지**: `core/`나 `services/`가 `ui/` 컴포넌트를 import하면 안 됨.
+3. **엄격한 계약 기반 통신**: 모든 상태 전이는 `GameAction` 유니온을 통해서만 `gameReducer`로 전달.
 
 ---
 
-## 4. 핵심 데이터 모델 및 계약 (src/models/types.ts)
+## 4. 핵심 데이터 모델 및 계약 (`src/models/types.ts`)
 
 ```typescript
-export type GameMode = '1P_CPU' | 'ONLINE_MATCH';
+export type GameMode = 'ONLINE_MATCH' | '1P_CPU';
 
 export type GamePhase =
   | 'TITLE'
+  | 'LOBBY'
   | 'READY'            // 3, 2, 1 카운트다운
-  | 'RPS_INPUT'        // 게임 시작 시 단 1회 선공 결정 가위바위보
-  | 'CHAM_INPUT'       // 2.0초 카운트다운 참참참 턴
-  | 'RESOLVE'          // 피격/가드 결과 연출 (1.3초)
-  | 'ROUND_RESOLVE'    // 턴 교체 딜레이 (1.0초)
-  | 'GAME_OVER';       // 5 데미지 도달 승패 확정
+  | 'RPS_INPUT'        // 경기 시작 시 1회 선공 결정
+  | 'RPS_RESULT'       // 가위바위보 결과 노출 (1.5초)
+  | 'CHAM_INPUT'       // 2.0초 참참참 입력 턴
+  | 'RESOLVE'          // 타격/가드 비디오/스프라이트 연출 (1.5초)
+  | 'ROLE_SWAP'        // 수비 성공 시 공수 전환 인지 딜레이 (1.5초)
+  | 'CHECK_WINNER'     // 데미지 5 도달 판정
+  | 'GAME_OVER';       // KO 최종 결과 모달
 
 export type RPSChoice = 'ROCK' | 'SCISSORS' | 'PAPER' | null;
 export type ChamDirection = 'LEFT' | 'UP' | 'RIGHT' | null;
@@ -121,130 +123,114 @@ export type Role = 'ATTACKER' | 'DEFENDER' | 'TIE' | null;
 export type DamageLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface PlayerState {
-  id: string;
+  id: 'p1' | 'p2';
   name: string;
   damage: DamageLevel;
-  role: Role;
   rpsChoice: RPSChoice;
   chamDirection: ChamDirection;
-  isReady: boolean;
+  role: Role;
+  isAi: boolean;
+  score: number;
+  guardCount: number;
 }
 
-export interface GameState {
+export interface GameEngineState {
   mode: GameMode;
   phase: GamePhase;
-  roundNumber: number;
+  round: number;
+  countdown: number;
+  timerRemainingRatio: number;
   p1: PlayerState;
   p2: PlayerState;
-  countdown: number;
-  turnTimer: number;
   lastOutcome: 'HIT' | 'DODGE' | 'TIE' | null;
   hitTarget: 'p1' | 'p2' | null;
   winner: 'p1' | 'p2' | null;
-  screenShake: boolean;
-  isOnlineMatch?: boolean;
-  matchId?: string | null;
+  message: string;
+  roleReversed: boolean;
+  online?: OnlineMatchContext;
 }
 ```
 
 ---
 
-## 5. 게임 FSM(유한상태기계) 상태 전이 및 불변 규칙
+## 5. FSM 상태 전이 및 게임 불변 규칙
 
-### A. 게임 룰 불변성 (Game Mechanics Invariants)
-1. **단 1회 RPS 선공 결정 (Initial 1-Time RPS)**:
-   - 가위바위보는 매 턴마다 하지 않고 **경기 시작 시 단 1회만** 수행하여 최초 공격자(ATTACKER)와 수비자(DEFENDER)를 결정.
-   - 무승부(TIE) 시에만 승패가 날 때까지 RPS 재수행.
-2. **2.0초 참참참 카운트다운 (2s Cham Countdown)**:
-   - 공격권 결정 후 즉시 `CHAM_INPUT` 단계로 진입하며 2초 타이머 작동.
-3. **공격 성공 시 공격권 유지 (Consecutive Hit Attack)**:
-   - 공격자 방향 === 수비자 방향일 경우 `HIT`: 수비자 데미지 +1 누적, **공격자는 다음 턴에도 공격권 유지**.
-4. **수비 성공 시 즉시 공수 전환 (Guard Role Reversal)**:
-   - 공격자 방향 !== 수비자 방향일 경우 `DODGE/GUARD`: 데미지 없음, **다음 턴 공수 역할 즉시 반전** (수비자가 공격자로 전환).
-5. **승패 판정 (KO Threshold)**:
-   - 누군가 5 데미지(`MAX_DAMAGE = 5`)에 도달하면 즉시 `GAME_OVER`.
+### A. 불변 룰 (Core Game Mechanics)
+1. **단 1회 RPS 선공 결정**: 가위바위보는 게임 시작 시 1회만 실행. 무승부(`TIE`)일 때만 재실행(`RETRY_RPS_TIE`).
+2. **참참참 판정 (`rules.ts`)**:
+   - `attackerDir !== defenderDir` ➔ **HIT** (공격 성공): 수비자 데미지 +1, **공격자 공격권 유지**.
+   - `attackerDir === defenderDir` ➔ **DODGE** (수비 성공/가드): 데미지 없음, **공수 역할 즉시 반전(`ROLE_SWAP`)**.
+3. **2초 제한 시간 (`CHAM_INPUT`)**: 2초 내 미입력 시 `rules.ts`의 `getCpuChamDirection()`으로 랜덤 강제 결정.
+4. **승리 조건**: 어느 한 쪽의 `damage >= 5`가 되면 즉시 `GAME_OVER`.
 
-### B. FSM 상태 전이 다이어그램
-
-```
-[TITLE] ──(START_GAME)──> [READY] (3..2..1)
+### B. 상태 전이 흐름도
+```text
+[TITLE] ──(START_GAME)──> [LOBBY or READY]
                              │
                              ▼ (START_RPS)
-                       [RPS_INPUT] ──(TIE)──┐
-                             │ (승패 결정)   │
-                             ▼               │
-                       [CHAM_INPUT] <────────┘
+                       [RPS_INPUT] ──(TIE)──> [RETRY_RPS_TIE]
                              │
-                      (RESOLVE_CHAM)
+                             ▼ (선공 결정)
+                       [RPS_RESULT] (1.5s)
                              │
                              ▼
-                         [RESOLVE]
+                       [CHAM_INPUT] (2.0s 카운트다운)
+                             │
+                             ▼ (RESOLVE_CHAM)
+                         [RESOLVE] (1.5s 연출)
                         /         \
-                 (isHit)           (isDodge/Guard)
+                 (isHit)           (isDodge)
                    /                 \
-        [공격권 유지]             [공수 역할 반전]
+            [공격권 유지]        [ROLE_SWAP] (1.5s 공수 반전)
                    \                 /
                     ▼               ▼
-                 [ROUND_RESOLVE] (Next Turn)
-                        │
-                  (Damage >= 5?)
-                  /            \
-              (Yes)            (No)
-                ▼                ▼
-           [GAME_OVER]      [CHAM_INPUT] (2초 턴 반복)
+                     [CHECK_WINNER]
+                      /          \
+            (Damage >= 5)       (Damage < 5)
+                 /                  \
+                ▼                    ▼
+           [GAME_OVER]          [CHAM_INPUT] (다음 턴)
 ```
 
 ---
 
-## 6. 에셋 및 사운드 시스템 계약
+## 6. 네트워크 & 백엔드 프로토콜 (`worker/index.ts`)
 
-### A. 런타임 에셋 경로 (`public/assets/`)
-- **이미지**:
-  - 캐릭터 표정: `/assets/images/p1_state_0.png` ~ `5.png`, `p2_state_0.png` ~ `5.png`
-  - 배경: `/assets/images/bg_arcade.png`
-  - 액션: `/assets/images/actions/attack_left.png`, `attack_up.png`, `attack_right.png`, `defend_*.png`
-  - 도구: `/assets/images/tools/hammer_*.png`, `potlid_*.png`
-  - RPS: `/assets/images/rps/rps_1p_rock.png`, `scissors.png`, `paper.png`, `rps_2p_*`
-- **오디오**:
-  - BGM: `/assets/sounds/bgm.mp3`, `/assets/sounds/climax_bgm.mp3` (매치 포인트 시 자동 전환)
-  - 효과음: `hit1~3.mp3`, `dodge.mp3`, `victory.mp3`, `surrender.mp3`, `you_win.mp3`, `loose.mp3`
-
-### B. SoundManager 절차적 사운드 합성기
-- 외부 에셋 파일이 없거나 브라우저 오디오 지연 시에도 **내장 Web Audio 신시사이저**가 동작:
-  - 뿅망치 타격: 사인파(1400Hz -> 2600Hz -> 950Hz) 0.1s 삑 사운드 합성
-  - 냄비 가드: 3중 복합 배음(880Hz, 1760Hz, 3520Hz) 금속 타격음 챙- 사운드 합성
+- **호스트**: Cloudflare Workers Durable Object (`GAME_ROOM` 네임스페이스)
+- **WebSocket 프로토콜**:
+  - `lobby`: 입장(`join_lobby`), 대기자 수 브로드캐스트(`lobby_stats`), 매치 성사 통보(`match_found`)
+  - `room_<id>`: 동기화(RPS 입력/결과, 참 방향/결과, 리매치 요청, 하트비트 `ping/pong`)
+- **방명록(Guestbook) 아키텍처**:
+  - REST: `GET /api/guestbook`, `POST /api/guestbook`, `DELETE /api/guestbook` (관리자 PIN 인증)
+  - WebSocket: 신규 등록 실시간 브로드캐스트 + `sessionStorage`/`localStorage` 0ms 즉시 렌더링 캐시
 
 ---
 
-## 7. 주요 리팩토링 타겟 (High-ROI Candidates Top 3)
+## 7. 주요 리팩토링 검토 대상 (Top 3 High-ROI Targets)
 
-향후 리팩토링 시 우선순위가 높은 3대 타겟입니다:
-
-| 순위 | 타겟 파일 | 현재 상태 및 문제점 | 권장 리팩토링 방향 (To-Be) |
-| :---: | :--- | :--- | :--- |
-| **1** | `src/ui/hooks/useGameLoop.ts`<br>*(364 lines)* | 타이머 틱, 키보드 이벤트 리스너, CPU AI 결정, 온라인 웹소켓 콜백이 단일 훅에 집중되어 비대함. | `useGameTimer`, `useKeyboardControls`, `useOnlineGameSync` 3개 서브 훅으로 관심사 분리. |
-| **2** | `src/ui/components/Arena.tsx`<br>*(234 lines)* | 스프라이트 URL 조합 로직 및 좌/우 플레이어 뷰 레이아웃이 단일 파일에 밀집됨. | 스프라이트 리졸버 유틸리티 함수 추출 및 `ArenaPlayerStage` 컴포넌트 재사용화. |
-| **3** | `src/ui/components/TouchControls.tsx`<br>*(297 lines)* | 가위바위보 패드와 3방향 참참참 버튼 렌더링에 중복 스타일 및 좌표 계산 산재. | 컨트롤 버튼 프리셋 컴포넌트(`DirectionalPad`, `RpsPad`)로 분할하여 재사용성 강화. |
+| 순위 | 타겟 파일 | 라인수 | 현재 문제점 | 권장 리팩토링 방향 (To-Be) |
+| :---: | :--- | :---: | :--- | :--- |
+| **1** | `src/ui/hooks/useGameLoop.ts` | 405L | 타이머 rAF 틱, CPU AI 호출 스케줄러, 온라인 소켓 이벤트 핸들러가 한 훅에 집중 | `useOnlineGameSync`, `useGameTimer` 서브 훅으로 관심사 분리 |
+| **2** | `src/services/network/matchmakingService.ts` | 455L | 매칭 대기열 관리, 방명록 HTTP/WS 폴백, 통계 리스너 혼재 | 방명록 전용 서비스(`guestbookService.ts`) 분리 및 단일 책임 원칙(SRP) 적용 |
+| **3** | `src/ui/components/battle/OpponentStage.tsx` / `PlayerSelfStage.tsx` | 226L / 175L | 액션 비디오 설정 계산, 대칭 각도 클래스 계산 등 렌더링 로직 중복 | `stageVisualResolver.ts` 순수 유틸 함수로 계산 로직 외과수술적 추출 |
 
 ---
 
-## 8. 회귀 방지 필수 자가 검증 (Automated Verification)
+## 8. 회귀 방지 필수 자가 검증 명령어 (Automated Verification)
 
-코드 수정 후 아래 2개 검증을 **반드시 순차 실행**하여 100% Green을 확인해야 합니다.
+코드 수정 후 반드시 다음 2개 명령어를 순차 실행하여 100% 통과를 확인해야 합니다:
 
 ```bash
-# 1. TypeScript 컴파일 무결성 및 프로덕션 번들 빌드 검증
+# 1. TypeScript 컴파일 무결성 및 프로덕션 빌드 검사
 npm run build
 # 기대 결과: tsc -b && vite build 무에러 통과 (dist/ 청크 정상 생성)
 
-# 2. 게임 엔진, 대기열 매치, 41개 물리 에셋 하네스 전체 검증
+# 2. 전수 단위/통합/가상 5,000판 E2E 테스트 검사
 npm test
 # 기대 결과:
-#  - RPS 9대 경우의 수 및 무승부 통과
-#  - 참참참 절대 좌표 판정 통과
-#  - 대기열 랜덤 매칭 및 재진입 알고리즘 100% 통과
-#  - 총 41개 필수 이미지/오디오 에셋 물리 파일 실존 확인
-#  - 1회 RPS 선공 + 5연속 참참참 완승 시뮬레이션 통과
-#  - [ALL HARNESS TESTS PASSED] 100% 통과
+#  - RPS 9대 경우의 수 및 16대 전수 입력 통과
+#  - 참참참 32대 전수 방향 조합 및 공수 판정 통과
+#  - 41개 물리 에셋 파일 100% 실존 확인
+#  - 1P vs CPU 5,000판 엔드투엔드 시뮬레이션 통과 (오류 제로)
+#  - [ALL HARNESS TESTS PASSED] & [VIRTUAL PLAY PASSED]
 ```
-

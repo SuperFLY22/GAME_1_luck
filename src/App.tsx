@@ -37,7 +37,7 @@ const GameContainer: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center relative overflow-x-hidden overflow-y-auto font-sans bg-cover bg-center py-0"
+      className="h-[100dvh] min-h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-center relative overflow-x-hidden overflow-y-auto font-sans bg-cover bg-center py-0"
       style={{
         backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.88)), url('/assets/images/bg_arcade.png')`,
       }}

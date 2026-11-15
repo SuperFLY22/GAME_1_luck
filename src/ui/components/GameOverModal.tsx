@@ -58,9 +58,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   }, [isLocalWinner]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn select-none pt-safe pb-safe pl-safe pr-safe">
       <div
-        className={`w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-4 rounded-3xl p-6 text-center flex flex-col items-center ${
+        className={`w-full max-w-md bg-gradient-to-b from-slate-900 to-slate-950 border-4 rounded-3xl p-4 sm:p-6 text-center flex flex-col items-center max-h-[92dvh] overflow-y-auto ${
           isLocalWinner
             ? 'border-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.3)]'
             : 'border-rose-600 shadow-[0_0_50px_rgba(225,29,72,0.3)]'
@@ -68,21 +68,21 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
       >
         {/* 승패 아이콘 */}
         <div
-          className={`w-20 h-20 rounded-full border-4 flex items-center justify-center -mt-14 mb-3 shadow-lg ${
+          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 flex items-center justify-center -mt-10 sm:-mt-14 mb-2 sm:mb-3 shadow-lg ${
             isLocalWinner
               ? 'bg-amber-500/20 border-amber-400'
               : 'bg-rose-500/20 border-rose-500'
           }`}
         >
           {isLocalWinner ? (
-            <Trophy className="w-10 h-10 text-amber-400 animate-bounce" />
+            <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400 animate-bounce" />
           ) : (
-            <Skull className="w-10 h-10 text-rose-400 animate-pulse" />
+            <Skull className="w-8 h-8 sm:w-10 sm:h-10 text-rose-400 animate-pulse" />
           )}
         </div>
 
         <div
-          className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-2 font-pixel ${
+          className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full border mb-1.5 sm:mb-2 font-pixel ${
             isLocalWinner
               ? 'text-amber-400 bg-amber-950/80 border-amber-600'
               : 'text-rose-400 bg-rose-950/80 border-rose-600'
@@ -91,13 +91,13 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           {isLocalWinner ? t('game_over_victory') : t('game_over_defeat')}
         </div>
 
-        <h2 className="text-3xl sm:text-4xl font-black text-white font-comic drop-shadow-md">
+        <h2 className="text-2xl sm:text-4xl font-black text-white font-comic drop-shadow-md">
           {t('game_over_winner_title', { name: winner.name })}
         </h2>
 
         {/* 내가 패배했을 때(DEFEAT) 웹제미나이 KO 패배 컷씬 비디오 연출 */}
         {!isLocalWinner && (
-          <div className="w-full max-w-[200px] aspect-[9/16] max-h-[160px] my-2 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.5)]">
+          <div className="w-full max-w-[180px] sm:max-w-[200px] aspect-[9/16] max-h-[140px] sm:max-h-[160px] my-1.5 sm:my-2 rounded-2xl overflow-hidden border-2 border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.5)]">
             <video
               src="/assets/videos/cutscenes/ko_defeat.mp4"
               autoPlay
@@ -110,18 +110,18 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           </div>
         )}
 
-        <p className="text-rose-400 font-bold text-sm mt-1 font-pixel">
+        <p className="text-rose-400 font-bold text-xs sm:text-sm mt-1 font-pixel">
           {t('game_over_loser_surrender', { name: loser.name })}
         </p>
 
         {opponentLeft && (
-          <div className="mt-2 px-3 py-1 bg-rose-950/80 border border-rose-500 rounded-xl text-xs font-black text-rose-300 animate-pulse font-pixel">
+          <div className="mt-1.5 sm:mt-2 px-3 py-1 bg-rose-950/80 border border-rose-500 rounded-xl text-xs font-black text-rose-300 animate-pulse font-pixel">
             {t('game_over_opponent_left')}
           </div>
         )}
 
         {/* 결과 스탯 요약 박스 */}
-        <div className="w-full bg-slate-800/80 rounded-2xl p-4 my-5 border-2 border-slate-700">
+        <div className="w-full bg-slate-800/80 rounded-2xl p-3 sm:p-4 my-3 sm:my-5 border-2 border-slate-700">
           {/* 총 대전 턴 수 */}
           <div className="text-center mb-3 pb-2 border-b border-slate-700">
             <span className="text-xs text-slate-400 font-bold font-pixel">
@@ -189,23 +189,23 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         </div>
 
         {/* 버튼 영역 */}
-        <div className="flex flex-col gap-2.5 w-full font-pixel">
+        <div className="flex flex-col gap-2 sm:gap-2.5 w-full font-pixel">
           {isOnline ? (
             <button
               type="button"
               onClick={onFindNewMatch}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black rounded-xl border-b-4 border-teal-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg flex items-center justify-center gap-2"
+              className="w-full py-2.5 sm:py-3.5 px-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black rounded-xl border-b-4 border-teal-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <Users className="w-5 h-5" />
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               {t('game_over_btn_online')}
             </button>
           ) : (
             <button
               type="button"
               onClick={onRestart}
-              className="w-full py-3.5 px-4 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black rounded-xl border-b-4 border-amber-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg flex items-center justify-center gap-2"
+              className="w-full py-2.5 sm:py-3.5 px-4 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black rounded-xl border-b-4 border-amber-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <RotateCcw className="w-5 h-5" />
+              <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
               {t('game_over_btn_restart')}
             </button>
           )}
@@ -213,9 +213,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           <button
             type="button"
             onClick={onGoTitle}
-            className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border-2 border-slate-600 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+            className="w-full py-2 sm:py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border-2 border-slate-600 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm"
           >
-            <Home className="w-4 h-4" />
+            <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             {t('game_over_btn_title')}
           </button>
         </div>

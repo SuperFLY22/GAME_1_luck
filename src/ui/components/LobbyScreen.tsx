@@ -25,9 +25,9 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center select-none animate-fadeIn">
+    <div className="flex flex-col items-center justify-center min-h-[100dvh] w-full px-4 text-center select-none animate-fadeIn relative pt-safe pb-safe pl-safe pr-safe">
       {/* 뒤로 가기 버튼 */}
-      <div className="absolute top-4 left-4">
+      <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] left-[max(0.75rem,env(safe-area-inset-left))]">
         <button
           type="button"
           onClick={onCancel}
@@ -39,20 +39,20 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       </div>
 
       {/* 헤더 배지 */}
-      <div className="text-amber-400 text-xs font-black tracking-widest uppercase mb-3 bg-amber-950/80 px-3.5 py-1 rounded-full border border-amber-600 inline-flex items-center gap-1.5 shadow-md">
+      <div className="text-amber-400 text-xs font-black tracking-widest uppercase mb-2 sm:mb-3 mt-10 sm:mt-0 bg-amber-950/80 px-3.5 py-1 rounded-full border border-amber-600 inline-flex items-center gap-1.5 shadow-md">
         <Zap className="w-3.5 h-3.5 animate-bounce" />
         {t('lobby_badge')}
       </div>
 
-      <h2 className="text-3xl sm:text-5xl font-black text-white font-comic drop-shadow-lg tracking-tight mb-2">
+      <h2 className="text-2xl sm:text-5xl font-black text-white font-comic drop-shadow-lg tracking-tight mb-1 sm:mb-2">
         {t('lobby_searching')}
       </h2>
-      <p className="text-slate-400 text-sm font-medium max-w-sm mb-6">
+      <p className="text-slate-400 text-xs sm:text-sm font-medium max-w-sm mb-4 sm:mb-6">
         {t('lobby_desc')}
       </p>
 
       {/* 닉네임 수정 박스 */}
-      <div className="flex items-center gap-2 bg-slate-900/90 border-2 border-slate-700 px-4 py-2 rounded-2xl mb-8 shadow-inner">
+      <div className="flex items-center gap-2 bg-slate-900/90 border-2 border-slate-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl mb-4 sm:mb-8 shadow-inner">
         <span className="text-xs text-slate-400 font-bold">{t('lobby_my_nick')}</span>
         {isEditing ? (
           <div className="flex items-center gap-1.5">
@@ -86,13 +86,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
       </div>
 
       {/* 레이더 매칭 애니메이션 */}
-      <div className="relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center my-2">
+      <div className="relative w-36 h-36 sm:w-52 sm:h-52 flex items-center justify-center my-2">
         <div className="absolute inset-0 rounded-full border-2 border-amber-500/30 animate-ping" />
         <div className="absolute inset-4 rounded-full border-2 border-sky-500/40 animate-pulse" />
         <div className="absolute inset-8 rounded-full border border-slate-700" />
-        <div className="w-24 h-24 rounded-full bg-slate-900 border-4 border-amber-400 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.4)] z-10">
-          <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-          <span className="text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wider font-pixel">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-900 border-4 border-amber-400 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.4)] z-10">
+          <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400 animate-spin" />
+          <span className="text-[9px] sm:text-[10px] font-black text-amber-300 mt-1 uppercase tracking-wider font-pixel">
             {t('lobby_matching')}
           </span>
         </div>

@@ -125,7 +125,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
 
       {/* 1. 상대방 본체 래퍼 (화면 정중앙 정렬) */}
       <div
-        className={`relative flex items-center justify-center w-48 h-56 sm:w-68 sm:h-76 transition-transform duration-200 mx-auto ${
+        className={`relative flex items-center justify-center w-36 h-44 sm:w-64 sm:h-72 md:w-68 md:h-76 transition-transform duration-200 mx-auto ${
           isAttacker && (phase === 'CHAM_INPUT' || phase === 'RESOLVE')
             ? 'aura-attacker rounded-3xl'
             : isDefender && (phase === 'CHAM_INPUT' || phase === 'RESOLVE')
@@ -201,21 +201,21 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
         {phase === 'RPS_RESULT' && rpsChoice && (
           <aside
             aria-label="상대방 가위바위보 결과"
-            className="absolute top-1/2 -translate-y-1/2 -right-14 sm:-right-24 z-30 flex flex-col items-center gap-1 bg-slate-950/95 border-2 border-rose-400/90 p-1.5 sm:p-2 rounded-2xl shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-scaleUp pointer-events-none font-pixel"
+            className="absolute top-1/2 -translate-y-1/2 -right-3 sm:-right-20 z-30 flex flex-col items-center gap-0.5 sm:gap-1 bg-slate-950/95 border-2 border-rose-400/90 p-1 sm:p-2 rounded-xl sm:rounded-2xl shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-scaleUp pointer-events-none font-pixel"
           >
-            <div className="text-[10px] sm:text-xs font-black text-rose-300">{t('battle_opp_choice_label')}</div>
+            <div className="text-[9px] sm:text-xs font-black text-rose-300">{t('battle_opp_choice_label')}</div>
             {rpsSprite ? (
               <img
                 src={rpsSprite}
                 alt={rpsChoice}
-                className="w-10 h-10 sm:w-14 sm:h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(244,63,94,0.6)]"
+                className="w-8 h-8 sm:w-14 sm:h-14 object-contain filter drop-shadow-[0_2px_8px_rgba(244,63,94,0.6)]"
               />
             ) : (
-              <span className="text-2xl sm:text-3xl">
+              <span className="text-xl sm:text-3xl">
                 {rpsChoice === 'ROCK' ? '✊' : rpsChoice === 'SCISSORS' ? '✌️' : '🖐️'}
               </span>
             )}
-            <span className="text-white font-black text-[11px] sm:text-xs whitespace-nowrap bg-rose-600/90 border border-rose-400 px-2 py-0.5 rounded-md shadow-sm">
+            <span className="text-white font-black text-[10px] sm:text-xs whitespace-nowrap bg-rose-600/90 border border-rose-400 px-1.5 py-0.5 rounded-md shadow-sm">
               {getRpsLabel(rpsChoice)}
             </span>
           </aside>
