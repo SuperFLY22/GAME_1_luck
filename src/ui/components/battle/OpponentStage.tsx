@@ -34,40 +34,50 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  // 7번 규칙: 상대방 대칭 각도 및 위치 클래스
-  // 상대방 LEFT  -> 내 시점 우측(4시 방향)
-  // 상대방 UP    -> 내 시점 중앙(12시 정면)
-  // 상대방 RIGHT -> 내 시점 좌측(8시 방향)
+  // 7번 규칙: 상대방 공격 대칭 각도 및 확실한 좌/우 위치 클래스
+  // 상대방 LEFT  -> 내 시점 우측 대각 쇄도 (4시 방향, +68px~+105px)
+  // 상대방 UP    -> 내 시점 중앙 12시 정면 (+22px~+30px)
+  // 상대방 RIGHT -> 내 시점 좌측 대각 쇄도 (8시 방향, -68px~-105px)
   let oppSymmetricClass = 'opp-action-symmetric-up';
   if (direction === 'LEFT') oppSymmetricClass = 'opp-action-symmetric-left';
   else if (direction === 'RIGHT') oppSymmetricClass = 'opp-action-symmetric-right';
 
-  // 2-d & 5-a & 3-c 연출 상태 분기
+  // 연출 상태 분기
   let oppVideoConfig: { src: string; startTime: number; endTime: number } | null = null;
   let oppStaticAttackImg: string | null = null;
   let oppFlyingPotlidImg: string | null = null;
   let oppFlyingPotlidClass = '';
+  let oppActionClass = oppSymmetricClass;
 
-  if (isResolve && direction) {
-    if (isAttacker) {
+  if (isResolve) {
+    if (isAttacker && direction) {
       if (lastOutcome === 'HIT') {
-        // 5-a. 상대방 공격 성공: opp_attack.mp4 0~2초 구간, 대칭 각도 적용
+        // 상대방 공격 성공: opp_attack.mp4 0~2초 구간, 대칭 각도 적용
         oppVideoConfig = {
           src: '/assets/videos/opp_attack.mp4',
           startTime: 0,
           endTime: 2,
         };
+        oppActionClass = oppSymmetricClass;
       } else if (lastOutcome === 'DODGE') {
-        // 3-c. 상대방 공격 실패 (내가 수비 성공):
-        // 애니메이션 대신 opp_attack_{dir}.png 정적 이미지를 방향에 맞게 출력
+        // 상대방 공격 실패 (내가 수비 성공):
+        // opp_attack_{dir}.png 정적 이미지를 확실한 방향성에 맞게 대칭 출력
         oppStaticAttackImg = `/assets/images/first_person/opp_attack_${dirKey}.png`;
+        oppActionClass = oppSymmetricClass;
       }
     } else if (isDefender) {
-      if (isHit) {
-        // 2-d. 상대방 수비 실패 (내가 공격 성공):
+      if (lastOutcome === 'DODGE') {
+        // 상대방 가드 성공: opp_dodge.mp4 0.5~2.5초 구간, 각도 변화 없이 그냥 12시 정면
+        oppVideoConfig = {
+          src: '/assets/videos/opp_dodge.mp4',
+          startTime: 0.5,
+          endTime: 2.5,
+        };
+        oppActionClass = 'opp-dodge-center';
+      } else if (isHit && direction) {
+        // 상대방 수비 실패 (내가 공격 성공):
         // 상대방이 수비했던 방향의 냄비뚜껑 이미지가 뱅글뱅글 날아가는 효과
         oppFlyingPotlidImg = `/assets/images/first_person/self_guard_${dirKey}.png`;
-        // 대칭으로 튕겨 날아감 (상대방 LEFT -> 우측 탈락, RIGHT -> 좌측 탈락)
         if (direction === 'LEFT') oppFlyingPotlidClass = 'animate-potlid-fly-right';
         else if (direction === 'RIGHT') oppFlyingPotlidClass = 'animate-potlid-fly-left';
         else oppFlyingPotlidClass = 'animate-potlid-fly-up';
@@ -75,7 +85,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
     }
   }
 
-  // 1 & 2-d. 상대방 상태 5단계 표현 반영 본체 이미지
+  // 상대방 상태 5단계 표현 반영 본체 이미지
   const safeDamage = Math.min(Math.max(damage, 0), 5);
   const oppStateImg = `/assets/images/first_person/opp_state_${safeDamage}.png`;
 
@@ -143,10 +153,10 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
           )}
         </div>
 
-        {/* 5-a. 상대방 공격 성공 시 비디오 (0~2초, 대칭 각도 적용) */}
+        {/* 비디오 액션 (공격 성공 시 opp_attack 0~2초 또는 가드 성공 시 opp_dodge 0.5~2.5초) */}
         {oppVideoConfig && (
           <div
-            className={`absolute inset-0 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppSymmetricClass}`}
+            className={`absolute -inset-10 sm:-inset-16 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppActionClass}`}
           >
             <ActionVideo
               src={oppVideoConfig.src}
@@ -157,10 +167,10 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
           </div>
         )}
 
-        {/* 3-c. 상대방 공격 실패 (내가 수비 성공) 시: opp_attack_{dir}.png 정적 이미지 대칭 출력 */}
+        {/* 상대방 공격 실패 (내가 수비 성공) 시: opp_attack_{dir}.png 정적 이미지 대칭 출력 */}
         {oppStaticAttackImg && (
           <div
-            className={`absolute inset-0 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppSymmetricClass}`}
+            className={`absolute -inset-10 sm:-inset-16 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppActionClass}`}
           >
             <img
               src={oppStaticAttackImg}
@@ -170,7 +180,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
           </div>
         )}
 
-        {/* 2-d. 상대방 수비 실패 (내가 공격 성공) 시: 냄비뚜껑 뱅글뱅글 날아가는 연출 */}
+        {/* 상대방 수비 실패 (내가 공격 성공) 시: 냄비뚜껑 뱅글뱅글 날아가는 연출 */}
         {oppFlyingPotlidImg && (
           <div
             className={`absolute -top-12 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center w-40 h-40 sm:w-56 sm:h-56 pointer-events-none ${oppFlyingPotlidClass}`}

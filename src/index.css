@@ -371,20 +371,44 @@
 }
 
 /* 상대방 대칭 표현:
-   - 상대방 LEFT 공격/수비 -> 플레이어 시점 우측에 위치, 하단이 바깥 4시 방향으로 벌어짐
-   - 상대방 UP 공격/수비   -> 플레이어 시점 중앙 정면
-   - 상대방 RIGHT 공격/수비 -> 플레이어 시점 좌측에 위치, 하단이 바깥 8시 방향으로 벌어짐
+   - 상대방 LEFT 공격: 플레이어 시점 우측에 뚜렷이 위치(+68px~+105px), 하단이 바깥 4시 방향으로 확 벌어짐(-28deg), scale(1.18)
+   - 상대방 UP 공격: 플레이어 시점 중앙 정면 아래로 쇄도(+22px~+30px), scale(1.15)
+   - 상대방 RIGHT 공격: 플레이어 시점 좌측에 뚜렷이 위치(-68px~-105px), 하단이 바깥 8시 방향으로 확 벌어짐(+28deg), scale(1.18)
+   - 상대방 가드 성공(opp_dodge): 각도 변화 없이 그냥 12시 정면(0deg, translate 없음)
 */
 .opp-action-symmetric-left {
-  transform: translate(40px, 12px) rotate(-22deg);
+  transform: translate(68px, 24px) rotate(-28deg) scale(1.18);
   transform-origin: center center;
 }
+@media (min-width: 640px) {
+  .opp-action-symmetric-left {
+    transform: translate(105px, 32px) rotate(-28deg) scale(1.22);
+  }
+}
+
 .opp-action-symmetric-up {
-  transform: translate(0px, 10px) rotate(0deg);
+  transform: translate(0px, 22px) rotate(0deg) scale(1.15);
   transform-origin: center center;
 }
+@media (min-width: 640px) {
+  .opp-action-symmetric-up {
+    transform: translate(0px, 30px) rotate(0deg) scale(1.2);
+  }
+}
+
 .opp-action-symmetric-right {
-  transform: translate(-40px, 12px) rotate(22deg);
+  transform: translate(-68px, 24px) rotate(28deg) scale(1.18);
+  transform-origin: center center;
+}
+@media (min-width: 640px) {
+  .opp-action-symmetric-right {
+    transform: translate(-105px, 32px) rotate(28deg) scale(1.22);
+  }
+}
+
+/* 상대방 가드 성공: 각도 변화 없이 12시 정면 */
+.opp-dodge-center {
+  transform: translate(0px, 0px) rotate(0deg) scale(1);
   transform-origin: center center;
 }
 
