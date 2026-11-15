@@ -132,6 +132,7 @@ export class GameRoom extends DurableObject {
       name?: string;
       nickname?: string;
       content?: string;
+      adminKey?: string;
     }
   ) {
     if (data.type === 'JOIN_QUEUE' && data.id && data.name) {
@@ -147,6 +148,32 @@ export class GameRoom extends DurableObject {
       this.broadcastQueueUpdate();
     } else if (data.type === 'ADD_GUESTBOOK') {
       this.handleAddGuestbook(data.nickname, data.content);
+    } else if (data.type === 'DELETE_GUESTBOOK') {
+      this.handleDeleteGuestbook(data.id, data.adminKey);
+    }
+  }
+
+  private handleDeleteGuestbook(id?: string, adminKey?: string) {
+    // 기본 관리자 마스터 키: admin777!
+    const validKey = 'admin777!';
+    if (!id || adminKey !== validKey) return;
+
+    this.guestbookEntries = this.guestbookEntries.filter((e) => e.id !== id);
+    this.ctx.storage.put('guestbook', this.guestbookEntries).catch((err) => {
+      console.error('[GameRoom] Failed to persist guestbook deletion:', err);
+    });
+
+    const payload = JSON.stringify({
+      type: 'GUESTBOOK_DELETED',
+      id,
+    });
+    const sockets = this.ctx.getWebSockets();
+    for (const socket of sockets) {
+      try {
+        socket.send(payload);
+      } catch {
+        // ignore
+      }
     }
   }
 

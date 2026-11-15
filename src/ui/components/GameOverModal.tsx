@@ -163,7 +163,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         <div className="w-full bg-slate-900/90 border border-amber-500/50 rounded-2xl p-2.5 mb-4 shadow-sm">
           {reviewSubmitted ? (
             <div className="text-center text-xs font-black text-emerald-400 py-1 font-pixel animate-fadeIn flex items-center justify-center gap-1">
-              ✨ <span>실시간 전광판에 등록되었습니다!</span>
+              ✨ <span>{t('guestbook_submitted')}</span>
             </div>
           ) : (
             <form onSubmit={handleSendReview} className="flex items-center gap-1.5">
@@ -173,7 +173,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
                 maxLength={60}
-                placeholder="승리 소감 또는 한줄 후기! (최대 60자)"
+                placeholder={t('guestbook_gameover_placeholder')}
                 className="flex-1 bg-slate-800 text-white text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 focus:border-amber-500 focus:outline-none"
               />
               <button
@@ -182,7 +182,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                 className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-black text-xs rounded-lg active:scale-95 transition-all font-pixel shrink-0 flex items-center gap-1"
               >
                 <Send className="w-3 h-3" />
-                <span>등록</span>
+                <span>{t('guestbook_btn_post')}</span>
               </button>
             </form>
           )}

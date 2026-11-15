@@ -115,14 +115,24 @@ export const DICTIONARY = {
 
     // Guestbook
     guestbook_title: '실시간 딱대 방명록',
+    guestbook_subtitle: '실시간 접속자들과 함께 보는 라이브 한줄평',
     guestbook_ticker_prefix: '⚡ LIVE 한줄평',
     guestbook_btn_open: '방명록 열기',
+    guestbook_btn_post: '등록',
     guestbook_input_nick: '닉네임',
     guestbook_input_content: '응원이나 한줄평을 남겨주세요! (최대 60자)',
     guestbook_btn_submit: '딱 대! 등록',
     guestbook_submitted: '전광판 등록 완료!',
     guestbook_empty: '아직 등록된 후기가 없습니다. 첫 번째 후기를 남겨보세요!',
     guestbook_gameover_banner: '💥 복수의 칼날 or 승리 소감 한줄 남기기',
+    guestbook_gameover_placeholder: '승리 소감 또는 한줄 후기! (최대 60자)',
+    guestbook_admin_mode: '관리자',
+    guestbook_admin_delete: '삭제',
+    guestbook_admin_pwd_prompt: '관리자 비밀번호를 입력하세요:',
+    guestbook_admin_wrong_pwd: '비밀번호가 올바르지 않습니다.',
+    time_just_now: '방금 전',
+    time_mins_ago: '{min}분 전',
+    time_hours_ago: '{hours}시간 전',
   },
   en: {
     // Title
@@ -238,14 +248,24 @@ export const DICTIONARY = {
 
     // Guestbook
     guestbook_title: 'Live Guestbook & Reviews',
+    guestbook_subtitle: 'Live reviews shared with current players',
     guestbook_ticker_prefix: '⚡ LIVE Reviews',
     guestbook_btn_open: 'Open Guestbook',
+    guestbook_btn_post: 'Post',
     guestbook_input_nick: 'Nickname',
     guestbook_input_content: 'Leave a cheer or review! (Max 60 chars)',
     guestbook_btn_submit: 'Post!',
     guestbook_submitted: 'Posted to Live Board!',
     guestbook_empty: 'No reviews yet. Be the first to leave one!',
     guestbook_gameover_banner: '💥 Leave a victory speech or review',
+    guestbook_gameover_placeholder: 'Victory speech or short review! (Max 60)',
+    guestbook_admin_mode: 'Admin',
+    guestbook_admin_delete: 'Delete',
+    guestbook_admin_pwd_prompt: 'Enter admin password:',
+    guestbook_admin_wrong_pwd: 'Incorrect password.',
+    time_just_now: 'Just now',
+    time_mins_ago: '{min}m ago',
+    time_hours_ago: '{hours}h ago',
   },
 } as const;
 

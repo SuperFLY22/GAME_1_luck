@@ -139,6 +139,24 @@ class MatchmakingService {
   }
 
   /**
+   * 관리자 권한으로 방명록 항목 삭제
+   */
+  public deleteGuestbookEntry(id: string, adminKey: string): void {
+    if (!id || !adminKey) return;
+    this.ensureSocket();
+
+    const payload = JSON.stringify({
+      type: 'DELETE_GUESTBOOK',
+      id,
+      adminKey,
+    });
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(payload);
+    }
+  }
+
+  /**
    * 로비 대기열 참가 (매칭 시작)
    */
   public async joinQueue(
@@ -206,6 +224,11 @@ class MatchmakingService {
               for (const listener of this.guestbookListeners) {
                 listener(this.guestbookEntries);
               }
+            }
+          } else if (data.type === 'GUESTBOOK_DELETED' && data.id) {
+            this.guestbookEntries = this.guestbookEntries.filter((e) => e.id !== data.id);
+            for (const listener of this.guestbookListeners) {
+              listener(this.guestbookEntries);
             }
           }
         } catch (err) {

@@ -31,8 +31,8 @@ export const GuestbookTicker: React.FC = () => {
   }, [entries.length]);
 
   const currentEntry = entries[currentIndex] || {
-    nickname: '딱대알림',
-    content: '실시간 방명록에서 한줄 후기를 남겨보세요! 한 판 딱 대!',
+    nickname: 'ALERT',
+    content: t('guestbook_empty'),
   };
 
   return (
@@ -71,7 +71,7 @@ export const GuestbookTicker: React.FC = () => {
           <div className="flex items-center gap-1 shrink-0 text-slate-400 group-hover:text-amber-300 transition-colors">
             <MessageSquare className="w-4 h-4" />
             <span className="text-[10px] font-bold font-pixel hidden sm:inline">
-              방명록 열기
+              {t('guestbook_btn_open')}
             </span>
           </div>
         </button>
