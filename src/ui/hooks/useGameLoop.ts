@@ -194,6 +194,11 @@ export function useGameLoop() {
         soundManager.playDodge();
       }
 
+      // 마지막 5번째 일격일 땐 컷씬(hit_impact.mp4) 재생 완료 후 결과 화면으로 전환
+      const isFinalHit =
+        state.lastOutcome === 'HIT' && (state.p1.damage >= 5 || state.p2.damage >= 5);
+      const displayMs = isFinalHit ? 3500 : 2300;
+
       const timer = setTimeout(() => {
         dispatch({ type: 'CHECK_ROUND_RESULT' });
         if (state.mode === 'ONLINE_MATCH' && state.online?.myRoleInRoom === 'p1') {
@@ -202,7 +207,7 @@ export function useGameLoop() {
             roomSessionService.startChamPhase();
           }
         }
-      }, GAME_CONFIG.RESOLVE_DISPLAY_MS);
+      }, displayMs);
 
       return () => clearTimeout(timer);
     }

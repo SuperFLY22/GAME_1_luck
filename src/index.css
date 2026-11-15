@@ -353,3 +353,109 @@
   animation: fp-opp-attack-towards-camera 0.24s cubic-bezier(0.12, 0.9, 0.2, 1) forwards;
 }
 
+/* ========================================================
+ * 6. 10시 / 12시 / 2시 기준 방향 및 대칭 각도
+ * ======================================================== */
+/* 플레이어 본인: 상단 부분이 향하는 방향 (10시, 12시, 2시) */
+.action-angle-10 {
+  transform: rotate(-26deg);
+  transform-origin: 50% 90%;
+}
+.action-angle-12 {
+  transform: rotate(0deg);
+  transform-origin: 50% 90%;
+}
+.action-angle-2 {
+  transform: rotate(26deg);
+  transform-origin: 50% 90%;
+}
+
+/* 상대방 대칭 표현:
+   - 상대방 LEFT 공격/수비 -> 플레이어 시점 우측에 위치, 하단이 바깥 4시 방향으로 벌어짐
+   - 상대방 UP 공격/수비   -> 플레이어 시점 중앙 정면
+   - 상대방 RIGHT 공격/수비 -> 플레이어 시점 좌측에 위치, 하단이 바깥 8시 방향으로 벌어짐
+*/
+.opp-action-symmetric-left {
+  transform: translate(40px, 12px) rotate(-22deg);
+  transform-origin: center center;
+}
+.opp-action-symmetric-up {
+  transform: translate(0px, 10px) rotate(0deg);
+  transform-origin: center center;
+}
+.opp-action-symmetric-right {
+  transform: translate(-40px, 12px) rotate(22deg);
+  transform-origin: center center;
+}
+
+/* ========================================================
+ * 7. 수비 실패 시 냄비뚜껑 뱅글뱅글 날아가는 연출 (방향별 탈락)
+ * ======================================================== */
+@keyframes potlid-spin-fly-left {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(-50px, -90px) rotate(-180deg) scale(1.15);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-120px, -150px) rotate(-480deg) scale(0.85);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-220px, 100px) rotate(-840deg) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes potlid-spin-fly-up {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(0px, -110px) rotate(180deg) scale(1.2);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(35px, -180px) rotate(540deg) scale(0.85);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(60px, 120px) rotate(900deg) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes potlid-spin-fly-right {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(50px, -90px) rotate(180deg) scale(1.15);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(120px, -150px) rotate(480deg) scale(0.85);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(220px, 100px) rotate(840deg) scale(0.2);
+    opacity: 0;
+  }
+}
+
+.animate-potlid-fly-left {
+  animation: potlid-spin-fly-left 0.85s cubic-bezier(0.18, 0.89, 0.32, 1.1) forwards;
+}
+.animate-potlid-fly-up {
+  animation: potlid-spin-fly-up 0.85s cubic-bezier(0.18, 0.89, 0.32, 1.1) forwards;
+}
+.animate-potlid-fly-right {
+  animation: potlid-spin-fly-right 0.85s cubic-bezier(0.18, 0.89, 0.32, 1.1) forwards;
+}
+
+

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
 import { useLanguage } from '../../context/LanguageContext';
+import { ActionVideo } from './ActionVideo';
 
 interface OpponentStageProps {
   id: 'p1' | 'p2';
@@ -33,48 +34,56 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  let activeSpriteUrl: string;
-  let activeVideoUrl: string | null = null;
-  let isVideoLoop = false;
+  // 7번 규칙: 상대방 대칭 각도 및 위치 클래스
+  // 상대방 LEFT  -> 내 시점 우측(4시 방향)
+  // 상대방 UP    -> 내 시점 중앙(12시 정면)
+  // 상대방 RIGHT -> 내 시점 좌측(8시 방향)
+  let oppSymmetricClass = 'opp-action-symmetric-up';
+  if (direction === 'LEFT') oppSymmetricClass = 'opp-action-symmetric-left';
+  else if (direction === 'RIGHT') oppSymmetricClass = 'opp-action-symmetric-right';
+
+  // 2-d & 5-a & 3-c 연출 상태 분기
+  let oppVideoConfig: { src: string; startTime: number; endTime: number } | null = null;
+  let oppStaticAttackImg: string | null = null;
+  let oppFlyingPotlidImg: string | null = null;
+  let oppFlyingPotlidClass = '';
 
   if (isResolve && direction) {
     if (isAttacker) {
-      activeSpriteUrl = `/assets/images/first_person/opp_attack_${dirKey}.png`;
-      activeVideoUrl = '/assets/videos/opp_attack.mp4';
-      isVideoLoop = false;
-    } else if (isDefender) {
-      if (lastOutcome === 'DODGE') {
-        activeSpriteUrl = `/assets/images/first_person/opp_dodge_${dirKey}.png`;
-        activeVideoUrl = '/assets/videos/opp_dodge.mp4';
-        isVideoLoop = false;
-      } else {
-        activeSpriteUrl = isHit
-          ? `/assets/images/first_person/opp_state_${damage}.png`
-          : `/assets/images/first_person/opp_guard_${dirKey}.png`;
+      if (lastOutcome === 'HIT') {
+        // 5-a. 상대방 공격 성공: opp_attack.mp4 0~2초 구간, 대칭 각도 적용
+        oppVideoConfig = {
+          src: '/assets/videos/opp_attack.mp4',
+          startTime: 0,
+          endTime: 2,
+        };
+      } else if (lastOutcome === 'DODGE') {
+        // 3-c. 상대방 공격 실패 (내가 수비 성공):
+        // 애니메이션 대신 opp_attack_{dir}.png 정적 이미지를 방향에 맞게 출력
+        oppStaticAttackImg = `/assets/images/first_person/opp_attack_${dirKey}.png`;
       }
-    } else {
-      activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
-    }
-  } else {
-    activeSpriteUrl = `/assets/images/first_person/opp_state_${damage}.png`;
-    if (damage === 0) {
-      activeVideoUrl = '/assets/videos/opp_idle.mp4';
-      isVideoLoop = true;
+    } else if (isDefender) {
+      if (isHit) {
+        // 2-d. 상대방 수비 실패 (내가 공격 성공):
+        // 상대방이 수비했던 방향의 냄비뚜껑 이미지가 뱅글뱅글 날아가는 효과
+        oppFlyingPotlidImg = `/assets/images/first_person/self_guard_${dirKey}.png`;
+        // 대칭으로 튕겨 날아감 (상대방 LEFT -> 우측 탈락, RIGHT -> 좌측 탈락)
+        if (direction === 'LEFT') oppFlyingPotlidClass = 'animate-potlid-fly-right';
+        else if (direction === 'RIGHT') oppFlyingPotlidClass = 'animate-potlid-fly-left';
+        else oppFlyingPotlidClass = 'animate-potlid-fly-up';
+      }
     }
   }
 
-  let bodyAnimClass = '';
-  if (isResolve) {
-    if (isHit) {
-      bodyAnimClass = 'animate-fp-opp-hit';
-    } else if (lastOutcome === 'DODGE' && direction) {
-      if (direction === 'LEFT') bodyAnimClass = 'animate-fp-opp-dodge-left';
-      else if (direction === 'RIGHT') bodyAnimClass = 'animate-fp-opp-dodge-right';
-      else bodyAnimClass = 'animate-fp-opp-dodge-up';
-    } else if (isAttacker) {
-      bodyAnimClass = 'animate-fp-opp-attack';
-    }
-  }
+  // 1 & 2-d. 상대방 상태 5단계 표현 반영 본체 이미지
+  const safeDamage = Math.min(Math.max(damage, 0), 5);
+  const oppStateImg = `/assets/images/first_person/opp_state_${safeDamage}.png`;
+
+  // 기본 대기 시 (RESOLVE가 아닐 때) 0 데미지면 idle 비디오
+  const isIdleVideo = !isResolve && damage === 0 && phase !== 'CHAM_INPUT';
+
+  // 피격 시 몸체 흔들림 애니메이션
+  const bodyHitAnimClass = isResolve && isHit ? 'animate-fp-opp-hit' : '';
 
   const getRpsLabel = (choice: RPSChoice) => {
     if (choice === 'ROCK') return t('battle_hand_rock');
@@ -84,7 +93,7 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
   };
 
   return (
-    <div className="relative flex flex-col items-center select-none z-10">
+    <div className="relative flex flex-col items-center justify-center select-none z-10 w-full">
       {/* 상대방 이름 및 역할 뱃지 */}
       <div className="flex items-center gap-2 mb-1 z-20 font-pixel">
         <span className="text-xs sm:text-sm font-black bg-slate-900/90 text-rose-300 border border-rose-500/60 px-2.5 py-0.5 rounded-full shadow-md">
@@ -103,9 +112,9 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
         )}
       </div>
 
-      {/* 상대방 본체 래퍼 */}
+      {/* 1. 상대방 본체 래퍼 (화면 정중앙 정렬) */}
       <div
-        className={`relative flex items-center justify-center w-44 h-52 sm:w-64 sm:h-72 transition-transform duration-200 ${
+        className={`relative flex items-center justify-center w-48 h-56 sm:w-68 sm:h-76 transition-transform duration-200 mx-auto ${
           isAttacker && (phase === 'CHAM_INPUT' || phase === 'RESOLVE')
             ? 'aura-attacker rounded-3xl'
             : isDefender && (phase === 'CHAM_INPUT' || phase === 'RESOLVE')
@@ -113,28 +122,68 @@ export const OpponentStage: React.FC<OpponentStageProps> = ({
             : ''
         }`}
       >
-        <div className={`w-full h-full flex items-center justify-center ${bodyAnimClass}`}>
-          {activeVideoUrl ? (
+        {/* 본체 상태 이미지 (상태 0~5단계 반영) */}
+        <div className={`w-full h-full flex items-center justify-center ${bodyHitAnimClass}`}>
+          {isIdleVideo ? (
             <video
-              key={activeVideoUrl}
-              src={activeVideoUrl}
+              src="/assets/videos/opp_idle.mp4"
               autoPlay
-              loop={isVideoLoop}
+              loop
               muted
               playsInline
-              poster={activeSpriteUrl}
+              poster={oppStateImg}
               className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
             />
           ) : (
             <img
-              src={activeSpriteUrl}
-              alt={`${name} sprite`}
+              src={oppStateImg}
+              alt={`${name} sprite state ${safeDamage}`}
               className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
             />
           )}
         </div>
 
-        {/* 가위바위보 결과 (캐릭터 본체 우측 배치) */}
+        {/* 5-a. 상대방 공격 성공 시 비디오 (0~2초, 대칭 각도 적용) */}
+        {oppVideoConfig && (
+          <div
+            className={`absolute inset-0 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppSymmetricClass}`}
+          >
+            <ActionVideo
+              src={oppVideoConfig.src}
+              startTime={oppVideoConfig.startTime}
+              endTime={oppVideoConfig.endTime}
+              className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(239,68,68,0.9)]"
+            />
+          </div>
+        )}
+
+        {/* 3-c. 상대방 공격 실패 (내가 수비 성공) 시: opp_attack_{dir}.png 정적 이미지 대칭 출력 */}
+        {oppStaticAttackImg && (
+          <div
+            className={`absolute inset-0 z-30 flex items-center justify-center pointer-events-none transition-transform duration-200 ${oppSymmetricClass}`}
+          >
+            <img
+              src={oppStaticAttackImg}
+              alt="Opponent Attack Stopped"
+              className="w-full h-full object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.85)]"
+            />
+          </div>
+        )}
+
+        {/* 2-d. 상대방 수비 실패 (내가 공격 성공) 시: 냄비뚜껑 뱅글뱅글 날아가는 연출 */}
+        {oppFlyingPotlidImg && (
+          <div
+            className={`absolute -top-12 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center w-40 h-40 sm:w-56 sm:h-56 pointer-events-none ${oppFlyingPotlidClass}`}
+          >
+            <img
+              src={oppFlyingPotlidImg}
+              alt="Opponent Lost Potlid"
+              className="w-full h-full object-contain drop-shadow-[0_15px_25px_rgba(251,191,36,0.9)]"
+            />
+          </div>
+        )}
+
+        {/* 가위바위보 결과 (RPS_RESULT 단계) */}
         {phase === 'RPS_RESULT' && rpsChoice && (
           <aside
             aria-label="상대방 가위바위보 결과"

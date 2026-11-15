@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ChamDirection, DamageLevel, GamePhase, Role, RPSChoice } from '../../../models/types';
 import { useLanguage } from '../../context/LanguageContext';
+import { ActionVideo } from './ActionVideo';
 
 interface PlayerSelfStageProps {
   id: 'p1' | 'p2';
@@ -22,6 +23,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   role,
   phase,
   isHit,
+  lastOutcome,
   rpsChoice,
   rpsSprite,
 }) => {
@@ -32,31 +34,55 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
 
   const dirKey = direction ? direction.toLowerCase() : 'up';
 
-  let actionSpriteUrl: string | null = null;
-  let actionVideoUrl: string | null = null;
-  let actionAnimClass = '';
+  // 6번 규칙: 10시(LEFT), 12시(UP), 2시(RIGHT) 각도 클래스
+  let angleClass = 'action-angle-12';
+  if (direction === 'LEFT') angleClass = 'action-angle-10';
+  else if (direction === 'RIGHT') angleClass = 'action-angle-2';
+
+  // 액션 영상 및 연출 계산
+  let videoConfig: { src: string; startTime: number; endTime: number } | null = null;
+  let potlidFlyAwayImg: string | null = null;
+  let potlidFlyAnimClass = '';
 
   if (isResolve && direction) {
     if (isAttacker) {
-      actionSpriteUrl = `/assets/images/first_person/self_attack_${dirKey}.png`;
-      actionVideoUrl = '/assets/videos/self_attack.mp4';
-      if (direction === 'LEFT') actionAnimClass = 'animate-fp-hammer-left';
-      else if (direction === 'RIGHT') actionAnimClass = 'animate-fp-hammer-right';
-      else actionAnimClass = 'animate-fp-hammer-up';
+      if (lastOutcome === 'HIT') {
+        // 2. 공격 성공: self_attack.mp4 5~8초 구간
+        videoConfig = {
+          src: '/assets/videos/self_attack.mp4',
+          startTime: 5,
+          endTime: 8,
+        };
+      } else if (lastOutcome === 'DODGE') {
+        // 4. 공격 실패: self_attack.mp4 1~3초 구간
+        videoConfig = {
+          src: '/assets/videos/self_attack.mp4',
+          startTime: 1,
+          endTime: 3,
+        };
+      }
     } else if (isDefender) {
-      actionSpriteUrl = `/assets/images/first_person/self_guard_${dirKey}.png`;
-      if (isHit) {
-        actionAnimClass = 'animate-potlid-pop-off';
-      } else {
-        actionVideoUrl = '/assets/videos/self_guard.mp4';
-        if (direction === 'LEFT') actionAnimClass = 'animate-fp-guard-left';
-        else if (direction === 'RIGHT') actionAnimClass = 'animate-fp-guard-right';
-        else actionAnimClass = 'animate-fp-guard-up';
+      if (lastOutcome === 'DODGE') {
+        // 3. 수비 성공: self_guard.mp4 (좌/우: 1~3초, 상: 5~7초)
+        const isUp = direction === 'UP';
+        videoConfig = {
+          src: '/assets/videos/self_guard.mp4',
+          startTime: isUp ? 5 : 1,
+          endTime: isUp ? 7 : 3,
+        };
+      } else if (isHit) {
+        // 5. 수비 실패: 선택했던 방향의 냄비뚜껑 이미지가 뱅글뱅글 날아가는 효과
+        potlidFlyAwayImg = `/assets/images/first_person/self_guard_${dirKey}.png`;
+        if (direction === 'LEFT') potlidFlyAnimClass = 'animate-potlid-fly-left';
+        else if (direction === 'RIGHT') potlidFlyAnimClass = 'animate-potlid-fly-right';
+        else potlidFlyAnimClass = 'animate-potlid-fly-up';
       }
     }
   }
 
-  const selfBackSpriteUrl = `/assets/images/first_person/self_state_${damage}.png`;
+  // 내 상태 이미지 (본체 0~5단계)
+  const safeDamage = Math.min(Math.max(damage, 0), 5);
+  const selfBackSpriteUrl = `/assets/images/first_person/self_state_${safeDamage}.png`;
 
   const getRpsLabel = (choice: RPSChoice) => {
     if (choice === 'ROCK') return t('battle_hand_rock');
@@ -66,36 +92,36 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
   };
 
   return (
-    <div className="relative flex flex-col items-center select-none z-20 pointer-events-none mt-auto">
-      {/* 1. 1인칭 플레이어 액션 (뿅망치 스윙 / 냄비 가드) */}
-      {(actionVideoUrl || actionSpriteUrl) && (
+    <div className="relative flex flex-col items-center justify-center select-none z-20 pointer-events-none mt-auto w-full">
+      {/* 1. 1인칭 플레이어 액션 (화면 정중앙 정렬 + 10시/12시/2시 각도) */}
+      {videoConfig && (
         <div
-          className={`absolute -top-24 sm:-top-36 z-30 transition-all duration-150 flex items-center justify-center w-52 h-52 sm:w-80 sm:h-80 ${
-            isAttacker ? 'right-0 sm:right-6' : 'left-0 sm:left-8'
-          } ${actionAnimClass}`}
+          className={`absolute -top-28 sm:-top-44 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center w-60 h-60 sm:w-96 sm:h-96 transition-transform duration-200 ${angleClass}`}
         >
-          {actionVideoUrl ? (
-            <video
-              key={actionVideoUrl}
-              src={actionVideoUrl}
-              autoPlay
-              muted
-              playsInline
-              poster={actionSpriteUrl || undefined}
-              className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]"
-            />
-          ) : (
-            <img
-              src={actionSpriteUrl!}
-              alt={isAttacker ? 'Self Attack Hammer' : 'Self Guard Lid'}
-              className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]"
-            />
-          )}
+          <ActionVideo
+            src={videoConfig.src}
+            startTime={videoConfig.startTime}
+            endTime={videoConfig.endTime}
+            className="w-full h-full object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)]"
+          />
         </div>
       )}
 
-      {/* 2. 내 캐릭터 뒷모습 본체 */}
-      <div className="relative flex flex-col items-center justify-end w-52 h-36 sm:w-88 sm:h-60 overflow-visible">
+      {/* 수비 실패 시 냄비뚜껑 뱅글뱅글 날아가는 연출 */}
+      {potlidFlyAwayImg && (
+        <div
+          className={`absolute -top-24 sm:-top-36 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center w-48 h-48 sm:w-72 sm:h-72 pointer-events-none ${potlidFlyAnimClass}`}
+        >
+          <img
+            src={potlidFlyAwayImg}
+            alt="Flying Potlid Guard Failure"
+            className="w-full h-full object-contain drop-shadow-[0_15px_30px_rgba(239,68,68,0.85)]"
+          />
+        </div>
+      )}
+
+      {/* 2. 내 캐릭터 뒷모습 본체 (1번 요구사항: 상태 이미지 화면 정중앙 배치) */}
+      <div className="relative flex flex-col items-center justify-end w-52 h-36 sm:w-88 sm:h-60 overflow-visible mx-auto">
         {/* '나 (YOU)' 배지 및 공격/수비 태그 */}
         <div className="absolute bottom-1 -left-4 sm:-left-8 z-40 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-1.5 whitespace-nowrap bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-md pointer-events-none font-pixel">
           <span className="text-[10px] sm:text-xs font-black bg-sky-500 text-white px-2.5 py-0.5 rounded-full border border-sky-300 shadow-md">
@@ -120,7 +146,7 @@ export const PlayerSelfStage: React.FC<PlayerSelfStageProps> = ({
           className="w-full h-full object-contain drop-shadow-[0_-8px_20px_rgba(0,0,0,0.7)]"
         />
 
-        {/* 내 RPS 선택 결과 */}
+        {/* 내 RPS 선택 결과 (RPS_RESULT 단계) */}
         {phase === 'RPS_RESULT' && rpsChoice && (
           <aside
             aria-label="내 가위바위보 결과"

@@ -63,17 +63,21 @@ export const FirstPersonArena: React.FC<FirstPersonArenaProps> = ({
 
   const curAttackerName = state.p1.role === 'ATTACKER' ? state.p1.name : state.p2.name;
 
+  const targetDamage = state.hitTarget === oppPlayer.id ? oppPlayer.damage : selfPlayer.damage;
+  const isFinalHit = state.lastOutcome === 'HIT' && targetDamage >= 5;
+
   return (
     <div className="relative w-full max-w-4xl mx-auto flex-1 flex flex-col justify-between items-center perspective-stage min-h-[380px] sm:min-h-[480px] py-1 select-none">
-      {/* 0. 비디오 컷씬 오버레이 */}
+      {/* 0. 비디오 컷씬 오버레이 (2-e: 마지막 5번째 일격 성공 시 발동) */}
       <CutsceneOverlay
         outcome={state.lastOutcome}
         target={state.hitTarget}
+        targetDamage={targetDamage}
         myPlayerId={myPlayerId}
       />
 
-      {/* 1. 코믹 임팩트 (HIT / DODGE 이펙트) */}
-      <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />
+      {/* 1. 코믹 임팩트 (일반 HIT / DODGE 이펙트 - 5번째 컷씬 발동 중엔 가림) */}
+      {!isFinalHit && <ComicImpact outcome={state.lastOutcome} target={state.hitTarget} />}
 
       {/* 2. 공수 교대 배너 (ROLE_SWAP Pause 단계) */}
       {state.phase === 'ROLE_SWAP' && (
